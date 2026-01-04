@@ -1,0 +1,60 @@
+import { useEffect, useRef, useState } from 'react';
+import { RoomState, WebSocketMessage } from '../types';
+
+export const useWebSocket = (
+  roomId: string,
+  playerId: string,
+  joined: boolean
+) => {
+  const [roomState, setRoomState] = useState<RoomState | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const questionStartTimeRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!joined) return;
+
+    const ws = new WebSocket('ws://localhost:8000/ws');
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      ws.send(
+        JSON.stringify({
+          type: 'JOIN_ROOM',
+          roomId: roomId,
+          playerId: playerId,
+        })
+      );
+    };
+
+    ws.onmessage = (event) => {
+      const data: WebSocketMessage = JSON.parse(event.data);
+      if (data.type === 'ROOM_STATE' && data.roomState) {
+        setRoomState(data.roomState);
+
+        if (
+          data.roomState.status === 'playing' &&
+          data.roomState.currentQuestion
+        ) {
+          if (!questionStartTimeRef.current) {
+            questionStartTimeRef.current = Date.now();
+          }
+        } else {
+          questionStartTimeRef.current = null;
+        }
+      }
+    };
+
+    return () => {
+      ws.close();
+      wsRef.current = null;
+    };
+  }, [joined, roomId, playerId]);
+
+  const sendMessage = (message: object) => {
+    if (wsRef.current) {
+      wsRef.current.send(JSON.stringify(message));
+    }
+  };
+
+  return { roomState, sendMessage, questionStartTimeRef };
+};

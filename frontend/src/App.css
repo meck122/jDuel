@@ -38,6 +38,7 @@
 
 .player-name {
   font-weight: bold;
+  color: #646cff;
 }
 
 .player-score {
@@ -52,6 +53,7 @@
 .question {
   font-size: 1.5em;
   font-weight: bold;
+  color: #646cff;
   margin: 2rem 0;
   padding: 1.5rem;
   background: #2a2a2a;
@@ -133,6 +135,7 @@ button:active {
   padding: 1rem;
   margin: 0.5rem 0;
   background: #2a2a2a;
+  color: #646cff;
   border-radius: 4px;
   font-size: 1.2em;
 }
