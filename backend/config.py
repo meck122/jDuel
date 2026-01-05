@@ -1,6 +1,6 @@
 """Configuration constants for the trivia game."""
 
-QUESTION_TIME_MS = 1000  # 15 seconds per question
+QUESTION_TIME_MS = 15000  # 15 seconds per question
 MAX_SCORE_PER_QUESTION = 1000
 RESULTS_TIME_MS = 10000  # 10 seconds for results screen
 GAME_OVER_TIME_MS = 60000  # 60 seconds (1 minute) before closing room

@@ -6,6 +6,7 @@ from fastapi import WebSocket
 
 from models import Room, GameStatus
 from questions import QUESTIONS
+from database import get_random_questions
 from config import QUESTION_TIME_MS, MAX_SCORE_PER_QUESTION, RESULTS_TIME_MS
 
 
@@ -18,7 +19,9 @@ class RoomManager:
     def create_or_get_room(self, room_id: str) -> Room:
         """Create a new room or return existing one."""
         if room_id not in self.rooms:
-            self.rooms[room_id] = Room(room_id, QUESTIONS)
+            # Get random questions from database instead of hardcoded list
+            questions = get_random_questions(count=10)
+            self.rooms[room_id] = Room(room_id, questions)
         return self.rooms[room_id]
     
     def add_player(self, room_id: str, player_id: str, websocket: WebSocket):
