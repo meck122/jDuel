@@ -10,6 +10,7 @@ class GameStatus(str, Enum):
     """Enum for game status."""
     WAITING = "waiting"
     PLAYING = "playing"
+    RESULTS = "results"
     FINISHED = "finished"
 
 
@@ -25,6 +26,9 @@ class Room:
         self.questions = questions.copy()
         self.question_start_time: Optional[datetime] = None
         self.answered_players: Set[str] = set()
+        self.player_answers: Dict[str, str] = {}  # Track player answers
+        self.results_start_time: Optional[datetime] = None
+        self.finish_time: Optional[datetime] = None
     
     def to_dict(self) -> dict:
         """Convert room to dictionary for JSON serialization."""
@@ -35,5 +39,8 @@ class Room:
             "question_index": self.question_index,
             "questions": self.questions,
             "question_start_time": self.question_start_time,
-            "answered_players": self.answered_players
+            "answered_players": self.answered_players,
+            "player_answers": self.player_answers,
+            "results_start_time": self.results_start_time,
+            "finish_time": self.finish_time
         }

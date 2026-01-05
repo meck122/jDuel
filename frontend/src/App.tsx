@@ -9,10 +9,16 @@ function App() {
   const [playerId, setPlayerId] = useState<string>('');
   const [joined, setJoined] = useState<boolean>(false);
 
-  const { roomState, sendMessage, questionStartTimeRef } = useWebSocket(
+  const { roomState, sendMessage } = useWebSocket(
     roomId,
     playerId,
-    joined
+    joined,
+    () => {
+      // Room was closed, reset to join form
+      setJoined(false);
+      setRoomId('');
+      setPlayerId('');
+    }
   );
 
   const handleJoin = (newRoomId: string, newPlayerId: string) => {
@@ -26,15 +32,10 @@ function App() {
   };
 
   const handleSubmitAnswer = (answer: string) => {
-    if (questionStartTimeRef.current) {
-      const timeMs = Date.now() - questionStartTimeRef.current;
-      sendMessage({
-        type: 'ANSWER',
-        answer: answer,
-        timeMs: timeMs,
-      });
-      questionStartTimeRef.current = null;
-    }
+    sendMessage({
+      type: 'ANSWER',
+      answer: answer,
+    });
   };
 
   if (!joined) {

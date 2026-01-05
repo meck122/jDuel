@@ -1,4 +1,5 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect } from 'react';
+import { Timer } from './Timer';
 
 interface QuestionViewProps {
   questionIndex: number;
@@ -14,12 +15,19 @@ export const QuestionView = ({
   onSubmitAnswer,
 }: QuestionViewProps) => {
   const [answer, setAnswer] = useState<string>('');
+  const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
+
+  // Reset submission state when question changes
+  useEffect(() => {
+    setHasSubmitted(false);
+    setAnswer('');
+  }, [questionIndex]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (answer) {
+    if (answer && !hasSubmitted) {
       onSubmitAnswer(answer);
-      setAnswer('');
+      setHasSubmitted(true);
     }
   };
 
@@ -27,20 +35,30 @@ export const QuestionView = ({
     <div className='game-section'>
       <h2>Question {questionIndex + 1} / 10</h2>
       <p className='question'>{questionText}</p>
-      <p className='timer'>
-        Time remaining: {Math.ceil(timeRemainingMs / 1000)}s
-      </p>
+      <Timer
+        timeRemainingMs={timeRemainingMs}
+        resetKey={questionIndex}
+        className='timer'
+        label='Time remaining'
+      />
 
-      <form onSubmit={handleSubmit} className='answer-form'>
-        <input
-          type='text'
-          placeholder='Your answer'
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          autoFocus
-        />
-        <button type='submit'>Submit</button>
-      </form>
+      {!hasSubmitted ? (
+        <form onSubmit={handleSubmit} className='answer-form'>
+          <input
+            type='text'
+            placeholder='Your answer'
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            autoFocus
+          />
+          <button type='submit'>Submit</button>
+        </form>
+      ) : (
+        <div className='answer-submitted'>
+          <p>✓ Answer submitted!</p>
+          <p className='waiting-text'>Waiting for next question...</p>
+        </div>
+      )}
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { Scoreboard } from './Scoreboard';
 import { WaitingRoom } from './WaitingRoom';
 import { QuestionView } from './QuestionView';
 import { GameOver } from './GameOver';
+import { ResultsView } from './ResultsView';
 
 interface GameRoomProps {
   roomId: string;
@@ -23,7 +24,9 @@ export const GameRoom = ({
     <div className='container'>
       <h1>Trivia Duel - Room: {roomId}</h1>
 
-      <Scoreboard players={roomState.players} currentPlayerId={playerId} />
+      {roomState.status !== 'playing' && roomState.status !== 'results' && (
+        <Scoreboard players={roomState.players} currentPlayerId={playerId} />
+      )}
 
       {roomState.status === 'waiting' && (
         <WaitingRoom onStartGame={onStartGame} />
@@ -40,8 +43,24 @@ export const GameRoom = ({
           />
         )}
 
+      {roomState.status === 'results' &&
+        roomState.results &&
+        roomState.timeRemainingMs !== undefined && (
+          <ResultsView
+            players={roomState.players}
+            correctAnswer={roomState.results.correctAnswer}
+            playerAnswers={roomState.results.playerAnswers}
+            timeRemainingMs={roomState.timeRemainingMs}
+            currentPlayerId={playerId}
+          />
+        )}
+
       {roomState.status === 'finished' && roomState.winner && (
-        <GameOver winner={roomState.winner} players={roomState.players} />
+        <GameOver 
+          winner={roomState.winner} 
+          players={roomState.players}
+          timeRemainingMs={roomState.timeRemainingMs}
+        />
       )}
     </div>
   );

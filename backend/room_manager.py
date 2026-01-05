@@ -6,7 +6,7 @@ from fastapi import WebSocket
 
 from models import Room, GameStatus
 from questions import QUESTIONS
-from config import QUESTION_TIME_MS, MAX_SCORE_PER_QUESTION
+from config import QUESTION_TIME_MS, MAX_SCORE_PER_QUESTION, RESULTS_TIME_MS
 
 
 class RoomManager:
@@ -49,12 +49,13 @@ class RoomManager:
         room.question_index = 0
         room.question_start_time = datetime.now()
         room.answered_players = set()
+        room.player_answers = {}
         
         # Reset all scores
         for player_id in room.scores:
             room.scores[player_id] = 0
     
-    def submit_answer(self, room_id: str, player_id: str, answer: str, time_ms: int) -> bool:
+    def submit_answer(self, room_id: str, player_id: str, answer: str) -> bool:
         """
         Submit an answer for a player.
         Returns True if answer is correct, False otherwise.
@@ -66,16 +67,29 @@ class RoomManager:
             return False
         
         room.answered_players.add(player_id)
+        room.player_answers[player_id] = answer
         
         current_question = room.questions[room.question_index]
         correct = answer.strip().lower() == current_question["answer"].strip().lower()
         
         if correct:
-            # Score based on speed: max points, decreases with time
-            speed_bonus = max(0, MAX_SCORE_PER_QUESTION - (time_ms // 10))
-            room.scores[player_id] += speed_bonus
+            # Calculate time on server side for security
+            elapsed = (datetime.now() - room.question_start_time).total_seconds() * 1000
+            time_ms = int(elapsed)
+            
+            # Validate time is within bounds
+            if time_ms <= QUESTION_TIME_MS:
+                # Score based on speed: max points, decreases with time
+                speed_bonus = max(0, MAX_SCORE_PER_QUESTION - (time_ms // 10))
+                room.scores[player_id] += speed_bonus
         
         return correct
+    
+    def show_results(self, room_id: str):
+        """Show results for the current question."""
+        room = self.rooms[room_id]
+        room.status = GameStatus.RESULTS
+        room.results_start_time = datetime.now()
     
     def next_question(self, room_id: str) -> bool:
         """
@@ -85,11 +99,14 @@ class RoomManager:
         room = self.rooms[room_id]
         room.question_index += 1
         room.answered_players = set()
+        room.player_answers = {}
         
         if room.question_index >= len(room.questions):
             room.status = GameStatus.FINISHED
+            room.finish_time = datetime.now()
             return False
         
+        room.status = GameStatus.PLAYING
         room.question_start_time = datetime.now()
         return True
     
@@ -115,10 +132,28 @@ class RoomManager:
                 "text": current_question["text"]
             }
             state["roomState"]["timeRemainingMs"] = time_remaining
+        elif room.status == GameStatus.RESULTS:
+            # Show results from previous question
+            previous_question = room.questions[room.question_index]
+            elapsed = (datetime.now() - room.results_start_time).total_seconds() * 1000
+            time_remaining = max(0, RESULTS_TIME_MS - int(elapsed))
+            
+            state["roomState"]["results"] = {
+                "correctAnswer": previous_question["answer"],
+                "playerAnswers": room.player_answers
+            }
+            state["roomState"]["timeRemainingMs"] = time_remaining
         elif room.status == GameStatus.FINISHED:
             # Show final results
             winner = max(room.scores.items(), key=lambda x: x[1])[0] if room.scores else None
             state["roomState"]["winner"] = winner
+            
+            # Include time until room closes if we have a finish time
+            if hasattr(room, 'finish_time') and room.finish_time:
+                from config import GAME_OVER_TIME_MS
+                elapsed = (datetime.now() - room.finish_time).total_seconds() * 1000
+                time_remaining = max(0, GAME_OVER_TIME_MS - int(elapsed))
+                state["roomState"]["timeRemainingMs"] = time_remaining
         
         return state
     

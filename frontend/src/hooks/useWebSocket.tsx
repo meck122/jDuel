@@ -4,11 +4,11 @@ import { RoomState, WebSocketMessage } from '../types';
 export const useWebSocket = (
   roomId: string,
   playerId: string,
-  joined: boolean
+  joined: boolean,
+  onRoomClosed?: () => void
 ) => {
   const [roomState, setRoomState] = useState<RoomState | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const questionStartTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!joined) return;
@@ -30,16 +30,9 @@ export const useWebSocket = (
       const data: WebSocketMessage = JSON.parse(event.data);
       if (data.type === 'ROOM_STATE' && data.roomState) {
         setRoomState(data.roomState);
-
-        if (
-          data.roomState.status === 'playing' &&
-          data.roomState.currentQuestion
-        ) {
-          if (!questionStartTimeRef.current) {
-            questionStartTimeRef.current = Date.now();
-          }
-        } else {
-          questionStartTimeRef.current = null;
+      } else if (data.type === 'ROOM_CLOSED') {
+        if (onRoomClosed) {
+          onRoomClosed();
         }
       }
     };
@@ -56,5 +49,5 @@ export const useWebSocket = (
     }
   };
 
-  return { roomState, sendMessage, questionStartTimeRef };
+  return { roomState, sendMessage };
 };

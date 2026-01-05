@@ -6,7 +6,7 @@ import json
 import asyncio
 
 from room_manager import RoomManager
-from config import CORS_ORIGINS, QUESTION_TIME_MS
+from config import CORS_ORIGINS, QUESTION_TIME_MS, RESULTS_TIME_MS, GAME_OVER_TIME_MS
 
 app = FastAPI()
 
@@ -62,9 +62,8 @@ async def websocket_endpoint(ws: WebSocket):
             elif msg_type == "ANSWER":
                 if current_room_id and current_player_id:
                     answer = message["answer"]
-                    time_ms = message["timeMs"]
                     
-                    room_manager.submit_answer(current_room_id, current_player_id, answer, time_ms)
+                    room_manager.submit_answer(current_room_id, current_player_id, answer)
                     await room_manager.broadcast_state(current_room_id)
     
     except WebSocketDisconnect:
@@ -81,8 +80,44 @@ async def question_timer(room_id: str):
     if room_id in room_manager.rooms:
         room = room_manager.rooms[room_id]
         if room.status.value == "playing":
+            # Show results screen
+            room_manager.show_results(room_id)
+            await room_manager.broadcast_state(room_id)
+            
+            # Start results timer
+            asyncio.create_task(results_timer(room_id))
+
+
+async def results_timer(room_id: str):
+    """Auto-advance from results to next question after time expires."""
+    await asyncio.sleep(RESULTS_TIME_MS / 1000)
+    
+    if room_id in room_manager.rooms:
+        room = room_manager.rooms[room_id]
+        if room.status.value == "results":
             has_next = room_manager.next_question(room_id)
             await room_manager.broadcast_state(room_id)
             
             if has_next:
                 asyncio.create_task(question_timer(room_id))
+            else:
+                # Game is finished, start game over timer
+                asyncio.create_task(game_over_timer(room_id))
+
+
+async def game_over_timer(room_id: str):
+    """Auto-close room after game over timeout."""
+    await asyncio.sleep(GAME_OVER_TIME_MS / 1000)
+    
+    if room_id in room_manager.rooms:
+        room = room_manager.rooms[room_id]
+        # Broadcast room closed message to all players
+        disconnected = []
+        for player_id, ws in room.players.items():
+            try:
+                await ws.send_json({"type": "ROOM_CLOSED"})
+            except:
+                disconnected.append(player_id)
+        
+        # Close the room
+        room_manager.close_room(room_id)
