@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { RoomState, WebSocketMessage } from '../types';
+import { WS_URL } from '../config';
 
 export const useWebSocket = (
   roomId: string,
@@ -13,7 +14,7 @@ export const useWebSocket = (
   useEffect(() => {
     if (!joined) return;
 
-    const ws = new WebSocket('ws://localhost:8000/ws');
+    const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
     ws.onopen = () => {
