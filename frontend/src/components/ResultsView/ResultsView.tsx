@@ -1,4 +1,5 @@
-import { Timer } from './Timer';
+import { Timer } from '../Timer/Timer';
+import styles from './ResultsView.module.css';
 
 interface ResultsViewProps {
   players: Record<string, number>;
@@ -16,7 +17,7 @@ export const ResultsView = ({
   currentPlayerId,
 }: ResultsViewProps) => {
   return (
-    <div className='game-section'>
+    <div className={styles.gameSection}>
       <h2>Question Results</h2>
       <Timer
         timeRemainingMs={timeRemainingMs}
@@ -25,48 +26,48 @@ export const ResultsView = ({
         label='Next question in'
       />
 
-      <div className='correct-answer-banner'>
-        <span className='correct-label'>Correct Answer:</span>
-        <span className='correct-value'>{correctAnswer}</span>
+      <div className={styles.correctAnswerBanner}>
+        <span className={styles.correctLabel}>Correct Answer:</span>
+        <span className={styles.correctValue}>{correctAnswer}</span>
       </div>
 
-      <div className='results-container'>
-        <div className='results-box'>
+      <div className={styles.resultsContainer}>
+        <div className={styles.resultsBox}>
           <h3>Scoreboard</h3>
-          <div className='results-scores'>
+          <div className={styles.resultsScores}>
             {Object.entries(players)
               .sort(([, a], [, b]) => b - a)
               .map(([player, score]) => (
-                <div key={player} className='results-score-item'>
-                  <span className='results-player-name'>
+                <div key={player} className={styles.resultsScoreItem}>
+                  <span className={styles.resultsPlayerName}>
                     {player} {player === currentPlayerId && '(you)'}
                   </span>
-                  <span className='results-player-score'>{score}</span>
+                  <span className={styles.resultsPlayerScore}>{score}</span>
                 </div>
               ))}
           </div>
         </div>
 
-        <div className='results-box'>
+        <div className={styles.resultsBox}>
           <h3>Player Answers</h3>
-          <div className='results-answers'>
+          <div className={styles.resultsAnswers}>
             {Object.entries(playerAnswers).map(([player, answer]) => {
               const isCorrect =
                 answer.toLowerCase() === correctAnswer.toLowerCase();
               return (
                 <div
                   key={player}
-                  className={`results-answer-item ${
-                    isCorrect ? 'correct' : 'incorrect'
+                  className={`${styles.resultsAnswerItem} ${
+                    isCorrect ? styles.correct : styles.incorrect
                   }`}
                 >
-                  <span className='results-answer-player'>
+                  <span className={styles.resultsAnswerPlayer}>
                     {player} {player === currentPlayerId && '(you)'}
                   </span>
-                  <span className='results-answer-text'>
+                  <span className={styles.resultsAnswerText}>
                     {answer || '(no answer)'}
                   </span>
-                  <span className='results-answer-indicator'>
+                  <span className={styles.resultsAnswerIndicator}>
                     {isCorrect ? '✓' : '✗'}
                   </span>
                 </div>

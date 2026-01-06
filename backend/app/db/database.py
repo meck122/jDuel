@@ -34,14 +34,14 @@ def get_random_questions(count: int = 10) -> list[dict]:
     cursor = conn.cursor()
     
     cursor.execute("""
-        SELECT question, answer FROM questions
+        SELECT question, answer, category FROM questions
         WHERE value = ?
         ORDER BY RANDOM()
         LIMIT ?
     """, ("$200", count))
     
     questions = [
-        {"text": row[0], "answer": row[1]}
+        {"text": row[0], "answer": row[1], "category": row[2]}
         for row in cursor.fetchall()
     ]
     

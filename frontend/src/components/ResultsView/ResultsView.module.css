@@ -1,0 +1,126 @@
+.gameSection {
+  margin: 2rem 0;
+}
+
+.correctAnswerBanner {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin: 2rem 0;
+  box-shadow: 0 4px 6px rgba(76, 175, 80, 0.3);
+}
+
+.correctLabel {
+  font-size: 1.1em;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  margin-right: 0.75rem;
+}
+
+.correctValue {
+  font-size: 1.4em;
+  font-weight: bold;
+  color: white;
+}
+
+.resultsContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+@media (max-width: 768px) {
+  .resultsContainer {
+    grid-template-columns: 1fr;
+  }
+}
+
+.resultsBox {
+  background: #1a1a1a;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+}
+
+.resultsBox h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #646cff;
+  font-size: 1.3em;
+}
+
+.resultsScores,
+.resultsAnswers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.resultsScoreItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #2a2a2a;
+  border-radius: 4px;
+  border-left: 3px solid #646cff;
+}
+
+.resultsPlayerName {
+  font-weight: 600;
+  color: #646cff;
+}
+
+.resultsPlayerScore {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #ffa500;
+}
+
+.resultsAnswerItem {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #2a2a2a;
+  border-radius: 4px;
+  border-left: 3px solid transparent;
+}
+
+.resultsAnswerItem.correct {
+  border-left-color: #4caf50;
+  background: rgba(76, 175, 80, 0.05);
+}
+
+.resultsAnswerItem.incorrect {
+  border-left-color: #f44336;
+  background: rgba(244, 67, 54, 0.05);
+}
+
+.resultsAnswerPlayer {
+  font-weight: 600;
+  color: #888;
+  font-size: 0.95em;
+}
+
+.resultsAnswerText {
+  color: white;
+  font-weight: 500;
+}
+
+.resultsAnswerIndicator {
+  font-size: 1.3em;
+  font-weight: bold;
+  text-align: center;
+  width: 30px;
+}
+
+.resultsAnswerItem.correct .resultsAnswerIndicator {
+  color: #4caf50;
+}
+
+.resultsAnswerItem.incorrect .resultsAnswerIndicator {
+  color: #f44336;
+}

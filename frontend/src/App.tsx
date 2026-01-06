@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './App.css';
-import { JoinForm } from './components/JoinForm';
-import { GameRoom } from './components/GameRoom';
+import { JoinForm } from './components/JoinForm/JoinForm';
+import { GameRoom } from './components/GameRoom/GameRoom';
 import { useWebSocket } from './hooks/useWebSocket';
 
 function App() {

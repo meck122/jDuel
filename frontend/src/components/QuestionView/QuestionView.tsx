@@ -1,9 +1,11 @@
 import { FormEvent, useState, useEffect } from 'react';
-import { Timer } from './Timer';
+import { Timer } from '../Timer/Timer';
+import styles from './QuestionView.module.css';
 
 interface QuestionViewProps {
   questionIndex: number;
   questionText: string;
+  questionCategory: string;
   timeRemainingMs: number;
   onSubmitAnswer: (answer: string) => void;
 }
@@ -11,6 +13,7 @@ interface QuestionViewProps {
 export const QuestionView = ({
   questionIndex,
   questionText,
+  questionCategory,
   timeRemainingMs,
   onSubmitAnswer,
 }: QuestionViewProps) => {
@@ -32,9 +35,10 @@ export const QuestionView = ({
   };
 
   return (
-    <div className='game-section'>
+    <div className={styles.gameSection}>
       <h2>Question {questionIndex + 1} / 10</h2>
-      <p className='question'>{questionText}</p>
+      <p className={styles.questionCategory}>Category: {questionCategory}</p>
+      <p className={styles.question}>{questionText}</p>
       <Timer
         timeRemainingMs={timeRemainingMs}
         resetKey={questionIndex}
@@ -43,7 +47,7 @@ export const QuestionView = ({
       />
 
       {!hasSubmitted ? (
-        <form onSubmit={handleSubmit} className='answer-form'>
+        <form onSubmit={handleSubmit} className={styles.answerForm}>
           <input
             type='text'
             placeholder='Your answer'
@@ -54,9 +58,9 @@ export const QuestionView = ({
           <button type='submit'>Submit</button>
         </form>
       ) : (
-        <div className='answer-submitted'>
+        <div className={styles.answerSubmitted}>
           <p>✓ Answer submitted!</p>
-          <p className='waiting-text'>Waiting for next question...</p>
+          <p className={styles.waitingText}>Waiting for next question...</p>
         </div>
       )}
     </div>

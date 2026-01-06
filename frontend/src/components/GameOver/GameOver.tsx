@@ -1,4 +1,5 @@
-import { Timer } from './Timer';
+import { Timer } from '../Timer/Timer';
+import styles from './GameOver.module.css';
 
 interface GameOverProps {
   winner: string;
@@ -6,12 +7,16 @@ interface GameOverProps {
   timeRemainingMs?: number;
 }
 
-export const GameOver = ({ winner, players, timeRemainingMs }: GameOverProps) => {
+export const GameOver = ({
+  winner,
+  players,
+  timeRemainingMs,
+}: GameOverProps) => {
   return (
-    <div className='game-section'>
+    <div className={styles.gameSection}>
       <h2>Game Over!</h2>
-      <p className='winner'>Winner: {winner} 🎉</p>
-      
+      <p className={styles.winner}>Winner: {winner} 🎉</p>
+
       {timeRemainingMs !== undefined && (
         <Timer
           timeRemainingMs={timeRemainingMs}
@@ -20,13 +25,13 @@ export const GameOver = ({ winner, players, timeRemainingMs }: GameOverProps) =>
           label='Room closing in'
         />
       )}
-      
+
       <h3>Final Scores:</h3>
-      <div className='final-scores'>
+      <div className={styles.finalScores}>
         {Object.entries(players)
           .sort(([, a], [, b]) => b - a)
           .map(([player, score]) => (
-            <div key={player} className='final-score-item'>
+            <div key={player} className={styles.finalScoreItem}>
               <span>{player}</span>
               <span>{score}</span>
             </div>

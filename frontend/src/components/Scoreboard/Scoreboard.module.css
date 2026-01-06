@@ -1,0 +1,32 @@
+.scoreboard {
+  background: #1a1a1a;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+}
+
+.scoreboard h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #646cff;
+}
+
+.scoreItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+
+.playerName {
+  font-weight: bold;
+  color: #646cff;
+}
+
+.playerScore {
+  font-size: 1.2em;
+  color: #646cff;
+}

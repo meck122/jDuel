@@ -1,3 +1,5 @@
+import styles from './Scoreboard.module.css';
+
 interface ScoreboardProps {
   players: Record<string, number>;
   currentPlayerId: string;
@@ -5,14 +7,14 @@ interface ScoreboardProps {
 
 export const Scoreboard = ({ players, currentPlayerId }: ScoreboardProps) => {
   return (
-    <div className='scoreboard'>
+    <div className={styles.scoreboard}>
       <h2>Scores</h2>
       {Object.entries(players).map(([player, score]) => (
-        <div key={player} className='score-item'>
-          <span className='player-name'>
+        <div key={player} className={styles.scoreItem}>
+          <span className={styles.playerName}>
             {player} {player === currentPlayerId && '(you)'}
           </span>
-          <span className='player-score'>{score}</span>
+          <span className={styles.playerScore}>{score}</span>
         </div>
       ))}
     </div>

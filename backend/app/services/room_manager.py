@@ -131,7 +131,8 @@ class RoomManager:
             time_remaining = max(0, QUESTION_TIME_MS - int(elapsed))
             
             state["roomState"]["currentQuestion"] = {
-                "text": current_question["text"]
+                "text": current_question["text"],
+                "category": current_question["category"]
             }
             state["roomState"]["timeRemainingMs"] = time_remaining
         elif room.status == GameStatus.RESULTS:

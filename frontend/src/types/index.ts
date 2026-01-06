@@ -4,6 +4,7 @@ export interface RoomState {
   questionIndex: number;
   currentQuestion?: {
     text: string;
+    category: string;
   };
   timeRemainingMs?: number;
   winner?: string;

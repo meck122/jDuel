@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react';
+import styles from './JoinForm.module.css';
 
 interface JoinFormProps {
   onJoin: (roomId: string, playerId: string) => void;
@@ -16,9 +17,9 @@ export const JoinForm = ({ onJoin }: JoinFormProps) => {
   };
 
   return (
-    <div className='container'>
-      <h1>Trivia Duel</h1>
-      <form onSubmit={handleSubmit} className='join-form'>
+    <div className={styles.container}>
+      <h1>jDuel</h1>
+      <form onSubmit={handleSubmit} className={styles.joinForm}>
         <div>
           <input
             type='text'

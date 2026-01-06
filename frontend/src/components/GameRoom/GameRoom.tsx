@@ -1,9 +1,10 @@
-import { RoomState } from '../types';
-import { Scoreboard } from './Scoreboard';
-import { WaitingRoom } from './WaitingRoom';
-import { QuestionView } from './QuestionView';
-import { GameOver } from './GameOver';
-import { ResultsView } from './ResultsView';
+import { RoomState } from '../../types';
+import { Scoreboard } from '../Scoreboard/Scoreboard';
+import { WaitingRoom } from '../WaitingRoom/WaitingRoom';
+import { QuestionView } from '../QuestionView/QuestionView';
+import { GameOver } from '../GameOver/GameOver';
+import { ResultsView } from '../ResultsView/ResultsView';
+import styles from './GameRoom.module.css';
 
 interface GameRoomProps {
   roomId: string;
@@ -21,8 +22,8 @@ export const GameRoom = ({
   onSubmitAnswer,
 }: GameRoomProps) => {
   return (
-    <div className='container'>
-      <h1>Trivia Duel - Room: {roomId}</h1>
+    <div className={styles.container}>
+      <h1>jDuel - Room: {roomId}</h1>
 
       {roomState.status !== 'playing' && roomState.status !== 'results' && (
         <Scoreboard players={roomState.players} currentPlayerId={playerId} />
@@ -38,6 +39,7 @@ export const GameRoom = ({
           <QuestionView
             questionIndex={roomState.questionIndex}
             questionText={roomState.currentQuestion.text}
+            questionCategory={roomState.currentQuestion.category}
             timeRemainingMs={roomState.timeRemainingMs}
             onSubmitAnswer={onSubmitAnswer}
           />
@@ -56,8 +58,8 @@ export const GameRoom = ({
         )}
 
       {roomState.status === 'finished' && roomState.winner && (
-        <GameOver 
-          winner={roomState.winner} 
+        <GameOver
+          winner={roomState.winner}
           players={roomState.players}
           timeRemainingMs={roomState.timeRemainingMs}
         />

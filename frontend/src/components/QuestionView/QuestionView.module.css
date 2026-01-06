@@ -1,0 +1,58 @@
+.gameSection {
+  margin: 2rem 0;
+}
+
+.question {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #646cff;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #2a2a2a;
+  border-radius: 8px;
+  line-height: 1.4;
+}
+
+.questionCategory {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #ffa500;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #2a2a2a;
+  border-radius: 8px;
+  line-height: 1.4;
+}
+
+.answerForm {
+  display: flex;
+  gap: 1rem;
+  max-width: 500px;
+  margin: 1.5rem auto;
+}
+
+.answerForm input {
+  flex: 1;
+}
+
+.answerSubmitted {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(76, 175, 80, 0.1);
+  border: 2px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.answerSubmitted p:first-child {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #4caf50;
+  margin: 0 0 0.5rem 0;
+}
+
+.waitingText {
+  color: #888;
+  font-style: italic;
+  margin: 0;
+}
