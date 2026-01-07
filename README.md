@@ -4,7 +4,7 @@ On ubuntu
 
 ```bash
 # update all packages
-sudo apt get install
+sudo apt install
 
 # install stuff we need
 sudo apt install -y python3-pip nginx npm
@@ -27,6 +27,7 @@ source .venv/bin/activate
 uv pip install fastapi uvicorn websockets
 
 # start app
+export FRONTEND_URL='<public aws ip>' # for CORS
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
