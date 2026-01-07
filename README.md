@@ -1,4 +1,4 @@
-# How to deploy on ec2
+# How to deploy on ec2 :)
 
 On ubuntu
 
