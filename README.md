@@ -22,13 +22,11 @@ VITE_WS_URL='ws://<public aws ip>/ws' npm run build
 # backend stuff
 cd backend
 pip install uv
-uv venv --python 3.13.1
-source .venv/bin/activate
-uv pip install fastapi uvicorn websockets
+uv sync
 
-# start app
+# start app (no need to activate venv!)
 export FRONTEND_URL='<public aws ip>' # for CORS
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ## nginx stuff needs to be done before starting app
@@ -71,8 +69,8 @@ sudo service nginx restart
 # Terminal 1 - Frontend dev server
 cd frontend && npm run dev
 
-# Terminal 2 - Backend
-cd backend && uvicorn app.main:app --reload
+# Terminal 2 - Backend with auto-reload
+cd backend && uv run uvicorn app.main:app --reload
 ```
 
 Frontend runs on port 5173, backend on 8000.
@@ -84,7 +82,7 @@ Frontend runs on port 5173, backend on 8000.
 cd frontend && VITE_WS_URL='ws://<public aws ip>/ws' npm run build
 
 # Run backend (serves both)
-cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000
+cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 Everything served from port 8000. The if BUILD_DIR.exists() check means you can still run the backend alone during development without errors.

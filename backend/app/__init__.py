@@ -1,1 +1,0 @@
-"""jDuel backend application package."""
