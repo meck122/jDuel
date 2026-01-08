@@ -60,7 +60,9 @@ server {
 ```
 
 ```bash
-sudo service nginx restart
+sudo nginx -t
+
+sudo systemctl reload nginx
 ```
 
 ## Development (separate servers)
@@ -82,7 +84,50 @@ Frontend runs on port 5173, backend on 8000.
 cd frontend && VITE_WS_URL='ws://<public aws ip>/ws' npm run build
 
 # Run backend (serves both)
-cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+cd backend && uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 Everything served from port 8000. The if BUILD_DIR.exists() check means you can still run the backend alone during development without errors.
+
+
+## Setting up systemd in prod so the app stays a runnin'
+
+```bash
+# create service config
+sudo vim /etc/systemd/system/jduel-backend.service
+```
+
+Paste this:
+
+```
+[Unit]
+Description=jDuel FastAPI Backend
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/jDuel/backend
+ExecStart=/home/ubuntu/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target 
+```
+
+Start and enable the servuce
+
+```bash
+sudo systemctl daemon-reload # refresh
+sudo systemctl start jduel-backend # start
+sudo systemctl enable jduel-backend # forever start on boot
+```
+
+```bash
+# check status
+sudo systemctl status jduel-backend
+
+# view logs
+journalctl -u jduel-backend -f
+```
