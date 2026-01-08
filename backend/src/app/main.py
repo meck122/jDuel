@@ -35,7 +35,7 @@ async def ws_endpoint(websocket: WebSocket):
 
 
 # Serve static files (only mount if dist directory exists - for production)
-BUILD_DIR = Path(__file__).parent.parent.parent / "frontend" / "dist"
+BUILD_DIR = Path(__file__).parent.parent.parent.parent / "frontend" / "dist"
 if BUILD_DIR.exists():
     app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="static")
 
