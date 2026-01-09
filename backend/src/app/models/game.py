@@ -8,6 +8,7 @@ from enum import Enum
 
 class GameStatus(str, Enum):
     """Enum for game status."""
+
     WAITING = "waiting"
     PLAYING = "playing"
     RESULTS = "results"
@@ -16,7 +17,7 @@ class GameStatus(str, Enum):
 
 class Room:
     """Represents a game room with players and state."""
-    
+
     def __init__(self, room_id: str, questions: list):
         self.room_id = room_id
         self.players: Dict[str, WebSocket] = {}
@@ -29,7 +30,7 @@ class Room:
         self.player_answers: Dict[str, str] = {}  # Track player answers
         self.results_start_time: Optional[datetime] = None
         self.finish_time: Optional[datetime] = None
-    
+
     def to_dict(self) -> dict:
         """Convert room to dictionary for JSON serialization."""
         return {
@@ -42,5 +43,5 @@ class Room:
             "answered_players": self.answered_players,
             "player_answers": self.player_answers,
             "results_start_time": self.results_start_time,
-            "finish_time": self.finish_time
+            "finish_time": self.finish_time,
         }
