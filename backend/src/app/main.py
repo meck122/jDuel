@@ -6,9 +6,8 @@ from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.websocket import websocket_endpoint
+from app.api.game_orchestrator import orchestrate_game_session
 from app.config import CORS_ORIGINS, setup_logging
-from app.services.room_manager import RoomManager
 
 # Initialize logging
 setup_logging()
@@ -23,9 +22,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize room manager
-room_manager = RoomManager()
-
 
 @app.get("/health")
 def health():
@@ -36,7 +32,7 @@ def health():
 @app.websocket("/ws")
 async def ws_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time game communication."""
-    await websocket_endpoint(websocket, room_manager)
+    await orchestrate_game_session(websocket)
 
 
 # Serve static files (only mount if dist directory exists - for production)
