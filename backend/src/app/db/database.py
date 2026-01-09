@@ -3,6 +3,8 @@
 import sqlite3
 from pathlib import Path
 
+from app.models.question import Question
+
 # Database path is now relative to location of this file
 DATABASE_PATH = Path(__file__).parent / "questions.db"
 
@@ -29,8 +31,15 @@ def init_database():
     conn.close()
 
 
-def get_random_questions(count: int = 10) -> list[dict]:
-    """Get random questions from the database."""
+def get_random_questions(count: int = 10) -> list[Question]:
+    """Get random questions from the database.
+
+    Args:
+        count: Number of questions to retrieve
+
+    Returns:
+        List of typed Question objects
+    """
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
@@ -45,7 +54,7 @@ def get_random_questions(count: int = 10) -> list[dict]:
     )
 
     questions = [
-        {"text": row[0], "answer": row[1], "category": row[2]}
+        Question(text=row[0], answer=row[1], category=row[2])
         for row in cursor.fetchall()
     ]
 

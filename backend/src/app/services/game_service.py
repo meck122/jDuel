@@ -53,7 +53,7 @@ class GameService:
         room.player_answers[player_id] = answer
 
         current_question = room.questions[room.question_index]
-        correct = self.is_answer_correct(answer, current_question["answer"])
+        correct = self.is_answer_correct(answer, current_question.answer)
 
         if correct:
             # Calculate time on server side for security
@@ -68,7 +68,7 @@ class GameService:
 
         return correct
 
-    def can_advance_to_results(self, room: Room) -> bool:
+    def all_players_answered(self, room: Room) -> bool:
         """Check if all players have answered.
 
         Args:

@@ -8,7 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 class TimerService:
-    """Manages all game timers with proper lifecycle handling."""
+    """Manages all game timers with proper lifecycle handling.
+
+    Note: Each room can have one timer of each type (question, results, game_over)
+    active at a time. Multiple timer types allow for clear separation of concerns
+    and easier debugging.
+    """
 
     def __init__(self):
         self._question_timers: dict[str, asyncio.Task] = {}

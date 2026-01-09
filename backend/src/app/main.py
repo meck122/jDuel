@@ -6,7 +6,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.game_orchestrator import orchestrate_game_session
+from app.api import handle_websocket
 from app.config import CORS_ORIGINS, setup_logging
 
 # Initialize logging
@@ -32,7 +32,7 @@ def health():
 @app.websocket("/ws")
 async def ws_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time game communication."""
-    await orchestrate_game_session(websocket)
+    await handle_websocket(websocket)
 
 
 # Serve static files (only mount if dist directory exists - for production)
