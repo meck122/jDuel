@@ -1,5 +1,5 @@
 """Database access layer."""
 
-from app.db.database import init_database, get_random_questions
+from app.db.database import get_random_questions, init_database
 
-__all__ = ["init_database", "get_random_questions"]
+__all__ = ["get_random_questions", "init_database"]

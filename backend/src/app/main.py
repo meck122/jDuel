@@ -1,13 +1,17 @@
 """Main FastAPI application for the trivia game."""
 
+from pathlib import Path
+
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-
-from app.services.room_manager import RoomManager
-from app.api.websocket import websocket_endpoint
-from app.config import CORS_ORIGINS
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
+
+from app.api.websocket import websocket_endpoint
+from app.config import CORS_ORIGINS, setup_logging
+from app.services.room_manager import RoomManager
+
+# Initialize logging
+setup_logging()
 
 app = FastAPI(title="jDuel API", version="1.0.0")
 

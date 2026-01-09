@@ -1,10 +1,11 @@
 """Script to import Jeopardy questions from CSV into SQLite database."""
 
-import pandas as pd
-import sqlite3
 import re
+import sqlite3
 import sys
 from pathlib import Path
+
+import pandas as pd
 
 # Add parent directory to path to import from app package
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -23,15 +24,11 @@ def is_valid_answer(answer: str) -> bool:
         return False
 
     # Check if only contains letters and numbers (no apostrophes, hyphens, etc)
-    if not re.match(r"^[a-zA-Z0-9]+$", cleaned):
-        return False
-
-    return True
+    return bool(re.match(r"^[a-zA-Z0-9]+$", cleaned))
 
 
 def import_jeopardy_questions(csv_path: str):
     """Import Jeopardy questions from CSV, filtering for valid answers."""
-
     # Read CSV
     df = pd.read_csv(csv_path)
 

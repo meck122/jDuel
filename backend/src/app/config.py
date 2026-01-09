@@ -1,6 +1,8 @@
 """Configuration constants for the trivia game."""
 
+import logging
 import os
+import sys
 
 QUESTION_TIME_MS = 10000  # 10 seconds per question
 MAX_SCORE_PER_QUESTION = 1000
@@ -14,3 +16,14 @@ CORS_ORIGINS = (
     if "localhost" in FRONTEND_URL
     else [FRONTEND_URL]
 )
+
+
+def setup_logging():
+    """Configure application logging."""
+    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+
+    logging.basicConfig(
+        level=getattr(logging, log_level),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)],
+    )

@@ -1,9 +1,9 @@
 """Data models for the trivia game."""
 
-from typing import Dict, Set, Optional
 from datetime import datetime
-from fastapi import WebSocket
 from enum import Enum
+
+from fastapi import WebSocket
 
 
 class GameStatus(str, Enum):
@@ -20,16 +20,16 @@ class Room:
 
     def __init__(self, room_id: str, questions: list):
         self.room_id = room_id
-        self.players: Dict[str, WebSocket] = {}
-        self.scores: Dict[str, int] = {}
+        self.players: dict[str, WebSocket] = {}
+        self.scores: dict[str, int] = {}
         self.status = GameStatus.WAITING
         self.question_index = 0
         self.questions = questions.copy()
-        self.question_start_time: Optional[datetime] = None
-        self.answered_players: Set[str] = set()
-        self.player_answers: Dict[str, str] = {}  # Track player answers
-        self.results_start_time: Optional[datetime] = None
-        self.finish_time: Optional[datetime] = None
+        self.question_start_time: datetime | None = None
+        self.answered_players: set[str] = set()
+        self.player_answers: dict[str, str] = {}  # Track player answers
+        self.results_start_time: datetime | None = None
+        self.finish_time: datetime | None = None
 
     def to_dict(self) -> dict:
         """Convert room to dictionary for JSON serialization."""

@@ -1,24 +1,26 @@
 """Room manager for handling game rooms and state."""
 
-from typing import Dict
-from datetime import datetime
+import logging
+from datetime import UTC, datetime
+
 from fastapi import WebSocket
 
-from app.models import Room, GameStatus
-from app.db import get_random_questions
 from app.config import (
-    QUESTION_TIME_MS,
-    MAX_SCORE_PER_QUESTION,
-    RESULTS_TIME_MS,
     GAME_OVER_TIME_MS,
+    MAX_SCORE_PER_QUESTION,
+    QUESTION_TIME_MS,
+    RESULTS_TIME_MS,
 )
+from app.db import get_random_questions
+from app.models import GameStatus, Room
 
 
 class RoomManager:
     """Manages all game rooms and their state."""
 
     def __init__(self):
-        self.rooms: Dict[str, Room] = {}
+        self.rooms: dict[str, Room] = {}
+        self.logger = logging.getLogger(__name__)
 
     def create_or_get_room(self, room_id: str) -> Room:
         """Create a new room or return existing one."""
@@ -26,6 +28,7 @@ class RoomManager:
             # Get random questions from database
             questions = get_random_questions(count=10)
             self.rooms[room_id] = Room(room_id, questions)
+            self.logger.info(f"Room created: room_id={room_id}")
         return self.rooms[room_id]
 
     def add_player(self, room_id: str, player_id: str, websocket: WebSocket):
@@ -33,6 +36,9 @@ class RoomManager:
         room = self.create_or_get_room(room_id)
         room.players[player_id] = websocket
         room.scores[player_id] = 0
+        self.logger.info(
+            f"Player joined: room_id={room_id}, player_id={player_id}, total_players={len(room.players)}"
+        )
 
     def remove_player(self, room_id: str, player_id: str):
         """Remove a player from a room and clean up empty rooms."""
@@ -45,8 +51,13 @@ class RoomManager:
         if player_id in room.scores:
             del room.scores[player_id]
 
+        self.logger.info(
+            f"Player left: room_id={room_id}, player_id={player_id}, remaining_players={len(room.players)}"
+        )
+
         # Clean up empty rooms
         if not room.players:
+            self.logger.info(f"Room deleted (empty): room_id={room_id}")
             del self.rooms[room_id]
 
     def start_game(self, room_id: str):
@@ -54,7 +65,7 @@ class RoomManager:
         room = self.rooms[room_id]
         room.status = GameStatus.PLAYING
         room.question_index = 0
-        room.question_start_time = datetime.now()
+        room.question_start_time = datetime.now(UTC)
         room.answered_players = set()
         room.player_answers = {}
 
@@ -62,9 +73,13 @@ class RoomManager:
         for player_id in room.scores:
             room.scores[player_id] = 0
 
+        player_list = list(room.players.keys())
+        self.logger.info(
+            f"Game started: room_id={room_id}, players={player_list}, total_questions={len(room.questions)}"
+        )
+
     def submit_answer(self, room_id: str, player_id: str, answer: str) -> bool:
-        """
-        Submit an answer for a player.
+        """Submit an answer for a player.
         Returns True if answer is correct, False otherwise.
         """
         room = self.rooms[room_id]
@@ -81,7 +96,9 @@ class RoomManager:
 
         if correct:
             # Calculate time on server side for security
-            elapsed = (datetime.now() - room.question_start_time).total_seconds() * 1000
+            elapsed = (
+                datetime.now(UTC) - room.question_start_time
+            ).total_seconds() * 1000
             time_ms = int(elapsed)
 
             # Validate time is within bounds
@@ -96,11 +113,10 @@ class RoomManager:
         """Show results for the current question."""
         room = self.rooms[room_id]
         room.status = GameStatus.RESULTS
-        room.results_start_time = datetime.now()
+        room.results_start_time = datetime.now(UTC)
 
     def next_question(self, room_id: str) -> bool:
-        """
-        Move to the next question.
+        """Move to the next question.
         Returns True if there is a next question, False if game is finished.
         """
         room = self.rooms[room_id]
@@ -110,11 +126,17 @@ class RoomManager:
 
         if room.question_index >= len(room.questions):
             room.status = GameStatus.FINISHED
-            room.finish_time = datetime.now()
+            room.finish_time = datetime.now(UTC)
+            winner = (
+                max(room.scores.items(), key=lambda x: x[1])[0] if room.scores else None
+            )
+            self.logger.info(
+                f"Game finished: room_id={room_id}, winner={winner}, final_scores={dict(room.scores)}"
+            )
             return False
 
         room.status = GameStatus.PLAYING
-        room.question_start_time = datetime.now()
+        room.question_start_time = datetime.now(UTC)
         return True
 
     def get_room_state(self, room_id: str) -> dict:
@@ -132,7 +154,9 @@ class RoomManager:
 
         if room.status == GameStatus.PLAYING:
             current_question = room.questions[room.question_index]
-            elapsed = (datetime.now() - room.question_start_time).total_seconds() * 1000
+            elapsed = (
+                datetime.now(UTC) - room.question_start_time
+            ).total_seconds() * 1000
             time_remaining = max(0, QUESTION_TIME_MS - int(elapsed))
 
             state["roomState"]["currentQuestion"] = {
@@ -143,7 +167,9 @@ class RoomManager:
         elif room.status == GameStatus.RESULTS:
             # Show results from previous question
             previous_question = room.questions[room.question_index]
-            elapsed = (datetime.now() - room.results_start_time).total_seconds() * 1000
+            elapsed = (
+                datetime.now(UTC) - room.results_start_time
+            ).total_seconds() * 1000
             time_remaining = max(0, RESULTS_TIME_MS - int(elapsed))
 
             state["roomState"]["results"] = {
@@ -160,7 +186,7 @@ class RoomManager:
 
             # Include time until room closes if we have a finish time
             if hasattr(room, "finish_time") and room.finish_time:
-                elapsed = (datetime.now() - room.finish_time).total_seconds() * 1000
+                elapsed = (datetime.now(UTC) - room.finish_time).total_seconds() * 1000
                 time_remaining = max(0, GAME_OVER_TIME_MS - int(elapsed))
                 state["roomState"]["timeRemainingMs"] = time_remaining
 
@@ -178,7 +204,10 @@ class RoomManager:
         for player_id, ws in room.players.items():
             try:
                 await ws.send_json(state)
-            except Exception:
+            except Exception as e:
+                self.logger.warning(
+                    f"Failed to broadcast to player: room_id={room_id}, player_id={player_id}, error={e!s}"
+                )
                 disconnected.append(player_id)
 
         # Clean up disconnected players
