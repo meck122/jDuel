@@ -1,6 +1,6 @@
 export interface RoomState {
   players: Record<string, number>;
-  status: 'waiting' | 'playing' | 'results' | 'finished';
+  status: "waiting" | "playing" | "results" | "finished";
   questionIndex: number;
   currentQuestion?: {
     text: string;

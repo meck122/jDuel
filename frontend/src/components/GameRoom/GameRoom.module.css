@@ -1,6 +1,27 @@
 .container {
   max-width: 800px;
+  width: 100%;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.titleJ {
+  color: #ffbf00;
+}
+
+.titleDuel {
+  color: #dc143c;
+}
+
+.titleRoom {
+  color: #000000;
+  font-size: 0.8em;
 }

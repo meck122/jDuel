@@ -1,5 +1,5 @@
-import { Timer } from '../Timer/Timer';
-import styles from './ResultsView.module.css';
+import { Timer } from "../Timer/Timer";
+import styles from "./ResultsView.module.css";
 
 interface ResultsViewProps {
   players: Record<string, number>;
@@ -18,12 +18,14 @@ export const ResultsView = ({
 }: ResultsViewProps) => {
   return (
     <div className={styles.gameSection}>
-      <h2>Question Results</h2>
+      <h2 className={styles.resultsHeader}>
+        <span className={styles.resultsQuestion}>Question Results</span>
+      </h2>
       <Timer
         timeRemainingMs={timeRemainingMs}
         resetKey={correctAnswer}
-        className='results-timer'
-        label='Next question in'
+        className="results-timer"
+        label="Next question in"
       />
 
       <div className={styles.correctAnswerBanner}>
@@ -40,7 +42,7 @@ export const ResultsView = ({
               .map(([player, score]) => (
                 <div key={player} className={styles.resultsScoreItem}>
                   <span className={styles.resultsPlayerName}>
-                    {player} {player === currentPlayerId && '(you)'}
+                    {player} {player === currentPlayerId && "(you)"}
                   </span>
                   <span className={styles.resultsPlayerScore}>{score}</span>
                 </div>
@@ -62,13 +64,13 @@ export const ResultsView = ({
                   }`}
                 >
                   <span className={styles.resultsAnswerPlayer}>
-                    {player} {player === currentPlayerId && '(you)'}
+                    {player} {player === currentPlayerId && "(you)"}
                   </span>
                   <span className={styles.resultsAnswerText}>
-                    {answer || '(no answer)'}
+                    {answer || "(no answer)"}
                   </span>
                   <span className={styles.resultsAnswerIndicator}>
-                    {isCorrect ? '✓' : '✗'}
+                    {isCorrect ? "✓" : "✗"}
                   </span>
                 </div>
               );

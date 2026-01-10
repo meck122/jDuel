@@ -1,6 +1,6 @@
-import { FormEvent, useState, useEffect } from 'react';
-import { Timer } from '../Timer/Timer';
-import styles from './QuestionView.module.css';
+import { FormEvent, useState, useEffect } from "react";
+import { Timer } from "../Timer/Timer";
+import styles from "./QuestionView.module.css";
 
 interface QuestionViewProps {
   questionIndex: number;
@@ -17,13 +17,13 @@ export const QuestionView = ({
   timeRemainingMs,
   onSubmitAnswer,
 }: QuestionViewProps) => {
-  const [answer, setAnswer] = useState<string>('');
+  const [answer, setAnswer] = useState<string>("");
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
 
   // Reset submission state when question changes
   useEffect(() => {
     setHasSubmitted(false);
-    setAnswer('');
+    setAnswer("");
   }, [questionIndex]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -36,26 +36,31 @@ export const QuestionView = ({
 
   return (
     <div className={styles.gameSection}>
-      <h2>Question {questionIndex + 1} / 10</h2>
-      <p className={styles.questionCategory}>Category: {questionCategory}</p>
+      <h2 className={styles.questionHeader}>
+        Question {questionIndex + 1} / 10
+      </h2>
+      <p className={styles.questionCategory}>
+        <span className={styles.categoryLabel}>Category:</span>{" "}
+        {questionCategory}
+      </p>
       <p className={styles.question}>{questionText}</p>
       <Timer
         timeRemainingMs={timeRemainingMs}
         resetKey={questionIndex}
-        className='timer'
-        label='Time remaining'
+        className="timer"
+        label="Time remaining"
       />
 
       {!hasSubmitted ? (
         <form onSubmit={handleSubmit} className={styles.answerForm}>
           <input
-            type='text'
-            placeholder='Your answer'
+            type="text"
+            placeholder="Your answer"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             autoFocus
           />
-          <button type='submit'>Submit</button>
+          <button type="submit">Submit</button>
         </form>
       ) : (
         <div className={styles.answerSubmitted}>

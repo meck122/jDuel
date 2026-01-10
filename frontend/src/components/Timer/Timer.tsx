@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import styles from './Timer.module.css';
+import { useState, useEffect } from "react";
+import styles from "./Timer.module.css";
 
 interface TimerProps {
   timeRemainingMs: number;
@@ -12,7 +12,7 @@ export const Timer = ({
   timeRemainingMs,
   resetKey,
   className,
-  label = 'Time remaining',
+  label = "Time remaining",
 }: TimerProps) => {
   const [displayTime, setDisplayTime] = useState<number>(timeRemainingMs);
 
@@ -28,8 +28,8 @@ export const Timer = ({
 
   // Map className prop to appropriate module style
   const getTimerClass = () => {
-    if (className === 'results-timer') return styles.resultsTimer;
-    if (className === 'game-over-timer') return styles.gameOverTimer;
+    if (className === "results-timer") return styles.resultsTimer;
+    if (className === "game-over-timer") return styles.gameOverTimer;
     return styles.timer;
   };
 

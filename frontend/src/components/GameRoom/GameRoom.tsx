@@ -1,10 +1,10 @@
-import { RoomState } from '../../types';
-import { Scoreboard } from '../Scoreboard/Scoreboard';
-import { WaitingRoom } from '../WaitingRoom/WaitingRoom';
-import { QuestionView } from '../QuestionView/QuestionView';
-import { GameOver } from '../GameOver/GameOver';
-import { ResultsView } from '../ResultsView/ResultsView';
-import styles from './GameRoom.module.css';
+import { RoomState } from "../../types";
+import { Scoreboard } from "../Scoreboard/Scoreboard";
+import { LobbyRoom } from "../LobbyRoom/LobbyRoom";
+import { QuestionView } from "../QuestionView/QuestionView";
+import { GameOver } from "../GameOver/GameOver";
+import { ResultsView } from "../ResultsView/ResultsView";
+import styles from "./GameRoom.module.css";
 
 interface GameRoomProps {
   roomId: string;
@@ -23,17 +23,27 @@ export const GameRoom = ({
 }: GameRoomProps) => {
   return (
     <div className={styles.container}>
-      <h1>jDuel - Room: {roomId}</h1>
+      <h1 className={styles.title}>
+        <span className={styles.titleJ}>j</span>
+        <span className={styles.titleDuel}>Duel</span>
+        <span className={styles.titleRoom}> - Room: {roomId}</span>
+      </h1>
 
-      {roomState.status !== 'playing' && roomState.status !== 'results' && (
-        <Scoreboard players={roomState.players} currentPlayerId={playerId} />
+      {roomState.status === "waiting" && (
+        <LobbyRoom
+          players={roomState.players}
+          currentPlayerId={playerId}
+          onStartGame={onStartGame}
+        />
       )}
 
-      {roomState.status === 'waiting' && (
-        <WaitingRoom onStartGame={onStartGame} />
-      )}
+      {roomState.status !== "waiting" &&
+        roomState.status !== "playing" &&
+        roomState.status !== "results" && (
+          <Scoreboard players={roomState.players} currentPlayerId={playerId} />
+        )}
 
-      {roomState.status === 'playing' &&
+      {roomState.status === "playing" &&
         roomState.currentQuestion &&
         roomState.timeRemainingMs !== undefined && (
           <QuestionView
@@ -45,7 +55,7 @@ export const GameRoom = ({
           />
         )}
 
-      {roomState.status === 'results' &&
+      {roomState.status === "results" &&
         roomState.results &&
         roomState.timeRemainingMs !== undefined && (
           <ResultsView
@@ -57,7 +67,7 @@ export const GameRoom = ({
           />
         )}
 
-      {roomState.status === 'finished' && roomState.winner && (
+      {roomState.status === "finished" && roomState.winner && (
         <GameOver
           winner={roomState.winner}
           players={roomState.players}
