@@ -1,0 +1,30 @@
+.container {
+  min-height: calc(100vh - var(--navbar-height));
+  width: 100%;
+  padding: var(--spacing-xl);
+}
+
+.centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sm {
+  max-width: var(--container-sm);
+  margin: 0 auto;
+}
+
+.md {
+  max-width: var(--container-md);
+  margin: 0 auto;
+}
+
+.lg {
+  max-width: var(--container-lg);
+  margin: 0 auto;
+}
+
+.full {
+  max-width: 100%;
+}

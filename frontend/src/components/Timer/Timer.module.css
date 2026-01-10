@@ -1,20 +1,18 @@
 .timer {
-  font-size: 1.2em;
-  color: #ffa500;
-  margin: 1rem 0;
+  font-size: var(--font-size-xl);
+  color: var(--color-warning);
+  margin: var(--spacing-md) 0;
 }
 
 .resultsTimer {
-  font-size: 1.3em;
-  color: #ffa500;
-  margin: 1rem 0;
+  composes: timer;
   font-weight: 600;
 }
 
 .gameOverTimer {
-  font-size: 1.1em;
-  color: #ff6b6b;
-  margin: 1rem 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-error);
+  margin: var(--spacing-md) 0;
   font-weight: 600;
   font-style: italic;
 }

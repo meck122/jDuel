@@ -1,47 +1,39 @@
 .gameSection {
-  margin: 2rem 0;
+  composes: game-section from global;
 }
 
 .questionHeader {
-  color: #ffbf00;
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  composes: game-header from global;
 }
 
 .categoryLabel {
-  color: #646cff;
+  color: var(--color-accent-red);
   font-weight: 700;
 }
 
-.question {
-  font-size: 1.5em;
-  font-weight: bold;
-  color: #646cff;
-  margin: 2rem 0;
-  padding: 1.5rem;
-  background: #2a2a2a;
-  border-radius: 8px;
-  line-height: 1.4;
+.questionCategory {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-warning);
+  margin: var(--spacing-md) 0;
 }
 
-.questionCategory {
-  font-size: 1.5em;
+.question {
+  font-size: var(--font-size-2xl);
   font-weight: bold;
-  color: #ffa500;
-  margin: 2rem 0;
-  padding: 1.5rem;
-  background: #2a2a2a;
-  border-radius: 8px;
+  color: var(--color-text-primary);
+  margin: var(--spacing-xl) 0;
+  padding: var(--spacing-lg);
+  background: var(--color-bg-darker);
+  border-radius: var(--radius-md);
   line-height: 1.4;
 }
 
 .answerForm {
   display: flex;
-  gap: 1rem;
+  gap: var(--spacing-md);
   max-width: 500px;
-  margin: 1.5rem auto;
+  margin: var(--spacing-lg) auto;
 }
 
 .answerForm input {
@@ -49,19 +41,19 @@
 }
 
 .answerSubmitted {
-  margin-top: 2rem;
-  padding: 1.5rem;
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
   background: rgba(76, 175, 80, 0.1);
   border: 2px solid rgba(76, 175, 80, 0.3);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   text-align: center;
 }
 
 .answerSubmitted p:first-child {
-  font-size: 1.2rem;
+  font-size: var(--font-size-xl);
   font-weight: bold;
-  color: #4caf50;
-  margin: 0 0 0.5rem 0;
+  color: var(--color-success);
+  margin: 0 0 var(--spacing-sm) 0;
 }
 
 .waitingText {

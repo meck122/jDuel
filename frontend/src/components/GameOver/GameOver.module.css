@@ -1,51 +1,38 @@
 .gameSection {
-  margin: 2rem 0;
+  composes: game-section from global;
 }
 
 .gameOverHeader {
-  font-size: 3rem;
+  font-size: var(--font-size-5xl);
   font-weight: 700;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--spacing-lg);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  color: #dc143c;
+  color: var(--color-accent-red);
 }
 
 .winnerLabel {
-  color: #ffbf00;
+  color: var(--color-accent);
   font-weight: 700;
 }
 
 .winner {
-  font-size: 1.8em;
-  color: #ffa500;
-  margin: 1.5rem 0;
+  font-size: var(--font-size-3xl);
+  color: var(--color-warning);
+  margin: var(--spacing-lg) 0;
 }
 
 .finalScores {
   max-width: 400px;
-  margin: 1.5rem auto;
-}
-
-.finalScoresHeader {
-  font-size: 3rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  color: #ffa500;
+  margin: var(--spacing-lg) auto;
 }
 
 .finalScoreItem {
-  display: flex;
-  justify-content: space-between;
-  padding: 1rem;
-  margin: 0.5rem 0;
-  background: #2a2a2a;
-  color: #646cff;
-  border-radius: 4px;
-  font-size: 1.2em;
+  composes: score-item from global;
+  margin: var(--spacing-sm) 0;
+  font-size: var(--font-size-xl);
 }
 
 .finalScoreItem:first-child {
   background: #3a3a2a;
-  border: 2px solid #ffa500;
+  border: 2px solid var(--color-warning);
 }

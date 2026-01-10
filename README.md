@@ -121,6 +121,7 @@ Start and enable the servuce
 ```bash
 sudo systemctl daemon-reload # refresh
 sudo systemctl start jduel-backend # start
+sudo systemctl restart jduel-backend # or restart if already running
 sudo systemctl enable jduel-backend # forever start on boot
 ```
 

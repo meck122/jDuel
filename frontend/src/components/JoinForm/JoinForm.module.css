@@ -1,71 +1,46 @@
+.container {
+  width: 100%;
+  text-align: center;
+}
+
 .logo {
   font-size: 5rem;
   font-weight: 900;
-  margin-bottom: 3rem;
+  margin-bottom: var(--spacing-3xl);
   letter-spacing: 2px;
   text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .logoJ {
-  color: #ffbf00;
+  color: var(--color-accent);
 }
 
 .logoDuel {
-  color: #dc143c;
+  color: var(--color-accent-red);
 }
 
 .joinForm {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--spacing-lg);
   max-width: 400px;
   width: 100%;
   margin: 0 auto;
-  padding: 2.5rem;
-  background: linear-gradient(135deg, #0a2463 0%, #1e3a8a 100%);
-  border-radius: 12px;
-  border: 3px solid #ffbf00;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  padding: var(--spacing-2xl);
+  background: var(--gradient-primary);
+  border-radius: var(--radius-lg);
+  border: 3px solid var(--color-accent);
+  box-shadow: var(--shadow-lg);
 }
 
+/* Override global input styles for larger size */
 .joinForm input[type="text"] {
-  padding: 1rem;
-  font-size: 1.1rem;
-  border-radius: 8px;
-  border: 2px solid rgba(255, 191, 0, 0.5);
-  background: rgba(30, 58, 138, 0.6);
-  color: white;
-  transition: all 0.3s ease;
+  font-size: var(--font-size-lg);
 }
 
-.joinForm input[type="text"]:focus {
-  outline: none;
-  border-color: #ffbf00;
-  box-shadow: 0 0 12px rgba(255, 191, 0, 0.5);
-  background: rgba(30, 58, 138, 0.8);
-}
-
-.joinForm input[type="text"]::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
+/* Override global button styles for larger size */
 .joinForm button[type="submit"] {
-  background: linear-gradient(135deg, #ffbf00 0%, #ffd700 100%);
-  color: #0a2463;
-  border: none;
-  border-radius: 8px;
-  padding: 1rem 2rem;
-  font-size: 1.2rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-top: 0.5rem;
-}
-
-.joinForm button[type="submit"]:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 191, 0, 0.6);
-  background: linear-gradient(135deg, #ffd700 0%, #ffbf00 100%);
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-lg);
+  margin-top: var(--spacing-sm);
 }
