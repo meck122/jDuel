@@ -68,10 +68,20 @@ async def handle_websocket(ws: WebSocket) -> None:
             message = json.loads(data)
             msg_type = message.get("type")
 
-            if msg_type == "JOIN_ROOM":
-                current_room_id = message["roomId"]
-                current_player_id = message["playerId"]
-                await orchestrator.handle_join(current_room_id, current_player_id, ws)
+            if msg_type == "CREATE_ROOM":
+                requested_player_id: str = message["playerId"]
+                (
+                    current_room_id,
+                    current_player_id,
+                ) = await orchestrator.handle_create_room(requested_player_id, ws)
+
+            elif msg_type == "JOIN_ROOM":
+                room_id = message["roomId"]
+                player_id = message["playerId"]
+                success = await orchestrator.handle_join(room_id, player_id, ws)
+                if success:
+                    current_room_id = room_id
+                    current_player_id = player_id
 
             elif msg_type == "START_GAME":
                 if current_room_id:
@@ -84,5 +94,12 @@ async def handle_websocket(ws: WebSocket) -> None:
                     )
 
     except WebSocketDisconnect:
+        if current_room_id and current_player_id:
+            await orchestrator.handle_disconnect(current_room_id, current_player_id)
+    except Exception as e:
+        logger.error(
+            f"WebSocket error: room_id={current_room_id}, player_id={current_player_id}, error={e!s}",
+            exc_info=True,
+        )
         if current_room_id and current_player_id:
             await orchestrator.handle_disconnect(current_room_id, current_player_id)

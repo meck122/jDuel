@@ -24,6 +24,7 @@ class ResultsData:
 class RoomStateData:
     """Room state data sent to clients."""
 
+    roomId: str
     players: dict[str, int]
     status: Literal["waiting", "playing", "results", "finished"]
     questionIndex: int
@@ -45,6 +46,7 @@ class RoomStateMessage:
         result: dict = {"type": self.type}
         if self.roomState:
             state_dict: dict = {
+                "roomId": self.roomState.roomId,
                 "players": self.roomState.players,
                 "status": self.roomState.status,
                 "questionIndex": self.roomState.questionIndex,

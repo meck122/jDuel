@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { JoinForm } from "../components/JoinForm/JoinForm";
 import { GameRoom } from "../components/GameRoom/GameRoom";
 import { PageContainer } from "../components/layout/PageContainer";
@@ -9,10 +9,10 @@ export function GamePage() {
   const [roomId, setRoomId] = useState<string>("");
   const [playerId, setPlayerId] = useState<string>("");
   const [joined, setJoined] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
+  // WS hook receives ws messages and translates it to RoomState and allows the client to sendMessage through sendMessage callback
   const { roomState, sendMessage } = useWebSocket(
-    roomId,
-    playerId,
     joined,
     () => {
       // Room was closed, reset to join form
@@ -20,12 +20,35 @@ export function GamePage() {
       setRoomId("");
       setPlayerId("");
     },
+    (message: string) => {
+      // Error occurred (e.g., room doesn't exist)
+      setErrorMessage(message);
+      setJoined(false);
+      setRoomId("");
+    },
   );
 
-  const handleJoin = (newRoomId: string, newPlayerId: string) => {
-    setRoomId(newRoomId);
-    setPlayerId(newPlayerId);
+  // Update roomId when we receive room state
+  useEffect(() => {
+    if (roomState?.roomId && roomState.roomId !== roomId) {
+      setRoomId(roomState.roomId);
+    }
+  }, [roomState, roomId]);
+
+  const handleCreateRoom = (playerId: string) => {
+    setErrorMessage("");
     setJoined(true);
+    setPlayerId(playerId);
+
+    sendMessage({ type: "CREATE_ROOM", playerId: playerId });
+  };
+
+  const handleJoin = (roomId: string, newPlayerId: string) => {
+    setErrorMessage("");
+    setJoined(true);
+    setPlayerId(newPlayerId);
+    setRoomId(roomId);
+    sendMessage({ type: "JOIN_ROOM", roomId: roomId, playerId: newPlayerId });
   };
 
   const handleStartGame = () => {
@@ -42,7 +65,11 @@ export function GamePage() {
   if (!joined) {
     return (
       <PageContainer centered maxWidth="sm">
-        <JoinForm onJoin={handleJoin} />
+        <JoinForm
+          onJoin={handleJoin}
+          onCreateRoom={handleCreateRoom}
+          errorMessage={errorMessage}
+        />
       </PageContainer>
     );
   }

@@ -1,11 +1,13 @@
 """Room manager for handling game rooms and player connections."""
 
 import logging
+import random
+import string
 
 from fastapi import WebSocket
 
 from app.db import get_random_questions
-from app.models import Room
+from app.models import Question, Room
 
 
 class RoomManager:
@@ -15,13 +17,17 @@ class RoomManager:
         self.rooms: dict[str, Room] = {}
         self.logger = logging.getLogger(__name__)
 
-    def create_or_get_room(self, room_id: str) -> Room:
-        """Create a new room or return existing one."""
-        if room_id not in self.rooms:
-            # Get random questions from database
-            questions = get_random_questions(count=10)
-            self.rooms[room_id] = Room(room_id, questions)
-            self.logger.info(f"Room created: room_id={room_id}")
+    def create_room(self) -> Room:
+        """Create a room with a unique room code
+
+        Returns:
+            The roomId
+        """
+        room_id: str = self.generate_unique_room_code()
+        questions: list[Question] = get_random_questions(count=10)
+        self.rooms[room_id] = Room(room_id, questions)
+
+        self.logger.info(f"Room created: room_id={room_id}")
         return self.rooms[room_id]
 
     def get_room(self, room_id: str) -> Room | None:
@@ -53,7 +59,7 @@ class RoomManager:
             player_id: The player ID
             websocket: The player's WebSocket connection
         """
-        room = self.create_or_get_room(room_id)
+        room = self.get_room(room_id)
         room.players[player_id] = websocket
         room.scores[player_id] = 0
         self.logger.info(
@@ -84,6 +90,20 @@ class RoomManager:
         if not room.players:
             self.logger.info(f"Room deleted (empty): room_id={room_id}")
             del self.rooms[room_id]
+
+    def generate_unique_room_code(self) -> str:
+        """Generate a unique 4-character alphanumeric room code.
+
+        Returns:
+            A unique room code in uppercase
+        """
+        max_attempts = 100
+        for _ in range(max_attempts):
+            code = "".join(random.choices(string.ascii_uppercase + string.digits, k=4))
+            if code not in self.rooms:
+                return code
+
+        return "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
     async def broadcast_state(self, room_id: str, state: dict) -> None:
         """Broadcast room state to all connected players.

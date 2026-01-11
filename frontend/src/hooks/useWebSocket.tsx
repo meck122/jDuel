@@ -3,13 +3,13 @@ import { RoomState, WebSocketMessage } from "../types";
 import { WS_URL } from "../config";
 
 export const useWebSocket = (
-  roomId: string,
-  playerId: string,
   joined: boolean,
-  onRoomClosed?: () => void,
+  onRoomClosed: () => void,
+  onError: (message: string) => void,
 ) => {
   const [roomState, setRoomState] = useState<RoomState | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const pendingMessageRef = useRef<object | null>(null);
 
   useEffect(() => {
     if (!joined) return;
@@ -18,23 +18,24 @@ export const useWebSocket = (
     wsRef.current = ws;
 
     ws.onopen = () => {
-      ws.send(
-        JSON.stringify({
-          type: "JOIN_ROOM",
-          roomId: roomId,
-          playerId: playerId,
-        }),
-      );
+      if (pendingMessageRef.current) {
+        ws.send(JSON.stringify(pendingMessageRef.current));
+        pendingMessageRef.current = null;
+      }
     };
 
     ws.onmessage = (event) => {
       const data: WebSocketMessage = JSON.parse(event.data);
       if (data.type === "ROOM_STATE" && data.roomState) {
         setRoomState(data.roomState);
+      } else if (data.type === "ROOM_CREATED" && data.playerId) {
+        // TODO: set playerId
       } else if (data.type === "ROOM_CLOSED") {
         if (onRoomClosed) {
           onRoomClosed();
         }
+      } else if (data.type === "ERROR" && data.message) {
+        onError(data.message);
       }
     };
 
@@ -42,11 +43,13 @@ export const useWebSocket = (
       ws.close();
       wsRef.current = null;
     };
-  }, [joined, roomId, playerId]);
+  }, [joined]);
 
   const sendMessage = (message: object) => {
-    if (wsRef.current) {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
+    } else {
+      pendingMessageRef.current = message;
     }
   };
 

@@ -3,8 +3,10 @@
 import logging
 from typing import Protocol
 
+from fastapi import WebSocket
+
 from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, RESULTS_TIME_MS
-from app.models.state import RoomStateMessage
+from app.models import Room, RoomStateMessage
 from app.services.game_service import GameService
 from app.services.room_manager import RoomManager
 from app.services.state_builder import StateBuilder
@@ -43,16 +45,61 @@ class GameOrchestrator:
         self._state_builder = state_builder
         self._room_closer = room_closer
 
-    async def handle_join(self, room_id: str, player_id: str, websocket) -> None:
+    async def handle_create_room(
+        self, player_id: int, websocket: WebSocket
+    ) -> tuple[str, str]:
+        """Handle creating a room and player joining the new room
+
+        Args:
+            player_id: The player's identifier
+            websocket: The player's WebSocket connection
+
+        Returns:
+            tuple: (room_id, player_id) - The room ID and player's unique identifier
+        """
+        room: Room = self._room_manager.create_room()
+        await self.handle_join(room.room_id, player_id, websocket)
+        return room.room_id, player_id
+
+    async def handle_join(
+        self, room_id: str, player_id: str, websocket: WebSocket
+    ) -> bool:
         """Handle player joining a room.
 
         Args:
             room_id: The room to join
             player_id: The player's identifier
             websocket: The player's WebSocket connection
+
+        Returns:
+            bool: True if join was successful, False if room doesn't exist
         """
+        room = self._room_manager.get_room(room_id)
+        if not room:
+            logger.warning(
+                f"Player tried to join non-existent room: room_id={room_id}, player_id={player_id}"
+            )
+            await websocket.send_json(
+                {"type": "ERROR", "message": f"Room {room_id} does not exist"}
+            )
+            return False
+
+        # Check if player name already exists in the room
+        if player_id in room.players:
+            logger.warning(
+                f"Player tried to join with duplicate name: room_id={room_id}, player_id={player_id}"
+            )
+            await websocket.send_json(
+                {
+                    "type": "ERROR",
+                    "message": f"Name '{player_id}' is already taken in this room",
+                }
+            )
+            return False
+
         self._room_manager.add_player(room_id, player_id, websocket)
         await self._broadcast_room_state(room_id)
+        return True
 
     async def handle_start_game(self, room_id: str) -> None:
         """Handle game start request.

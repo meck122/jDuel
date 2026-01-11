@@ -1,4 +1,5 @@
 export interface RoomState {
+  roomId: string;
   players: Record<string, number>;
   status: "waiting" | "playing" | "results" | "finished";
   questionIndex: number;
@@ -17,4 +18,6 @@ export interface RoomState {
 export interface WebSocketMessage {
   type: string;
   roomState?: RoomState;
+  playerId?: string;
+  message?: string;
 }

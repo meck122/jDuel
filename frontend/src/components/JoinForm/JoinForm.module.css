@@ -44,3 +44,8 @@
   font-size: var(--font-size-lg);
   margin-top: var(--spacing-sm);
 }
+
+.joinForm button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

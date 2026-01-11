@@ -116,7 +116,7 @@ Environment=PYTHONUNBUFFERED=1
 WantedBy=multi-user.target 
 ```
 
-Start and enable the servuce
+Start and enable the service
 
 ```bash
 sudo systemctl daemon-reload # refresh

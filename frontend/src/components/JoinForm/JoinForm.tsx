@@ -2,16 +2,32 @@ import { FormEvent, useState } from "react";
 import styles from "./JoinForm.module.css";
 
 interface JoinFormProps {
+  onCreateRoom: (playerId: string) => void;
   onJoin: (roomId: string, playerId: string) => void;
+  errorMessage?: string;
 }
 
-export const JoinForm = ({ onJoin }: JoinFormProps) => {
+export const JoinForm = ({
+  onCreateRoom,
+  onJoin,
+  errorMessage,
+}: JoinFormProps) => {
   const [roomId, setRoomId] = useState<string>("");
   const [playerId, setPlayerId] = useState<string>("");
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleOnSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (roomId && playerId) {
+
+    const nativeEvent = e.nativeEvent as SubmitEvent;
+    const submitter = nativeEvent.submitter as HTMLButtonElement | null;
+
+    if (!submitter) return;
+
+    const action = submitter.name;
+
+    if (action === "create") {
+      onCreateRoom(playerId);
+    } else if (action == "join") {
       onJoin(roomId, playerId);
     }
   };
@@ -22,16 +38,14 @@ export const JoinForm = ({ onJoin }: JoinFormProps) => {
         <span className={styles.logoJ}>j</span>
         <span className={styles.logoDuel}>Duel</span>
       </h1>
-      <form onSubmit={handleSubmit} className={styles.joinForm}>
-        <div>
-          <input
-            type="text"
-            placeholder="Room ID"
-            value={roomId}
-            onChange={(e) => setRoomId(e.target.value)}
-            autoFocus
-          />
+      {errorMessage && (
+        <div
+          style={{ color: "red", marginBottom: "1rem", textAlign: "center" }}
+        >
+          {errorMessage}
         </div>
+      )}
+      <form onSubmit={handleOnSubmit} className={styles.joinForm}>
         <div>
           <input
             type="text"
@@ -40,7 +54,22 @@ export const JoinForm = ({ onJoin }: JoinFormProps) => {
             onChange={(e) => setPlayerId(e.target.value)}
           />
         </div>
-        <button type="submit">Join Room</button>
+        <button type="submit" name="create" disabled={!playerId || !!roomId}>
+          Create Room
+        </button>
+        <div>
+          <input
+            type="text"
+            style={{ textTransform: "uppercase" }}
+            placeholder="Room ID"
+            value={roomId}
+            onChange={(e) => setRoomId(e.target.value.toUpperCase())}
+            autoFocus
+          />
+        </div>
+        <button type="submit" name="join" disabled={!roomId || !playerId}>
+          Join Existing Room
+        </button>
       </form>
     </div>
   );

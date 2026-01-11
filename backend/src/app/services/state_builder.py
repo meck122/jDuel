@@ -25,6 +25,7 @@ class StateBuilder:
             Typed room state message for clients
         """
         state_data = RoomStateData(
+            roomId=room.room_id,
             players=room.scores,
             status=room.status.value,
             questionIndex=room.question_index,
