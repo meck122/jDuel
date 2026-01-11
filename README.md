@@ -231,7 +231,9 @@ Currently no automated tests. Manual testing workflow:
 
 ## License
 
-[Add appropriate license]
+This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 License.
+
+Commercial use is prohibited.
 
 ## Contributors
 
