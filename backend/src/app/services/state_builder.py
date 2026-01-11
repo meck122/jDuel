@@ -1,7 +1,5 @@
 """Builds room state for client communication."""
 
-from datetime import UTC, datetime
-
 from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, RESULTS_TIME_MS
 from app.models import GameStatus, Room
 from app.models.state import (
@@ -48,14 +46,15 @@ class StateBuilder:
             room: The game room
         """
         current_question = room.questions[room.question_index]
-        elapsed = (datetime.now(UTC) - room.question_start_time).total_seconds() * 1000
-        time_remaining = max(0, QUESTION_TIME_MS - int(elapsed))
 
         state.currentQuestion = CurrentQuestion(
             text=current_question.text,
             category=current_question.category,
         )
-        state.timeRemainingMs = time_remaining
+
+        # if a player disconnected this same time will be sent...
+        # BUT it's ok because the prop doesn't update and the component does not re-rerender
+        state.timeRemainingMs = QUESTION_TIME_MS
 
     def _add_results_state(self, state: RoomStateData, room: Room) -> None:
         """Add results state details.
@@ -65,14 +64,12 @@ class StateBuilder:
             room: The game room
         """
         current_question = room.questions[room.question_index]
-        elapsed = (datetime.now(UTC) - room.results_start_time).total_seconds() * 1000
-        time_remaining = max(0, RESULTS_TIME_MS - int(elapsed))
 
         state.results = ResultsData(
             correctAnswer=current_question.answer,
             playerAnswers=room.player_answers,
         )
-        state.timeRemainingMs = time_remaining
+        state.timeRemainingMs = RESULTS_TIME_MS
 
     def _add_finished_state(self, state: RoomStateData, room: Room) -> None:
         """Add finished state details.
@@ -86,6 +83,4 @@ class StateBuilder:
         )
 
         if room.finish_time:
-            elapsed = (datetime.now(UTC) - room.finish_time).total_seconds() * 1000
-            time_remaining = max(0, GAME_OVER_TIME_MS - int(elapsed))
-            state.timeRemainingMs = time_remaining
+            state.timeRemainingMs = GAME_OVER_TIME_MS

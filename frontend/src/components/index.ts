@@ -3,7 +3,6 @@ export { PageContainer } from "./layout/PageContainer";
 
 // Common
 export { Timer } from "./Timer/Timer";
-export { Scoreboard } from "./Scoreboard/Scoreboard";
 export { Navigation } from "./Navigation/Navigation";
 
 // Forms

@@ -134,10 +134,9 @@ class GameOrchestrator:
             return
 
         self._game_service.process_answer(room, player_id, answer)
-        await self._broadcast_room_state(room_id)
 
         if self._game_service.all_players_answered(room):
-            self._timer_service.cancel_all_room_timers(room_id)
+            self._timer_service.cancel_all_timers_for_room(room_id)
             await self._transition_to_results(room_id)
 
     async def handle_disconnect(self, room_id: str, player_id: str) -> None:
@@ -153,7 +152,7 @@ class GameOrchestrator:
         if self._room_manager.get_room(room_id):
             await self._broadcast_room_state(room_id)
         else:
-            self._timer_service.cancel_all_room_timers(room_id)
+            self._timer_service.cancel_all_timers_for_room(room_id)
 
     async def _broadcast_room_state(self, room_id: str) -> None:
         """Build and broadcast current room state."""

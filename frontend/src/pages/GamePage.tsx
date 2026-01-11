@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { JoinForm } from "../components/JoinForm/JoinForm";
 import { GameRoom } from "../components/GameRoom/GameRoom";
 import { PageContainer } from "../components/layout/PageContainer";
@@ -11,29 +11,32 @@ export function GamePage() {
   const [joined, setJoined] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
+  const handleOnRoomClosed = useCallback(() => {
+    setJoined(false);
+    setRoomId("");
+    setPlayerId("");
+  }, []);
+
+  const handleOnError = useCallback((message: string) => {
+    // Error occurred (e.g., room doesn't exist)
+    setErrorMessage(message);
+    setJoined(false);
+    setRoomId("");
+  }, []);
+
   // WS hook receives ws messages and translates it to RoomState and allows the client to sendMessage through sendMessage callback
   const { roomState, sendMessage } = useWebSocket(
     joined,
-    () => {
-      // Room was closed, reset to join form
-      setJoined(false);
-      setRoomId("");
-      setPlayerId("");
-    },
-    (message: string) => {
-      // Error occurred (e.g., room doesn't exist)
-      setErrorMessage(message);
-      setJoined(false);
-      setRoomId("");
-    },
+    handleOnRoomClosed,
+    handleOnError,
   );
 
-  // Update roomId when we receive room state
+  // Capture roomId from first ROOM_STATE message after client is joined (only needed for CREATE_ROOM flow)
   useEffect(() => {
-    if (roomState?.roomId && roomState.roomId !== roomId) {
+    if (joined && roomState?.roomId && !roomId) {
       setRoomId(roomState.roomId);
     }
-  }, [roomState, roomId]);
+  }, [joined, roomState?.roomId, roomId]);
 
   const handleCreateRoom = (playerId: string) => {
     setErrorMessage("");

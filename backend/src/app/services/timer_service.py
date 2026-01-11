@@ -71,7 +71,7 @@ class TimerService:
         task = asyncio.create_task(self._run_timer(duration_ms, callback))
         self._game_over_timers[room_id] = task
 
-    def cancel_all_room_timers(self, room_id: str) -> None:
+    def cancel_all_timers_for_room(self, room_id: str) -> None:
         """Cancel all timers for a room.
 
         Args:

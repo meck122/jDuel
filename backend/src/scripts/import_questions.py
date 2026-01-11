@@ -44,6 +44,10 @@ def import_jeopardy_questions(csv_path: str):
     # Connect and insert
     conn = sqlite3.connect(DATABASE_PATH)
 
+    # Clear the questions table first
+    conn.execute("DELETE FROM questions")
+    conn.commit()  # Commit the deletion
+
     # Insert filtered questions
     inserted = 0
     for _, row in df.iterrows():

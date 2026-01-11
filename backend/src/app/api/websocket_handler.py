@@ -32,7 +32,7 @@ class WebSocketRoomCloser(RoomCloser):
                     await ws.send_json({"type": "ROOM_CLOSED"})
 
             logger.info(f"Auto-closing room after game over timeout: room_id={room_id}")
-            self._timer_service.cancel_all_room_timers(room_id)
+            self._timer_service.cancel_all_timers_for_room(room_id)
             self._room_manager.delete_room(room_id)
 
 

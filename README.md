@@ -75,7 +75,6 @@ jDuel/
         │   ├── QuestionView/   # Question display
         │   ├── ResultsView/    # Answer results
         │   ├── GameOver/       # Final scores
-        │   ├── Scoreboard/     # Live player scores
         │   └── Timer/          # Countdown display
         ├── hooks/
         │   └── useWebSocket.tsx # WebSocket hook

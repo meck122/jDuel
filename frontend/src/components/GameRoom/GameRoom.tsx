@@ -1,5 +1,4 @@
 import { RoomState } from "../../types";
-import { Scoreboard } from "../Scoreboard/Scoreboard";
 import { LobbyRoom } from "../LobbyRoom/LobbyRoom";
 import { QuestionView } from "../QuestionView/QuestionView";
 import { GameOver } from "../GameOver/GameOver";
@@ -36,12 +35,6 @@ export const GameRoom = ({
           onStartGame={onStartGame}
         />
       )}
-
-      {roomState.status !== "waiting" &&
-        roomState.status !== "playing" &&
-        roomState.status !== "results" && (
-          <Scoreboard players={roomState.players} currentPlayerId={playerId} />
-        )}
 
       {roomState.status === "playing" &&
         roomState.currentQuestion &&
