@@ -1,134 +1,239 @@
-# How to deploy on ec2 :D
+# jDuel
 
-On ubuntu
+A real-time multiplayer Jeopardy-style trivia game built with React and FastAPI.
 
-```bash
-# update all packages
-sudo apt install
+## Project Overview
 
-# install stuff we need
-sudo apt install -y python3-pip nginx npm
+jDuel is a WebSocket-based multiplayer trivia game where players compete in real-time to answer questions. Players can create or join game rooms using short alphanumeric codes, answer timed trivia questions, and see live scoreboards.
 
-git clone <your-repo-url>
-cd jDuel
+### Key Features
 
-# frontend stuff
-cd frontend
-npm install
+- **Room-based Multiplayer**: Create or join rooms with 4-character uppercase room codes (e.g., "AB3D")
+- **Real-time Gameplay**: WebSocket-powered instant updates for all players
+- **Live Results**: See all player answers and correct answer after each question
+- **Automatic Cleanup**: Rooms auto-close 60 seconds after game completion
 
-# build with url for browser to connect to ec2 -> nginx -> fastAPI backend
-VITE_WS_URL='ws://<public aws ip>/ws' npm run build
+## Architecture
 
-# backend stuff
-cd backend
-pip install uv
-uv sync
+### Tech Stack
 
-# start app (no need to activate venv!)
-export FRONTEND_URL='<public aws ip>' # for CORS
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
+**Frontend:**
 
-## nginx stuff needs to be done before starting app
+- React 19 with TypeScript
+- Vite for build tooling
+- Material-UI (MUI) components
+- CSS Modules for styling
+- WebSocket for real-time communication
 
-```bash
-sudo vim /etc/nginx/sites-enabled/fastapi_nginx
-```
+**Backend:**
 
-need some of the fancy header stuff for websockets i think?
+- FastAPI (Python 3.13+)
+- WebSockets for bidirectional communication
+- In-memory data structures (no database)
+- Pandas for CSV question import
+- Uvicorn ASGI server
+
+### Project Structure
 
 ```
-server {
-    listen 80;
-    server_name <public aws ip>;
+jDuel/
+├── backend/
+│   ├── pyproject.toml          # Python dependencies (uv package manager)
+│   └── src/
+│       ├── app/
+│       │   ├── main.py         # FastAPI app entry point
+│       │   ├── config.py       # Configuration constants
+│       │   ├── api/
+│       │   │   └── websocket_handler.py  # WebSocket message handling
+│       │   ├── db/
+│       │   │   └── database.py # Question loading from CSV
+│       │   ├── models/
+│       │   │   ├── game.py     # Room, Player, Question models
+│       │   │   ├── question.py # Question data structures
+│       │   │   └── state.py    # Room state messages
+│       │   └── services/
+│       │       ├── game_service.py      # Game logic (answers, scoring)
+│       │       ├── orchestrator.py      # Game flow coordination
+│       │       ├── room_manager.py      # Room/player management
+│       │       ├── state_builder.py     # State message construction
+│       │       └── timer_service.py     # Question/results timers
+│       └── scripts/
+│           ├── import_questions.py      # CSV import utility
+│           └── jeopardy_questions.csv   # Question database
+│
+└── frontend/
+    ├── package.json            # npm dependencies
+    ├── vite.config.ts          # Vite configuration
+    └── src/
+        ├── main.tsx            # React entry point
+        ├── App.tsx             # Router setup
+        ├── config.tsx          # API/WebSocket URLs
+        ├── components/
+        │   ├── JoinForm/       # Room creation/join UI
+        │   ├── LobbyRoom/      # Waiting room UI
+        │   ├── GameRoom/       # Main game coordinator
+        │   ├── QuestionView/   # Question display
+        │   ├── ResultsView/    # Answer results
+        │   ├── GameOver/       # Final scores
+        │   ├── Scoreboard/     # Live player scores
+        │   └── Timer/          # Countdown display
+        ├── hooks/
+        │   └── useWebSocket.tsx # WebSocket hook
+        ├── pages/
+        │   └── GamePage.tsx    # Main game page
+        └── types/
+            └── index.ts        # TypeScript interfaces
+```
 
-    location / {
-        proxy_pass http://127.0.0.1:8000;
+## WebSocket Protocol
 
-        # WebSocket headers
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+The game uses WebSocket for all real-time communication.
 
-        # Standard headers
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+### Client → Server Messages
+
+```typescript
+// Create a new room
+{ type: "CREATE_ROOM", playerId: string }
+
+// Join an existing room
+{ type: "JOIN_ROOM", roomId: string, playerId: string }
+
+// Start the game (host only)
+{ type: "START_GAME" }
+
+// Submit an answer
+{ type: "ANSWER", answer: string }
+```
+
+### Server → Client Messages
+
+```typescript
+// Room state update (sent on every state change)
+{
+  type: "ROOM_STATE",
+  roomState: {
+    roomId: string,
+    players: { [playerId: string]: score },
+    status: "waiting" | "playing" | "results" | "finished",
+    questionIndex: number,
+    currentQuestion?: { text: string, category: string },
+    timeRemainingMs?: number,
+    winner?: string,
+    results?: {
+      correctAnswer: string,
+      playerAnswers: { [playerId: string]: answer }
     }
+  }
 }
+
+// Error occurred (e.g., room doesn't exist, name taken)
+{ type: "ERROR", message: string }
+
+// Room was closed by server
+{ type: "ROOM_CLOSED" }
 ```
+
+## Game Flow
+
+1. **Lobby Phase** (`status: "waiting"`):
+
+   - Players join the room
+   - Host can see all players and start the game
+   - Room code displayed for sharing
+
+2. **Question Phase** (`status: "playing"`):
+
+   - Question displayed with category
+   - 15-second countdown timer
+   - Players submit answers once
+   - Transitions to results when all answer or timer expires
+
+3. **Results Phase** (`status: "results"`):
+
+   - Shows correct answer
+   - Displays all player answers (color-coded: green=correct, red=incorrect)
+   - 10-second display
+   - Auto-advances to next question or game over
+
+4. **Game Over** (`status: "finished"`):
+   - Final scores displayed
+   - Winner announced
+   - Room auto-closes after 60 seconds
+
+## Key Implementation Details
+
+### Backend Services
+
+- **RoomManager**: Manages room lifecycle, player connections, generates room codes, handles duplicate name detection
+- **GameService**: Validates answers (case-insensitive), calculates scores (time-based bonus), tracks answered players
+- **GameOrchestrator**: Coordinates game flow between services, handles state transitions
+- **TimerService**: Manages question timers and results timers per room
+- **StateBuilder**: Constructs room state messages with current question, timer, results
+
+### Frontend Hooks
+
+- **useWebSocket**: Manages WebSocket connection, message handling, auto-reconnect prevention using refs to avoid dependency issues
+
+### State Management
+
+- Backend: In-memory dictionaries keyed by room ID (no persistence)
+- Frontend: React state with WebSocket-driven updates
+- WebSocket connection lifecycle tied to `joined` state only (not `roomId` or `playerId` to prevent reconnection loops)
+
+### Validation & Error Handling
+
+- **Non-existent room**: Error message, user stays on join form
+- **Duplicate player name**: Error message, user must choose different name
+- **Invalid room code format**: Input enforced to uppercase on frontend
+- **Disconnections**: Players auto-removed from rooms, empty rooms deleted
+
+### Timing Configuration
+
+Timing configuration constants in `backend/src/app/config.py`:
+
+## Environment Variables
+
+**Backend** (`backend/.env`):
 
 ```bash
-sudo nginx -t
-
-sudo systemctl reload nginx
+LOG_LEVEL=INFO                           # DEBUG, INFO, WARNING, ERROR
+FRONTEND_URL=http://localhost:5173       # For CORS configuration
 ```
 
-## Development (separate servers)
+**Frontend** (`frontend/src/config.tsx`):
 
-```bash
-# Terminal 1 - Frontend dev server
-cd frontend && npm run dev
-
-# Terminal 2 - Backend with auto-reload
-cd backend && uv run uvicorn app.main:app --reload
+```typescript
+export const WS_URL = 'ws://localhost:8000/ws';
 ```
 
-Frontend runs on port 5173, backend on 8000.
+## Testing
 
-## Production (single server)
+Currently no automated tests. Manual testing workflow:
 
-```bash
-# Build frontend once
-cd frontend && VITE_WS_URL='ws://<public aws ip>/ws' npm run build
+1. Open two browser windows (or incognito + normal)
+2. Create room in window 1, note room code
+3. Join with room code in window 2
+4. Start game from window 1
+5. Both players answer questions
+6. Verify scores, results, and game over screen
 
-# Run backend (serves both)
-cd backend && uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
+## Future Enhancements
 
-Everything served from port 8000. The if BUILD_DIR.exists() check means you can still run the backend alone during development without errors.
+- [ ] Persistent storage (database)
+- [ ] User authentication
+- [ ] Room settings (question count, time limits)
+- [ ] Question categories filter
+- [ ] Spectator mode
+- [ ] Leaderboards
+- [ ] Mobile-responsive design improvements
+- [ ] Sound effects and animations
+- [ ] Automated testing suite
 
+## License
 
-## Setting up systemd in prod so the app stays a runnin'
+[Add appropriate license]
 
-```bash
-# create service config
-sudo vim /etc/systemd/system/jduel-backend.service
-```
+## Contributors
 
-Paste this:
-
-```
-[Unit]
-Description=jDuel FastAPI Backend
-After=network.target
-
-[Service]
-User=ubuntu
-WorkingDirectory=/home/ubuntu/jDuel/backend
-ExecStart=/home/ubuntu/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
-Restart=always
-RestartSec=3
-Environment=PYTHONUNBUFFERED=1
-
-[Install]
-WantedBy=multi-user.target 
-```
-
-Start and enable the service
-
-```bash
-sudo systemctl daemon-reload # refresh
-sudo systemctl start jduel-backend # start
-sudo systemctl restart jduel-backend # or restart if already running
-sudo systemctl enable jduel-backend # forever start on boot
-```
-
-```bash
-# check status
-sudo systemctl status jduel-backend
-
-# view logs
-journalctl -u jduel-backend -f
-```
+Mark Liao
+Joshua Strutt
