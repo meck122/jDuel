@@ -16,6 +16,7 @@ This guide covers both local development and production deployment on AWS EC2.
 
 ```bash
 cd backend
+uv sync # first time only
 uv run uvicorn app.main:app --reload
 ```
 
@@ -27,6 +28,18 @@ Backend runs on `http://localhost:8000`
 cd frontend
 npm install  # first time only
 npm run dev
+```
+
+**Formatting commands**
+
+```bash
+# backend
+uv tool install ruff
+ruff format .
+ruff check .
+
+# frontend
+npm run format
 ```
 
 Frontend runs on `http://localhost:5173`
@@ -74,8 +87,8 @@ cd frontend
 npm install
 
 # Build frontend with production WebSocket URL
-# Replace <public-aws-ip> with your EC2 instance's public IP
-VITE_WS_URL='ws://<public-aws-ip>/ws' npm run build
+# Replace <public-domain-ip> with your public domain ip or EC2 instance's public IP
+VITE_WS_URL='ws://<public-domain-ip>/ws' npm run build
 
 # Install backend dependencies
 cd ../backend
@@ -92,12 +105,13 @@ Create nginx configuration:
 sudo vim /etc/nginx/sites-enabled/jduel
 ```
 
-Paste the following configuration (replace `<public-aws-ip>` with your EC2 public IP):
+Paste the following configuration (replace `<public-domain-ip>` with your 
+EC2 public IP or public domain IP if you have one):
 
 ```nginx
 server {
     listen 80;
-    server_name <public-aws-ip>;
+    server_name <public-domain-ip>;
 
     location / {
         proxy_pass http://127.0.0.1:8000;
@@ -150,7 +164,7 @@ ExecStart=/home/ubuntu/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 -
 Restart=always
 RestartSec=3
 Environment=PYTHONUNBUFFERED=1
-Environment=FRONTEND_URL=<public-aws-ip>
+Environment=FRONTEND_URL=<public-domain-ip>
 
 [Install]
 WantedBy=multi-user.target
@@ -183,7 +197,7 @@ sudo systemctl status jduel-backend
 journalctl -u jduel-backend -f
 ```
 
-Test the application by visiting `http://<public-aws-ip>` in your browser.
+Test the application by visiting `http://<public-domain-ip>` in your browser.
 
 ### Managing the Service
 
@@ -215,7 +229,7 @@ git pull
 
 # Rebuild frontend (if frontend changed)
 cd frontend
-VITE_WS_URL='ws://<public-aws-ip>/ws' npm run build
+VITE_WS_URL='ws://<public-domain-ip>/ws' npm run build
 
 # Restart backend service
 cd ..
