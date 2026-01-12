@@ -1,6 +1,6 @@
 # jDuel
 
-A real-time multiplayer Jeopardy-style trivia game built with React and FastAPI.
+A real-time multiplayer Josh-style trivia game built with React and FastAPI.
 
 ## Project Overview
 
