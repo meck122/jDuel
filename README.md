@@ -31,9 +31,13 @@ jDuel is a WebSocket-based multiplayer trivia game where players compete in real
 - WebSockets for bidirectional communication
 - In-memory data structures (no database)
 - Pandas for CSV question import
+- **Answer Verification**:
+  - spaCy for NLP and lemmatization
+  - sentence-transformers for semantic similarity
+  - RapidFuzz for fuzzy string matching
 - Uvicorn ASGI server
 
-### Project Structure
+### General Project Structure
 
 ```
 jDuel/
@@ -41,7 +45,7 @@ jDuel/
 │   ├── pyproject.toml          # Python dependencies (uv package manager)
 │   └── src/
 │       ├── app/
-│       │   ├── main.py         # FastAPI app entry point
+│       │   ├── main.py         # FastAPI app entry point + lifespan
 │       │   ├── config.py       # Configuration constants
 │       │   ├── api/
 │       │   │   └── websocket_handler.py  # WebSocket message handling
@@ -52,6 +56,8 @@ jDuel/
 │       │   │   ├── question.py # Question data structures
 │       │   │   └── state.py    # Room state messages
 │       │   └── services/
+│       │       ├── container.py         # Service container (DI)
+│       │       ├── answer_service.py    # AI-powered answer checking
 │       │       ├── game_service.py      # Game logic (answers, scoring)
 │       │       ├── orchestrator.py      # Game flow coordination
 │       │       ├── room_manager.py      # Room/player management
@@ -59,6 +65,7 @@ jDuel/
 │       │       └── timer_service.py     # Question/results timers
 │       └── scripts/
 │           ├── import_questions.py      # CSV import utility
+│           ├── answer_service_testing.py # Answer checking tests
 │           └── jeopardy_questions.csv   # Question database
 │
 └── frontend/
@@ -120,7 +127,8 @@ The game uses WebSocket for all real-time communication.
     winner?: string,
     results?: {
       correctAnswer: string,
-      playerAnswers: { [playerId: string]: answer }
+      playerAnswers: { [playerId: string]: answer },
+      playerResults: { [playerId: string]: number }  // Points gained in this question (0 if incorrect)
     }
   }
 }
@@ -150,7 +158,8 @@ The game uses WebSocket for all real-time communication.
 3. **Results Phase** (`status: "results"`):
 
    - Shows correct answer
-   - Displays all player answers (color-coded: green=correct, red=incorrect)
+   - Displays all player answers with backend-determined correctness (AI-powered verification)
+   - Color-coded indicators: green checkmark for correct, red X for incorrect
    - 10-second display
    - Auto-advances to next question or game over
 
@@ -163,11 +172,17 @@ The game uses WebSocket for all real-time communication.
 
 ### Backend Services
 
+- **ServiceContainer**: Dependency injection container that manages all service instances using the Composition Root pattern
+- **AnswerService**: AI-powered answer verification using:
+  - Fuzzy string matching (RapidFuzz) for typo tolerance
+  - Semantic similarity (sentence-transformers embeddings) for synonyms
+  - Lemmatization (spaCy) for grammatical variations
+  - Exact matching for numeric answers
 - **RoomManager**: Manages room lifecycle, player connections, generates room codes, handles duplicate name detection
-- **GameService**: Validates answers (case-insensitive), calculates scores (time-based bonus), tracks answered players
+- **GameService**: Validates answers through AnswerService, calculates scores (time-based bonus), tracks correct/incorrect answers
 - **GameOrchestrator**: Coordinates game flow between services, handles state transitions
 - **TimerService**: Manages question timers and results timers per room
-- **StateBuilder**: Constructs room state messages with current question, timer, results
+- **StateBuilder**: Constructs room state messages with current question, timer, results, and correct player tracking
 
 ### Frontend Hooks
 

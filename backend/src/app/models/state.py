@@ -18,6 +18,7 @@ class ResultsData:
 
     correctAnswer: str
     playerAnswers: dict[str, str]
+    playerResults: dict[str, int]  # Map of player ID to points gained (0 if incorrect)
 
 
 @dataclass
@@ -64,6 +65,7 @@ class RoomStateMessage:
                 state_dict["results"] = {
                     "correctAnswer": self.roomState.results.correctAnswer,
                     "playerAnswers": self.roomState.results.playerAnswers,
+                    "playerResults": self.roomState.results.playerResults,
                 }
             result["roomState"] = state_dict
         return result

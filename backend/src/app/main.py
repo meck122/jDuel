@@ -1,5 +1,7 @@
 """Main FastAPI application for the trivia game."""
 
+import contextlib
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI, WebSocket
@@ -11,8 +13,28 @@ from app.config import CORS_ORIGINS, setup_logging
 
 # Initialize logging
 setup_logging()
+logger = logging.getLogger(__name__)
 
-app = FastAPI(title="jDuel API", version="1.0.0")
+
+@contextlib.asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Manage application lifespan events."""
+    from app.services.answer_service import AnswerService
+    from app.services.container import init_services
+
+    # Initialize all services at startup
+    logger.info("Initializing AnswerService...")
+    answer_service = AnswerService()
+    logger.info("AnswerService ready!")
+
+    init_services(answer_service)
+
+    yield
+
+    logger.info("Application shutdown")
+
+
+app = FastAPI(title="jDuel API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

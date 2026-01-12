@@ -30,5 +30,11 @@ class Room:
         self.question_start_time: datetime | None = None
         self.answered_players: set[str] = set()
         self.player_answers: dict[str, str] = {}
+        self.correct_players: set[str] = (
+            set()
+        )  # Players who answered correctly (need to calculate correct score)
+        self.question_points: dict[
+            str, int
+        ] = {}  # Points gained by each player in current question
         self.results_start_time: datetime | None = None
         self.finish_time: datetime | None = None

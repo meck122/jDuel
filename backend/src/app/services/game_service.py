@@ -4,35 +4,32 @@ from datetime import UTC, datetime
 
 from app.config import MAX_SCORE_PER_QUESTION, QUESTION_TIME_MS
 from app.models import GameStatus, Room
+from app.services.answer_service import AnswerService
 
 
 class GameService:
     """Handles game rules, scoring, and progression logic."""
 
-    def calculate_score(self, time_taken_ms: int) -> int:
-        """Calculate score based on answer speed.
+    def __init__(self, answer_service: AnswerService):
+        """Initialize game service with answer verification.
 
         Args:
-            time_taken_ms: Time taken to answer in milliseconds
+            answer_service: Pre-initialized AnswerService instance
+        """
+        self.answer_service = answer_service
+
+    def _calculate_score(self, correct_answer_count: int) -> int:
+        """Calculate score based on answer order.
+
+        Args:
+            correct_answer_count: Number of correct answers already submitted (0-indexed)
 
         Returns:
-            Score value between 0 and MAX_SCORE_PER_QUESTION
+            Score value: 1000 for first, 500 for second, 250 for third, etc.
         """
-        if time_taken_ms > QUESTION_TIME_MS:
+        if correct_answer_count < 0:
             return 0
-        return max(0, MAX_SCORE_PER_QUESTION - (time_taken_ms // 10))
-
-    def is_answer_correct(self, user_answer: str, correct_answer: str) -> bool:
-        """Check if answer is correct (case-insensitive, trimmed).
-
-        Args:
-            user_answer: The player's submitted answer
-            correct_answer: The correct answer
-
-        Returns:
-            True if answers match, False otherwise
-        """
-        return user_answer.strip().lower() == correct_answer.strip().lower()
+        return MAX_SCORE_PER_QUESTION // (2**correct_answer_count)
 
     def process_answer(self, room: Room, player_id: str, answer: str) -> bool:
         """Process a player's answer and update their score.
@@ -53,18 +50,28 @@ class GameService:
         room.player_answers[player_id] = answer
 
         current_question = room.questions[room.question_index]
-        correct = self.is_answer_correct(answer, current_question.answer)
+        correct = self.answer_service.is_correct(answer, current_question.answer)
 
         if correct:
+            room.correct_players.add(player_id)
             # Calculate time on server side for security
             elapsed_ms = int(
                 (datetime.now(UTC) - room.question_start_time).total_seconds() * 1000
             )
 
             # Validate time is within bounds
-            if elapsed_ms <= QUESTION_TIME_MS:
-                score = self.calculate_score(elapsed_ms)
+            if (
+                elapsed_ms <= QUESTION_TIME_MS
+            ):  # TODO: is this if necessary? maybe security?
+                # Count how many correct answers were already submitted
+                correct_count = len(room.correct_players) - 1
+                score = self._calculate_score(correct_count)
                 room.scores[player_id] += score
+                room.question_points[player_id] = score
+            else:
+                room.question_points[player_id] = 0
+        else:
+            room.question_points[player_id] = 0
 
         return correct
 
@@ -91,6 +98,8 @@ class GameService:
         room.question_index += 1
         room.answered_players = set()
         room.player_answers = {}
+        room.correct_players = set()
+        room.question_points = {}
 
         if room.question_index >= len(room.questions):
             room.status = GameStatus.FINISHED

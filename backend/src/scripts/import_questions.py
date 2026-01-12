@@ -1,6 +1,5 @@
 """Script to import Jeopardy questions from CSV into SQLite database."""
 
-import re
 import sqlite3
 import sys
 from pathlib import Path
@@ -19,12 +18,16 @@ def is_valid_answer(answer: str) -> bool:
         return False
 
     # Remove whitespace and check if single word
-    cleaned = str(answer).strip()
-    if " " in cleaned:
-        return False
+    cleaned = str(answer).strip().lower()
+    return not cleaned.count(" ") >= 2
 
-    # Check if only contains letters and numbers (no apostrophes, hyphens, etc)
-    return bool(re.match(r"^[a-zA-Z0-9]+$", cleaned))
+    # # Check if only contains letters and numbers (no apostrophes, hyphens, etc)
+    # return bool(re.match(r"^[a-zA-Z0-9]+$", cleaned))
+
+
+def is_valid_question(question: str) -> bool:
+    cleaned = question.strip().lower()
+    return not cleaned.__contains__("http") and not cleaned.__contains__("/")
 
 
 def import_jeopardy_questions(csv_path: str):
@@ -36,6 +39,7 @@ def import_jeopardy_questions(csv_path: str):
     df.columns = df.columns.str.strip()
 
     # Filter for valid answers
+    df = df[df["Question"].apply(is_valid_question)]
     df = df[df["Answer"].apply(is_valid_answer)]
 
     # Initialize database

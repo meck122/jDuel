@@ -16,7 +16,7 @@ export function About() {
         minHeight: "calc(100vh - 64px)",
         width: "100%",
         background:
-          "linear-gradient(135deg, #0A2463 0%, #1E3A8A 50%, #0A2463 100%)",
+          "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f1419 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -29,9 +29,10 @@ export function About() {
           elevation={8}
           sx={{
             p: { xs: 3, sm: 5 },
-            backgroundColor: "rgba(30, 58, 138, 0.95)",
+            backgroundColor: "rgba(255, 255, 255, 0.98)",
             backdropFilter: "blur(10px)",
-            border: "2px solid #FFBF00",
+            border: "1px solid rgba(0, 0, 0, 0.1)",
+            borderRadius: 2,
           }}
         >
           <Typography
@@ -40,9 +41,8 @@ export function About() {
             align="center"
             gutterBottom
             sx={{
-              color: "#FFBF00",
+              color: "#1a1a2e",
               fontWeight: 700,
-              textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
               mb: 4,
             }}
           >
@@ -53,17 +53,30 @@ export function About() {
             <Typography
               variant="h4"
               gutterBottom
-              sx={{ color: "#FFBF00", fontWeight: 600 }}
+              sx={{ color: "#2c3e50", fontWeight: 600 }}
             >
               About the Game
             </Typography>
-            <Divider sx={{ bgcolor: "#FFBF00", mb: 2 }} />
+            <Divider sx={{ bgcolor: "#3498db", mb: 2, height: 2 }} />
             <Typography
               variant="body1"
-              sx={{ color: "white", fontSize: "1.1rem", lineHeight: 1.8 }}
+              sx={{ color: "#34495e", fontSize: "1.1rem", lineHeight: 1.8 }}
             >
-              jDuel is a real-time multiplayer trivia game inspired by Jeopardy!
-              Test your knowledge against friends in an exciting battle of wits.
+              jDuel (joshDuel) is a real-time multiplayer trivia game inspired
+              by my buddy{" "}
+              <span
+                style={{
+                  background:
+                    "linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  fontWeight: 600,
+                }}
+              >
+                Josh
+              </span>
+              . Test your knowledge against friends in an exciting battle of
+              wits.
             </Typography>
           </Box>
 
@@ -71,46 +84,52 @@ export function About() {
             <Typography
               variant="h4"
               gutterBottom
-              sx={{ color: "#FFBF00", fontWeight: 600 }}
+              sx={{ color: "#2c3e50", fontWeight: 600 }}
             >
               How to Play
             </Typography>
-            <Divider sx={{ bgcolor: "#FFBF00", mb: 2 }} />
-            <List sx={{ color: "white" }}>
+            <Divider sx={{ bgcolor: "#3498db", mb: 2, height: 2 }} />
+            <List sx={{ color: "#34495e" }}>
               <ListItem>
                 <ListItemText
                   primary="1. Create or join a room using a unique room code"
-                  primaryTypographyProps={{ fontSize: "1.1rem" }}
+                  slotProps={{
+                    primary: { sx: { fontSize: "1.1rem" } },
+                  }}
                 />
               </ListItem>
               <ListItem>
                 <ListItemText
                   primary="2. Wait for other players to join"
-                  primaryTypographyProps={{ fontSize: "1.1rem" }}
+                  slotProps={{
+                    primary: { sx: { fontSize: "1.1rem" } },
+                  }}
                 />
               </ListItem>
               <ListItem>
                 <ListItemText
                   primary="3. Any player can start the game when ready"
-                  primaryTypographyProps={{ fontSize: "1.1rem" }}
+                  slotProps={{
+                    primary: { sx: { fontSize: "1.1rem" } },
+                  }}
                 />
               </ListItem>
               <ListItem>
                 <ListItemText
                   primary="4. Answer questions as quickly and accurately as possible"
-                  primaryTypographyProps={{ fontSize: "1.1rem" }}
+                  slotProps={{
+                    primary: { sx: { fontSize: "1.1rem" } },
+                  }}
                 />
               </ListItem>
               <ListItem>
-                <ListItemText
-                  sx={{ "& .MuiListItemText-primary": { fontWeight: 600 } }}
-                >
+                <ListItemText>
                   <Typography component="span" sx={{ fontSize: "1.1rem" }}>
                     5. Points are awarded based on{" "}
                     <Box
                       component="span"
                       sx={{
-                        color: "#FF4444",
+                        color: "#e74c3c",
                         fontWeight: 700,
                         fontSize: "1.2rem",
                       }}
@@ -124,7 +143,9 @@ export function About() {
               <ListItem>
                 <ListItemText
                   primary="6. The player with the most points at the end wins!"
-                  primaryTypographyProps={{ fontSize: "1.1rem" }}
+                  slotProps={{
+                    primary: { sx: { fontSize: "1.1rem" } },
+                  }}
                 />
               </ListItem>
             </List>
@@ -134,14 +155,14 @@ export function About() {
             <Typography
               variant="h4"
               gutterBottom
-              sx={{ color: "#FFBF00", fontWeight: 600 }}
+              sx={{ color: "#2c3e50", fontWeight: 600 }}
             >
               About the Creator
             </Typography>
-            <Divider sx={{ bgcolor: "#FFBF00", mb: 2 }} />
+            <Divider sx={{ bgcolor: "#3498db", mb: 2, height: 2 }} />
             <Typography
               variant="body1"
-              sx={{ color: "white", fontSize: "1.1rem", lineHeight: 1.8 }}
+              sx={{ color: "#34495e", fontSize: "1.1rem", lineHeight: 1.8 }}
             >
               Created by Mark Liao. This project was built to bring the
               excitement of trivia games to the web, making it easy for friends
@@ -153,14 +174,14 @@ export function About() {
             <Typography
               variant="h4"
               gutterBottom
-              sx={{ color: "#FFBF00", fontWeight: 600 }}
+              sx={{ color: "#2c3e50", fontWeight: 600 }}
             >
               Technology
             </Typography>
-            <Divider sx={{ bgcolor: "#FFBF00", mb: 2 }} />
+            <Divider sx={{ bgcolor: "#3498db", mb: 2, height: 2 }} />
             <Typography
               variant="body1"
-              sx={{ color: "white", fontSize: "1.1rem", lineHeight: 1.8 }}
+              sx={{ color: "#34495e", fontSize: "1.1rem", lineHeight: 1.8 }}
             >
               jDuel is built with React, TypeScript, Material UI, and FastAPI,
               featuring real-time WebSocket communication for a seamless

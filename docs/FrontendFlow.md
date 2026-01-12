@@ -475,8 +475,13 @@ setHasAnswered(true);
       playerAnswers: {
         "Alice": "tokyo",
         "Bob": "Tokyo"
+      },
+      playerResults: {
+        "Alice": 500,
+        "Bob": 1000
       }
-    }
+    },
+    timeRemainingMs: 10000
   }
 }
 ```
@@ -612,8 +617,13 @@ setDisplayTime(0);
       playerAnswers: {
         "Alice": "Leonardo da Vinci"
         // Bob is missing from playerAnswers
+      },
+      playerResults: {
+        "Alice": 1000
+        // Bob is missing from playerResults (earned 0)
       }
-    }
+    },
+    timeRemainingMs: 10000
   }
 }
 ```

@@ -55,6 +55,7 @@ export const GameRoom = ({
             players={roomState.players}
             correctAnswer={roomState.results.correctAnswer}
             playerAnswers={roomState.results.playerAnswers}
+            playerResults={roomState.results.playerResults}
             timeRemainingMs={roomState.timeRemainingMs}
             currentPlayerId={playerId}
           />

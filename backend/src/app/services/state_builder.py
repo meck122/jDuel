@@ -68,6 +68,7 @@ class StateBuilder:
         state.results = ResultsData(
             correctAnswer=current_question.answer,
             playerAnswers=room.player_answers,
+            playerResults=room.question_points,
         )
         state.timeRemainingMs = RESULTS_TIME_MS
 

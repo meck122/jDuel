@@ -6,10 +6,8 @@ import logging
 
 from fastapi import WebSocket, WebSocketDisconnect
 
-from app.services.game_service import GameService
-from app.services.orchestrator import GameOrchestrator, RoomCloser
+from app.services.orchestrator import RoomCloser
 from app.services.room_manager import RoomManager
-from app.services.state_builder import StateBuilder
 from app.services.timer_service import TimerService
 
 logger = logging.getLogger(__name__)
@@ -36,18 +34,6 @@ class WebSocketRoomCloser(RoomCloser):
             self._room_manager.delete_room(room_id)
 
 
-# Service instances
-# Note: For production, consider using FastAPI's dependency injection
-room_manager = RoomManager()
-game_service = GameService()
-timer_service = TimerService()
-state_builder = StateBuilder()
-room_closer = WebSocketRoomCloser(room_manager, timer_service)
-orchestrator = GameOrchestrator(
-    room_manager, game_service, timer_service, state_builder, room_closer
-)
-
-
 async def handle_websocket(ws: WebSocket) -> None:
     """Handle WebSocket connection for game communication.
 
@@ -57,6 +43,11 @@ async def handle_websocket(ws: WebSocket) -> None:
     Args:
         ws: The WebSocket connection
     """
+    from app.services.container import get_container
+
+    container = get_container()
+    orchestrator = container.orchestrator
+
     await ws.accept()
 
     current_room_id: str | None = None

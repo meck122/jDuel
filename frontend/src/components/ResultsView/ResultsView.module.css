@@ -93,6 +93,21 @@
   font-weight: 500;
 }
 
+.resultsAnswerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.resultsPointsGained {
+  font-size: var(--font-size-md);
+  font-weight: bold;
+  color: var(--color-success);
+  background: rgba(76, 175, 80, 0.15);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
 .resultsAnswerIndicator {
   font-size: var(--font-size-xl);
   font-weight: bold;

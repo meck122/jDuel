@@ -17,6 +17,10 @@ This guide covers both local development and production deployment on AWS EC2.
 ```bash
 cd backend
 uv sync # first time only
+
+# Download spaCy language model (required for answer checking)
+uv run python -m spacy download en_core_web_sm
+
 uv run uvicorn app.main:app --reload
 ```
 
@@ -93,6 +97,9 @@ VITE_WS_URL='ws://<public-domain-ip>/ws' npm run build
 # Install backend dependencies
 cd ../backend
 uv sync
+
+# Download spaCy language model (required for answer checking)
+uv run python -m spacy download en_core_web_sm
 ```
 
 ### Step 3: Configure Nginx as Reverse Proxy

@@ -103,6 +103,7 @@ This document describes the complete WebSocket message protocol and illustrates 
 - `results` (object, optional): Only present in "results" status
   - `correctAnswer`: The correct answer
   - `playerAnswers`: Map of playerIds to their submitted answers
+  - `playerResults`: Map of playerIds to points gained (0 if incorrect)
 
 #### ERROR
 
@@ -279,8 +280,13 @@ Since both players have answered, the game immediately transitions to results (t
       "playerAnswers": {
         "Alice": "tokyo",
         "Bob": "Tokyo"
+      },
+      "playerResults": {
+        "Alice": 500,
+        "Bob": 1000
       }
-    }
+    },
+    "timeRemainingMs": 10000
   }
 }
 ```
@@ -362,8 +368,12 @@ After timer reaches 0:
       "correctAnswer": "Leonardo da Vinci",
       "playerAnswers": {
         "Alice": "Leonardo da Vinci"
+      },
+      "playerResults": {
+        "Alice": 1000
       }
-    }
+    },
+    "timeRemainingMs": 10000
   }
 }
 ```
@@ -441,8 +451,13 @@ _Results screen shows:_
       "playerAnswers": {
         "Alice": "2",
         "Bob": "1"
+      },
+      "playerResults": {
+        "Alice": 1000,
+        "Bob": 0
       }
-    }
+    },
+    "timeRemainingMs": 10000
   }
 }
 ```
@@ -475,7 +490,8 @@ After 10 seconds on results screen:
     },
     "status": "finished",
     "questionIndex": 3,
-    "winner": "Alice"
+    "winner": "Alice",
+    "timeRemainingMs": 60000
   }
 }
 ```

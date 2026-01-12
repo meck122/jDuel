@@ -51,6 +51,3 @@ htmlcov/
 
 # Node (for frontend)
 node_modules/
-
-# Data
-*.csv

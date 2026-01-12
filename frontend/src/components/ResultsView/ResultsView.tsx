@@ -5,6 +5,7 @@ interface ResultsViewProps {
   players: Record<string, number>;
   correctAnswer: string;
   playerAnswers: Record<string, string>;
+  playerResults: Record<string, number>;
   timeRemainingMs: number;
   currentPlayerId: string;
 }
@@ -13,6 +14,7 @@ export const ResultsView = ({
   players,
   correctAnswer,
   playerAnswers,
+  playerResults,
   timeRemainingMs,
   currentPlayerId,
 }: ResultsViewProps) => {
@@ -54,8 +56,8 @@ export const ResultsView = ({
           <h3>Player Answers</h3>
           <div className={styles.resultsAnswers}>
             {Object.entries(playerAnswers).map(([player, answer]) => {
-              const isCorrect =
-                answer.toLowerCase() === correctAnswer.toLowerCase();
+              const pointsGained = playerResults[player];
+              const isCorrect = pointsGained !== undefined && pointsGained > 0;
               return (
                 <div
                   key={player}
@@ -69,9 +71,16 @@ export const ResultsView = ({
                   <span className={styles.resultsAnswerText}>
                     {answer || "(no answer)"}
                   </span>
-                  <span className={styles.resultsAnswerIndicator}>
-                    {isCorrect ? "✓" : "✗"}
-                  </span>
+                  <div className={styles.resultsAnswerRight}>
+                    {pointsGained !== undefined && pointsGained > 0 && (
+                      <span className={styles.resultsPointsGained}>
+                        +{pointsGained}
+                      </span>
+                    )}
+                    <span className={styles.resultsAnswerIndicator}>
+                      {isCorrect ? "✓" : "✗"}
+                    </span>
+                  </div>
                 </div>
               );
             })}

@@ -12,6 +12,7 @@ export interface RoomState {
   results?: {
     correctAnswer: string;
     playerAnswers: Record<string, string>;
+    playerResults: Record<string, number>;
   };
 }
 
