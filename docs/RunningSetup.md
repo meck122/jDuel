@@ -99,6 +99,7 @@ cd ../backend
 uv sync
 
 # Download spaCy language model (required for answer checking)
+uv run python -m ensurepip --upgrade
 uv run python -m spacy download en_core_web_sm
 ```
 
