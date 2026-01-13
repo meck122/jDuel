@@ -1,50 +1,144 @@
-# jDuel WebSocket Event Protocol
+# jDuel Event Protocol
 
-This document describes the complete WebSocket message protocol and illustrates the event sequence for a typical game session.
+This document describes the complete HTTP API and WebSocket message protocol for the jDuel game.
 
-## Message Types Overview
+## Architecture Overview
 
-### Client → Server Messages
+jDuel uses a **hybrid HTTP/WebSocket architecture**:
 
-| Message Type  | Purpose                        | Required Fields      |
-| ------------- | ------------------------------ | -------------------- |
-| `CREATE_ROOM` | Create a new game room         | `playerId`           |
-| `JOIN_ROOM`   | Join an existing room          | `roomId`, `playerId` |
-| `START_GAME`  | Start the game                 | None                 |
-| `ANSWER`      | Submit an answer to a question | `answer`             |
+- **HTTP REST API**: Room creation, validation, and player registration
+- **WebSocket**: Real-time game communication after joining
 
-### Server → Client Messages
+This separation enables:
 
-| Message Type  | Purpose                            | Payload            |
-| ------------- | ---------------------------------- | ------------------ |
-| `ROOM_STATE`  | Broadcast current room state       | `roomState` object |
-| `ERROR`       | Error occurred (validation failed) | `message` string   |
-| `ROOM_CLOSED` | Room was closed by server          | None               |
+- Deep linking (shareable room URLs like `/room/AB3D`)
+- Proper HTTP error handling (404, 409 status codes)
+- Cleaner state management
 
-## Message Schema Details
+---
 
-### Client Messages
+## HTTP REST API
 
-#### CREATE_ROOM
+### Endpoints
+
+| Method | Endpoint                   | Purpose           | Request Body      | Response             |
+| ------ | -------------------------- | ----------------- | ----------------- | -------------------- |
+| `POST` | `/api/rooms`               | Create a new room | None              | `CreateRoomResponse` |
+| `GET`  | `/api/rooms/{roomId}`      | Get room info     | None              | `RoomInfoResponse`   |
+| `POST` | `/api/rooms/{roomId}/join` | Register player   | `JoinRoomRequest` | `JoinRoomResponse`   |
+
+### Request/Response Schemas
+
+#### POST /api/rooms
+
+Creates a new game room.
+
+**Response (200 OK):**
 
 ```json
 {
-  "type": "CREATE_ROOM",
+  "roomId": "AB3D",
+  "status": "waiting",
+  "playerCount": 0
+}
+```
+
+#### GET /api/rooms/{roomId}
+
+Gets information about a room. Used to validate room exists before connecting.
+
+**Response (200 OK):**
+
+```json
+{
+  "roomId": "AB3D",
+  "status": "waiting",
+  "playerCount": 2,
+  "players": ["Alice", "Bob"]
+}
+```
+
+**Response (404 Not Found):**
+
+```json
+{
+  "error": "Room not found",
+  "code": "ROOM_NOT_FOUND"
+}
+```
+
+#### POST /api/rooms/{roomId}/join
+
+Pre-registers a player to join a room. Must be called before WebSocket connection.
+
+**Request:**
+
+```json
+{
   "playerId": "Alice"
 }
 ```
 
-#### JOIN_ROOM
+**Response (200 OK):**
 
 ```json
 {
-  "type": "JOIN_ROOM",
   "roomId": "AB3D",
-  "playerId": "Bob"
+  "playerId": "Alice",
+  "status": "waiting"
 }
 ```
 
-#### START_GAME
+**Error Responses:**
+
+- **404**: `{ "error": "Room not found", "code": "ROOM_NOT_FOUND" }`
+- **409**: `{ "error": "Name 'Alice' is already taken", "code": "NAME_TAKEN" }`
+- **409**: `{ "error": "Game has already started", "code": "GAME_STARTED" }`
+
+---
+
+## WebSocket Protocol
+
+### Connection
+
+Connect to WebSocket with room and player info as query parameters:
+
+```
+ws://localhost:8000/ws?roomId=AB3D&playerId=Alice
+```
+
+**Prerequisites:**
+
+- Room must exist (created via `POST /api/rooms`)
+- Player must be registered (via `POST /api/rooms/{roomId}/join`)
+
+**Connection Errors:**
+
+- Code `4004`: Room not found
+- Code `4003`: Player not registered
+
+### Message Types Overview
+
+#### Client → Server Messages
+
+| Message Type | Purpose          | Required Fields |
+| ------------ | ---------------- | --------------- |
+| `START_GAME` | Start the game   | None            |
+| `ANSWER`     | Submit an answer | `answer`        |
+
+#### Server → Client Messages
+
+| Message Type  | Purpose                      | Payload            |
+| ------------- | ---------------------------- | ------------------ |
+| `ROOM_STATE`  | Broadcast current room state | `roomState` object |
+| `ERROR`       | Error occurred               | `message` string   |
+| `ROOM_CLOSED` | Room was closed by server    | None               |
+
+### Message Schema Details
+
+#### Client Messages
+
+##### START_GAME
 
 ```json
 {
@@ -52,7 +146,7 @@ This document describes the complete WebSocket message protocol and illustrates 
 }
 ```
 
-#### ANSWER
+##### ANSWER
 
 ```json
 {
@@ -61,9 +155,9 @@ This document describes the complete WebSocket message protocol and illustrates 
 }
 ```
 
-### Server Messages
+#### Server Messages
 
-#### ROOM_STATE
+##### ROOM_STATE
 
 ```json
 {
@@ -105,7 +199,7 @@ This document describes the complete WebSocket message protocol and illustrates 
   - `playerAnswers`: Map of playerIds to their submitted answers
   - `playerResults`: Map of playerIds to points gained (0 if incorrect)
 
-#### ERROR
+##### ERROR
 
 ```json
 {
@@ -114,7 +208,7 @@ This document describes the complete WebSocket message protocol and illustrates 
 }
 ```
 
-#### ROOM_CLOSED
+##### ROOM_CLOSED
 
 ```json
 {
@@ -126,36 +220,147 @@ This document describes the complete WebSocket message protocol and illustrates 
 
 ## Complete Game Sequence Example
 
-This example shows all WebSocket events for a complete game between two players: **Alice** (creator) and **Bob** (joiner).
+This example shows all HTTP and WebSocket events for a complete game between **Alice** (creator) and **Bob** (joiner via deep link).
 
-### Phase 1: Room Creation and Joining
+### Phase 1: Room Creation (Alice)
 
-#### Event 1: Alice creates a room
+#### Step 1: Alice creates a room
 
-**Client (Alice) → Server:**
+**HTTP Request:**
+
+```
+POST /api/rooms
+```
+
+**HTTP Response (200):**
 
 ```json
 {
-  "type": "CREATE_ROOM",
-  "playerId": "Alice"
+  "roomId": "AB3D",
+  "status": "waiting",
+  "playerCount": 0
 }
 ```
 
-**Server → Client (Alice):**
+#### Step 2: Alice registers as player
+
+**HTTP Request:**
+
+```
+POST /api/rooms/AB3D/join
+Content-Type: application/json
+
+{ "playerId": "Alice" }
+```
+
+**HTTP Response (200):**
+
+```json
+{
+  "roomId": "AB3D",
+  "playerId": "Alice",
+  "status": "waiting"
+}
+```
+
+#### Step 3: Alice connects WebSocket
+
+**WebSocket Connect:**
+
+```
+ws://localhost:8000/ws?roomId=AB3D&playerId=Alice
+```
+
+**Server → Alice (ROOM_STATE):**
 
 ```json
 {
   "type": "ROOM_STATE",
   "roomState": {
     "roomId": "AB3D",
-    "players": {
-      "Alice": 0
-    },
+    "players": { "Alice": 0 },
     "status": "waiting",
     "questionIndex": 0
   }
 }
 ```
+
+### Phase 2: Bob Joins via Deep Link
+
+Alice shares the link: `https://jduel.com/room/AB3D`
+
+#### Step 1: Bob opens deep link, enters name
+
+Frontend fetches room info:
+
+```
+GET /api/rooms/AB3D
+```
+
+**HTTP Response (200):**
+
+```json
+{
+  "roomId": "AB3D",
+  "status": "waiting",
+  "playerCount": 1,
+  "players": ["Alice"]
+}
+```
+
+#### Step 2: Bob registers as player
+
+**HTTP Request:**
+
+```
+POST /api/rooms/AB3D/join
+Content-Type: application/json
+
+{ "playerId": "Bob" }
+```
+
+**HTTP Response (200):**
+
+```json
+{
+  "roomId": "AB3D",
+  "playerId": "Bob",
+  "status": "waiting"
+}
+```
+
+#### Step 3: Bob connects WebSocket
+
+**WebSocket Connect:**
+
+```
+ws://localhost:8000/ws?roomId=AB3D&playerId=Bob
+```
+
+**Server → All Players (ROOM_STATE):**
+
+```json
+{
+  "type": "ROOM_STATE",
+  "roomState": {
+    "roomId": "AB3D",
+    "players": { "Alice": 0, "Bob": 0 },
+    "status": "waiting",
+    "questionIndex": 0
+  }
+}
+```
+
+    "players": {
+      "Alice": 0
+    },
+    "status": "waiting",
+    "questionIndex": 0
+
+}
+}
+
+````
 
 _Alice sees the lobby with room code "AB3D" and is waiting for other players._
 
@@ -171,7 +376,7 @@ _Alice sees the lobby with room code "AB3D" and is waiting for other players._
   "roomId": "AB3D",
   "playerId": "Bob"
 }
-```
+````
 
 **Server → All Clients (Alice + Bob):**
 

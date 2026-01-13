@@ -11,7 +11,14 @@ from app.models import Question, Room
 
 
 class RoomManager:
-    """Manages game rooms and player connections."""
+    """Manages game rooms and player connections.
+
+    Supports a two-phase player registration:
+    1. HTTP phase: register_player() reserves the player name
+    2. WebSocket phase: attach_connection() binds the WebSocket
+
+    This decoupling enables deep linking and proper HTTP error handling.
+    """
 
     def __init__(self):
         self.rooms: dict[str, Room] = {}
@@ -51,45 +58,73 @@ class RoomManager:
             del self.rooms[room_id]
             self.logger.info(f"Room deleted: room_id={room_id}")
 
-    def add_player(self, room_id: str, player_id: str, websocket: WebSocket) -> None:
-        """Add a player to a room.
+    def register_player(self, room_id: str, player_id: str) -> bool:
+        """Pre-register a player in a room (HTTP phase).
+
+        This reserves the player name without requiring a WebSocket connection.
+        Called from HTTP endpoint before WebSocket connection is established.
+
+        Args:
+            room_id: The room ID
+            player_id: The player ID to register
+
+        Returns:
+            bool: True if registration successful, False if name taken
+        """
+        room = self.get_room(room_id)
+        if not room:
+            return False
+
+        if player_id in room.players:
+            return False
+
+        room.players.add(player_id)
+        room.scores[player_id] = 0
+        self.logger.info(
+            f"Player registered: room_id={room_id}, player_id={player_id}, "
+            f"total_players={len(room.players)}"
+        )
+        return True
+
+    def attach_connection(
+        self, room_id: str, player_id: str, websocket: WebSocket
+    ) -> bool:
+        """Attach a WebSocket connection to a registered player (WebSocket phase).
+
+        Args:
+            room_id: The room ID
+            player_id: The player ID (must be pre-registered)
+            websocket: The player's WebSocket connection
+
+        Returns:
+            bool: True if attachment successful, False if player not registered
+        """
+        room = self.get_room(room_id)
+        if not room or player_id not in room.players:
+            return False
+
+        room.connections[player_id] = websocket
+        self.logger.info(
+            f"WebSocket attached: room_id={room_id}, player_id={player_id}, "
+            f"connected_players={len(room.connections)}"
+        )
+        return True
+
+    def detach_connection(self, room_id: str, player_id: str) -> None:
+        """Detach a WebSocket connection from a player.
+
+        The player remains registered but without an active connection.
 
         Args:
             room_id: The room ID
             player_id: The player ID
-            websocket: The player's WebSocket connection
         """
         room = self.get_room(room_id)
-        room.players[player_id] = websocket
-        room.scores[player_id] = 0
-        self.logger.info(
-            f"Player joined: room_id={room_id}, player_id={player_id}, total_players={len(room.players)}"
-        )
-
-    def remove_player(self, room_id: str, player_id: str) -> None:
-        """Remove a player from a room and clean up empty rooms.
-
-        Args:
-            room_id: The room ID
-            player_id: The player ID to remove
-        """
-        if room_id not in self.rooms:
-            return
-
-        room = self.rooms[room_id]
-        if player_id in room.players:
-            del room.players[player_id]
-        if player_id in room.scores:
-            del room.scores[player_id]
-
-        self.logger.info(
-            f"Player left: room_id={room_id}, player_id={player_id}, remaining_players={len(room.players)}"
-        )
-
-        # Clean up empty rooms
-        if not room.players:
-            self.logger.info(f"Room deleted (empty): room_id={room_id}")
-            del self.rooms[room_id]
+        if room and player_id in room.connections:
+            del room.connections[player_id]
+            self.logger.info(
+                f"WebSocket detached: room_id={room_id}, player_id={player_id}"
+            )
 
     def generate_unique_room_code(self) -> str:
         """Generate a unique 4-character alphanumeric room code.
@@ -117,16 +152,10 @@ class RoomManager:
 
         room = self.rooms[room_id]
 
-        disconnected = []
-        for player_id, ws in room.players.items():
+        for player_id, ws in room.connections.items():
             try:
                 await ws.send_json(state)
             except Exception as e:
                 self.logger.warning(
                     f"Failed to broadcast to player: room_id={room_id}, player_id={player_id}, error={e!s}"
                 )
-                disconnected.append(player_id)
-
-        # Clean up disconnected players
-        for player_id in disconnected:
-            self.remove_player(room_id, player_id)

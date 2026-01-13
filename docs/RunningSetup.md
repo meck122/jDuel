@@ -18,10 +18,17 @@ This guide covers both local development and production deployment on AWS EC2.
 cd backend
 uv sync # first time only
 
-# Download spaCy language model (required for answer checking)
+# Download spaCy language model (required for answer checking) (also first time only)
+uv run python -m ensurepip --upgrade # requires pip
 uv run python -m spacy download en_core_web_sm
 
 uv run uvicorn app.main:app --reload
+
+# OR use this to run without CUDA GPU build (less ram usage on GPu machines)
+CUDA_VISIBLE_DEVICES="" uv run uvicorn app.main:app --reload
+
+# NOTE: without CUDA RAM ~ 850MB
+# with CUDA RAM usage ~ 3GB
 ```
 
 Backend runs on `http://localhost:8000`

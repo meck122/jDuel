@@ -1,974 +1,452 @@
-# jDuel Frontend Flow
+# jDuel Frontend Architecture
 
-This document describes the React component lifecycle, state changes, and hook behaviors throughout a complete game session.
+This document describes the React component architecture, state management, and game flow for the jDuel frontend.
+
+## Project Structure
+
+```
+frontend/src/
+├── App.tsx                    # Root component with routing
+├── config.tsx                 # Environment configuration
+├── theme.ts                   # MUI theme configuration
+│
+├── components/                # Reusable UI components
+│   ├── common/               # Shared components
+│   │   └── Timer/            # Countdown timer component
+│   ├── layout/               # Layout components
+│   │   └── PageContainer/    # Page wrapper with max-width
+│   ├── Navigation/           # Top navigation bar
+│   └── About/                # About page content
+│
+├── contexts/                  # React contexts for state
+│   └── GameContext.tsx       # Game state & WebSocket management
+│
+├── features/                  # Feature-based modules
+│   └── game/                 # Game feature
+│       ├── GameView/         # Main game container/orchestrator
+│       ├── Lobby/            # Pre-game waiting room
+│       ├── Question/         # Question display & answer input
+│       ├── Results/          # Post-question results
+│       └── GameOver/         # Final scores display
+│
+├── pages/                     # Route-level components
+│   ├── HomePage/             # Landing page (create/join)
+│   └── RoomPage/             # Game room page
+│
+├── services/                  # API services
+│   └── api.ts                # HTTP API client
+│
+├── styles/                    # Global styles
+│   ├── global.css            # Global CSS
+│   ├── variables.css         # CSS custom properties
+│   └── components.css        # Shared component styles
+│
+└── types/                     # TypeScript types
+    └── index.ts              # Shared type definitions
+```
+
+---
 
 ## Component Architecture
 
 ```
 App (Router)
-└── GamePage
-    ├── useWebSocket hook
-    └── Conditional Rendering:
-        ├── JoinForm (if !joined)
-        ├── "Connecting..." (if joined && !roomState)
-        └── GameRoom (if joined && roomState)
-            ├── LobbyRoom (status: waiting)
-            ├── QuestionView (status: playing)
-            ├── ResultsView (status: results)
-            └── GameOver (status: finished)
+├── Route "/" → HomePage
+│   ├── "Host a Game" card → Create room flow
+│   └── "Join a Game" card → Join room flow
+│
+├── Route "/room/:roomId" → RoomPage
+│   └── GameProvider (context)
+│       └── RoomPageContent
+│           ├── Loading state
+│           ├── Name prompt (deep link)
+│           ├── Error state
+│           ├── Connecting state
+│           └── GameView (connected)
+│               ├── Lobby (status: waiting)
+│               ├── Question (status: playing)
+│               ├── Results (status: results)
+│               └── GameOver (status: finished)
+│
+└── Route "/about" → About
 ```
+
+---
+
+## State Management
+
+### GameContext
+
+The `GameContext` provides centralized game state management, eliminating prop drilling:
+
+```typescript
+interface GameContextValue {
+  // Room identification
+  roomId: string;
+  playerId: string;
+
+  // Connection state
+  isConnected: boolean;
+  isConnecting: boolean;
+  connectionError: string | null;
+
+  // Game state from server
+  roomState: RoomState | null;
+
+  // Actions
+  connect: (roomId: string, playerId: string) => void;
+  disconnect: () => void;
+  startGame: () => void;
+  submitAnswer: (answer: string) => void;
+}
+```
+
+### Using GameContext
+
+```tsx
+// In any game component
+import { useGame } from '../contexts';
+
+function Question() {
+  const { roomState, submitAnswer } = useGame();
+
+  // Access state directly, no props needed
+  const question = roomState?.currentQuestion;
+
+  return <form onSubmit={() => submitAnswer(answer)}>{/* ... */}</form>;
+}
+```
+
+---
+
+## Player Session Persistence
+
+Player names are stored in `localStorage` for convenience:
+
+```javascript
+const PLAYER_NAME_KEY = 'jduel_player_name';
+
+// Save on successful join
+localStorage.setItem(PLAYER_NAME_KEY, playerName);
+
+// Load on page visit
+const savedName = localStorage.getItem(PLAYER_NAME_KEY);
+```
+
+This means:
+
+- Returning users don't need to re-enter their name
+- Deep link visitors see their saved name pre-filled
+- Name persists across browser sessions
 
 ---
 
 ## Complete Game Flow: Two Players
 
-This traces React state changes and component renders for a complete game between **Alice** (creator) and **Bob** (joiner).
+This traces the HTTP calls, WebSocket connections, and React state changes for a complete game between **Alice** (creator) and **Bob** (joiner via deep link).
 
 ---
 
-### Phase 1: Initial Load
+### Phase 1: Alice Creates a Room
 
-#### Alice Opens App
+#### Step 1: Alice Opens App
+
+**URL:** `http://localhost:5173/`
 
 **Component Tree:**
 
 ```
-App → GamePage → JoinForm
+App → HomePage
 ```
 
-**GamePage State:**
+**User sees:** Two action cards - "Host a Game" and "Join a Game"
+
+#### Step 2: Alice Clicks "Host a Game"
+
+**User Action:** Alice enters name "Alice" and clicks "Create Room"
+
+#### Step 3: HTTP Room Creation
+
+**API Calls:**
 
 ```javascript
-{
-  roomId: "",
-  playerId: "",
-  joined: false,
-  errorMessage: ""
-}
+// 1. Create room
+const room = await createRoom();
+// Response: { roomId: "AB3D", status: "waiting", playerCount: 0 }
+
+// 2. Register Alice as player
+await joinRoom('AB3D', 'Alice');
+// Response: { roomId: "AB3D", playerId: "Alice", status: "waiting" }
 ```
 
-**useWebSocket State:**
+#### Step 4: Navigate to Room
+
+**Navigation:**
 
 ```javascript
-{
-  roomState: null,
-  wsRef.current: null
-}
+navigate('/room/AB3D?player=Alice');
 ```
 
-**Rendered Components:**
-
-- `<JoinForm />` with empty inputs
-
-**User Action:** Alice types "Alice" in the name field
-
-**State Update:**
-
-```javascript
-// JoinForm local state
-setPlayerId('Alice');
-```
-
----
-
-### Phase 2: Room Creation
-
-#### Alice Clicks "Create Room"
-
-**Handler Called:** `handleCreateRoom("Alice")`
-
-**GamePage State Changes:**
-
-```javascript
-setErrorMessage(''); // Clear any previous errors
-setJoined(true); // ✅ Triggers WebSocket connection
-setPlayerId('Alice');
-```
-
-**useWebSocket Effect Triggered:**
-
-```javascript
-useEffect(() => {
-  if (!joined) return; // Now joined = true, so continues
-
-  const ws = new WebSocket(WS_URL);
-  wsRef.current = ws;
-
-  ws.onopen = () => {
-    // Sends pending CREATE_ROOM message
-  };
-
-  ws.onmessage = (event) => {
-    // Listens for ROOM_STATE
-  };
-}, [joined]); // ← joined changed from false → true
-```
-
-**Message Sent:** `sendMessage({ type: "CREATE_ROOM", playerId: "Alice" })`
-
-**Component Re-render:**
-
-```
-App → GamePage → PageContainer → "Connecting..."
-```
-
-**Why "Connecting"?** Because `joined = true` but `roomState = null`
-
----
-
-#### Server Responds with ROOM_STATE
-
-**WebSocket Message Received:**
-
-```javascript
-ws.onmessage fires with:
-{
-  type: "ROOM_STATE",
-  roomState: {
-    roomId: "AB3D",
-    players: { "Alice": 0 },
-    status: "waiting",
-    questionIndex: 0
-  }
-}
-```
-
-**useWebSocket State Update:**
-
-```javascript
-setRoomState({
-  roomId: 'AB3D',
-  players: { Alice: 0 },
-  status: 'waiting',
-  questionIndex: 0,
-});
-```
-
-**GamePage useEffect Triggered:**
-
-```javascript
-useEffect(() => {
-  if (roomState?.roomId && !roomId) {
-    setRoomId('AB3D'); // ✅ Captures room code
-  }
-}, [roomState?.roomId, roomId]);
-```
-
-**Final GamePage State:**
-
-```javascript
-{
-  roomId: "AB3D",
-  playerId: "Alice",
-  joined: true,
-  errorMessage: ""
-}
-```
-
-**Component Re-render:**
-
-```
-App → GamePage → GameRoom → LobbyRoom
-```
-
-**LobbyRoom Props:**
-
-```javascript
-{
-  roomId: "AB3D",
-  playerId: "Alice",
-  roomState: {
-    roomId: "AB3D",
-    players: { "Alice": 0 },
-    status: "waiting",
-    questionIndex: 0
-  },
-  onStartGame: handleStartGame
-}
-```
-
-**Rendered UI:**
-
-- Room code: "AB3D" displayed
-- Player list: "Alice (You)" shown
-- "Start Game" button visible (Alice is host)
-
----
-
-### Phase 3: Bob Joins
-
-#### Bob Opens App in New Browser
+**URL:** `http://localhost:5173/room/AB3D?player=Alice`
 
 **Component Tree:**
 
 ```
-App → GamePage → JoinForm
+App → RoomPage → GameProvider → RoomPageContent → GameView → Lobby
 ```
 
-**Bob's Initial State:** (Same as Alice's initial state)
+#### Step 5: WebSocket Connection
 
-**User Actions:**
-
-1. Bob types "Bob" in name field
-2. Bob types "AB3D" in room code field
-
-**JoinForm Local State:**
+**GameContext connects:**
 
 ```javascript
+connect('AB3D', 'Alice');
+// WebSocket URL: ws://localhost:8000/ws?roomId=AB3D&playerId=Alice
+```
+
+**Server → Alice (ROOM_STATE):**
+
+```json
 {
-  playerId: "Bob",
-  roomId: "AB3D"  // Converted to uppercase via onChange
-}
-```
-
----
-
-#### Bob Clicks "Join Existing Room"
-
-**Handler Called:** `handleJoin("AB3D", "Bob")`
-
-**Bob's GamePage State Changes:**
-
-```javascript
-setErrorMessage('');
-setJoined(true); // ✅ Triggers WebSocket
-setPlayerId('Bob');
-setRoomId('AB3D'); // Already set before WS connects
-```
-
-**Bob's useWebSocket Effect:**
-
-- WebSocket connects
-- Sends: `{ type: "JOIN_ROOM", roomId: "AB3D", playerId: "Bob" }`
-
-**Bob's Component:** Shows "Connecting..."
-
----
-
-#### Server Broadcasts Updated ROOM_STATE to Both Clients
-
-**Alice's Browser Receives:**
-
-```javascript
-ws.onmessage fires with:
-{
-  type: "ROOM_STATE",
-  roomState: {
-    roomId: "AB3D",
-    players: { "Alice": 0, "Bob": 0 },
-    status: "waiting",
-    questionIndex: 0
+  "type": "ROOM_STATE",
+  "roomState": {
+    "roomId": "AB3D",
+    "players": { "Alice": 0 },
+    "status": "waiting",
+    "questionIndex": 0
   }
 }
 ```
 
-**Alice's useWebSocket Update:**
+---
+
+### Phase 2: Bob Joins via Deep Link
+
+Alice shares the link: `http://localhost:5173/room/AB3D`
+
+#### Step 1: Bob Opens Deep Link
+
+**URL:** `http://localhost:5173/room/AB3D` (no `?player=` param)
+
+**Component Tree:**
+
+```
+App → RoomPage → GameProvider → RoomPageContent (loading)
+```
+
+#### Step 2: Validate Room Exists
+
+**API Call:**
 
 ```javascript
-setRoomState({
-  roomId: 'AB3D',
-  players: { Alice: 0, Bob: 0 }, // ← Bob added
-  status: 'waiting',
-  questionIndex: 0,
-});
+const room = await getRoom('AB3D');
+// Response: { roomId: "AB3D", status: "waiting", playerCount: 1, players: ["Alice"] }
 ```
 
-**Alice's Component Re-render:**
+**RoomPageContent shows:** Name prompt form
 
+#### Step 3: Bob Enters Name and Joins
+
+**API Call:**
+
+```javascript
+await joinRoom('AB3D', 'Bob');
+// Response: { roomId: "AB3D", playerId: "Bob", status: "waiting" }
 ```
-App → GamePage → GameRoom → LobbyRoom
+
+**URL Update:** `/room/AB3D?player=Bob`
+
+#### Step 4: WebSocket Connection
+
+**GameContext connects:**
+
+```javascript
+connect('AB3D', 'Bob');
 ```
 
-**Alice's LobbyRoom now shows:**
+**Server → All Players (ROOM_STATE):**
 
-- "Alice (You)"
-- "Bob"
+```json
+{
+  "type": "ROOM_STATE",
+  "roomState": {
+    "roomId": "AB3D",
+    "players": { "Alice": 0, "Bob": 0 },
+    "status": "waiting",
+    "questionIndex": 0
+  }
+}
+```
 
 ---
 
-**Bob's Browser Receives:** (Same ROOM_STATE)
-
-**Bob's useWebSocket Update:** Same as Alice
-
-**Bob's Component Transition:**
-
-```
-"Connecting..." → GameRoom → LobbyRoom
-```
-
-**Bob's LobbyRoom shows:**
-
-- "Alice"
-- "Bob (You)"
-- No "Start Game" button (Bob is not host)
-
----
-
-### Phase 4: Starting the Game
+### Phase 3: Game Start
 
 #### Alice Clicks "Start Game"
 
-**Handler Called:** `handleStartGame()`
-
-**Message Sent:** `sendMessage({ type: "START_GAME" })`
-
-**No Local State Change** - Waiting for server response
-
----
-
-#### Server Broadcasts Playing State
-
-**Both Clients Receive:**
+**Action via GameContext:**
 
 ```javascript
+const { startGame } = useGame();
+startGame(); // Sends { type: "START_GAME" }
+```
+
+**Server → All Players (ROOM_STATE):**
+
+```json
 {
-  type: "ROOM_STATE",
-  roomState: {
-    roomId: "AB3D",
-    players: { "Alice": 0, "Bob": 0 },
-    status: "playing",  // ← Status changed
-    questionIndex: 0,
-    currentQuestion: {
-      text: "What is the capital of Japan?",
-      category: "Geography"
+  "type": "ROOM_STATE",
+  "roomState": {
+    "roomId": "AB3D",
+    "players": { "Alice": 0, "Bob": 0 },
+    "status": "playing",
+    "questionIndex": 0,
+    "currentQuestion": {
+      "text": "What is the capital of France?",
+      "category": "Geography"
     },
-    timeRemainingMs: 15000
+    "timeRemainingMs": 15000
   }
 }
 ```
 
-**Both Clients' useWebSocket Update:**
+**Component Renders:**
+
+```
+GameView → Question
+```
+
+---
+
+### Phase 4: Answering Questions
+
+#### Both Players Submit Answers
+
+**Alice's action:**
 
 ```javascript
-setRoomState({
-  /* new state */
-});
+const { submitAnswer } = useGame();
+submitAnswer('Paris');
 ```
 
-**Both Clients Re-render:**
+**WebSocket Message (Alice → Server):**
 
+```json
+{ "type": "ANSWER", "answer": "Paris" }
 ```
-App → GamePage → GameRoom → QuestionView
-```
 
-**QuestionView Props:**
+#### Server Shows Results
 
-```javascript
+**Server → All Players (ROOM_STATE):**
+
+```json
 {
-  roomState: { /* current state */ },
-  playerId: "Alice" | "Bob",
-  onSubmitAnswer: handleSubmitAnswer
-}
-```
-
-**QuestionView Internal State:**
-
-```javascript
-{
-  answer: "",
-  hasAnswered: false
-}
-```
-
-**Rendered UI:**
-
-- Question text displayed
-- Category badge shown
-- Answer input field (empty)
-- Timer component showing 15 seconds
-- Submit button (disabled until input has text)
-- Scoreboard showing both players at 0 points
-
----
-
-### Phase 5: Answering Question
-
-#### Timer Component Behavior
-
-**Timer receives:** `timeRemainingMs: 15000`
-
-**Timer Internal State:**
-
-```javascript
-{
-  timeRemaining: 15000;
-}
-```
-
-**Timer useEffect:**
-
-```javascript
-useEffect(() => {
-  const interval = setInterval(() => {
-    setDisplayTime((prev) => Math.max(0, prev - 1000));
-  }, 1000);
-
-  return () => clearInterval(interval);
-}, []);
-```
-
-**Timer Updates:** Decrements locally every second for smooth animation
-
-**Note:** Timer is purely presentational. Server enforces actual timeout.
-
----
-
-#### Bob Types Answer (5 seconds elapsed)
-
-**QuestionView Local State Update:**
-
-```javascript
-// Bob's QuestionView state
-setAnswer('Tokyo');
-```
-
-**Submit button:** Enabled (answer is not empty)
-
----
-
-#### Bob Clicks Submit
-
-**Handler Called:** `handleSubmitAnswer("Tokyo")`
-
-**Message Sent:** `sendMessage({ type: "ANSWER", answer: "Tokyo" })`
-
-**Bob's QuestionView State Update:**
-
-```javascript
-setHasAnswered(true);
-```
-
-**Bob's UI Changes:**
-
-- Input field: Disabled
-- Submit button: Hidden
-- Shows: "Waiting for other players..."
-
-**Bob's Component:** No re-render from parent (still in "playing" status)
-
----
-
-#### Alice Types and Submits (3 seconds later)
-
-**Same Flow as Bob:**
-
-1. `setAnswer("tokyo")`
-2. `handleSubmitAnswer("tokyo")`
-3. `setHasAnswered(true)`
-
----
-
-#### Server Broadcasts Results State
-
-**Both Clients Receive:**
-
-```javascript
-{
-  type: "ROOM_STATE",
-  roomState: {
-    roomId: "AB3D",
-    players: { "Alice": 500, "Bob": 1000 },  // ← Scores updated
-    status: "results",  // ← Status changed
-    questionIndex: 0,
-    results: {
-      correctAnswer: "Tokyo",
-      playerAnswers: {
-        "Alice": "tokyo",
-        "Bob": "Tokyo"
-      },
-      playerResults: {
-        "Alice": 500,
-        "Bob": 1000
-      }
-    },
-    timeRemainingMs: 10000
+  "type": "ROOM_STATE",
+  "roomState": {
+    "roomId": "AB3D",
+    "players": { "Alice": 1000, "Bob": 0 },
+    "status": "results",
+    "questionIndex": 0,
+    "timeRemainingMs": 5000,
+    "results": {
+      "correctAnswer": "Paris",
+      "playerAnswers": { "Alice": "Paris", "Bob": "London" },
+      "playerResults": { "Alice": 1000, "Bob": 0 }
+    }
   }
 }
 ```
 
-**Both Clients' useWebSocket Update:**
-
-```javascript
-setRoomState({
-  /* new state with results */
-});
-```
-
-**Both Clients Re-render:**
+**Component Renders:**
 
 ```
-App → GamePage → GameRoom → ResultsView
+GameView → Results
 ```
-
-**ResultsView Props:**
-
-```javascript
-{
-  roomState: { /* state with results */ },
-  playerId: "Alice" | "Bob"
-}
-```
-
-**ResultsView Rendered UI:**
-
-- Correct answer: "Tokyo" (highlighted)
-- Alice's answer: "tokyo" (green checkmark, +500 points)
-- Bob's answer: "Tokyo" (green checkmark, +1000 points)
-- Scoreboard shows updated scores
-- No timer component
 
 ---
 
-### Phase 6: Next Question
+### Phase 5: Game Over
 
-#### 10 Seconds Later - Server Broadcasts Next Question
+After 10 questions:
 
-**Both Clients Receive:**
+**Server → All Players (ROOM_STATE):**
 
-```javascript
+```json
 {
-  type: "ROOM_STATE",
-  roomState: {
-    roomId: "AB3D",
-    players: { "Alice": 500, "Bob": 1000 },
-    status: "playing",  // ← Back to playing
-    questionIndex: 1,   // ← Next question
-    currentQuestion: {
-      text: "Who painted the Mona Lisa?",
-      category: "Art"
-    },
-    timeRemainingMs: 15000
+  "type": "ROOM_STATE",
+  "roomState": {
+    "roomId": "AB3D",
+    "players": { "Alice": 6200, "Bob": 3800 },
+    "status": "finished",
+    "questionIndex": 9,
+    "winner": "Alice",
+    "timeRemainingMs": 10000
   }
 }
 ```
 
-**Both Clients Re-render:**
+**Component Renders:**
 
 ```
-App → GamePage → GameRoom → QuestionView
+GameView → GameOver
 ```
 
-**QuestionView Component Behavior:**
+#### Room Closes
 
-**Key Question:** Does QuestionView reset its state?
+After timeout, server sends:
 
-**Answer:** Yes! Component re-renders with new `roomState.currentQuestion`, triggering:
+```json
+{ "type": "ROOM_CLOSED" }
+```
+
+**GameProvider callback:**
 
 ```javascript
-useEffect(() => {
-  setAnswer('');
-  setHasAnswered(false);
-}, [roomState.currentQuestion]); // ← Question changed
-```
-
-**Fresh UI State:**
-
-- Empty answer input
-- Submit button disabled
-- hasAnswered = false
-- New timer at 15 seconds
-
----
-
-### Phase 7: Question Timeout Scenario
-
-#### Only Alice Answers This Time
-
-**Alice's Flow:**
-
-1. Types "Leonardo da Vinci"
-2. Submits → `setHasAnswered(true)`
-3. Shows "Waiting for other players..."
-
-**Bob:** Doesn't answer, just watches timer countdown
-
----
-
-#### Timer Expires on Bob's Screen
-
-**Bob's Timer Component:**
-
-```javascript
-setDisplayTime(0);
-```
-
-**Bob's UI:** Timer shows "0s"
-
-**Bob's QuestionView:** Still showing answer input (not disabled)
-
-**Note:** Bob can't answer anymore - server has moved on
-
----
-
-#### Server Broadcasts Results (Bob Didn't Answer)
-
-**Both Clients Receive:**
-
-```javascript
-{
-  type: "ROOM_STATE",
-  roomState: {
-    roomId: "AB3D",
-    players: { "Alice": 1500, "Bob": 1000 },
-    status: "results",
-    questionIndex: 1,
-    results: {
-      correctAnswer: "Leonardo da Vinci",
-      playerAnswers: {
-        "Alice": "Leonardo da Vinci"
-        // Bob is missing from playerAnswers
-      },
-      playerResults: {
-        "Alice": 1000
-        // Bob is missing from playerResults (earned 0)
-      }
-    },
-    timeRemainingMs: 10000
-  }
-}
-```
-
-**Both Clients Render ResultsView:**
-
-- Alice's answer shown (green, +1000 points)
-- Bob's answer: Not shown (no entry in playerAnswers)
-- UI clearly indicates Bob didn't answer
-
----
-
-### Phase 8: Game Over
-
-#### After Final Question Results
-
-**Both Clients Receive:**
-
-```javascript
-{
-  type: "ROOM_STATE",
-  roomState: {
-    roomId: "AB3D",
-    players: { "Alice": 2500, "Bob": 1500 },
-    status: "finished",  // ← Game over
-    questionIndex: 3,
-    winner: "Alice"
-  }
-}
-```
-
-**Both Clients Re-render:**
-
-```
-App → GamePage → GameRoom → GameOver
-```
-
-**GameOver Props:**
-
-```javascript
-{
-  roomState: {
-    players: { "Alice": 2500, "Bob": 1500 },
-    winner: "Alice"
-  },
-  playerId: "Alice" | "Bob"
-}
-```
-
-**GameOver Rendered UI:**
-
-- Winner announcement: "Alice Wins! 🎉"
-- Final scores displayed
-- "Alice (You)" or "Bob (You)" highlighted
-- No actions available
-
----
-
-### Phase 9: Room Closure
-
-#### 60 Seconds Later - Server Closes Room
-
-**Both Clients Receive:**
-
-```javascript
-{
-  type: 'ROOM_CLOSED';
-}
-```
-
-**useWebSocket Handler:**
-
-```javascript
-ws.onmessage fires with:
-{
-  type: "ROOM_CLOSED"
-}
-
-if (data.type === 'ROOM_CLOSED') {
-  if (onRoomClosedRef.current) {
-    onRoomClosedRef.current();  // ← Calls callback
-  }
-}
-```
-
-**GamePage Callback Executes:**
-
-```javascript
-const handleOnRoomClosed = () => {
-  setJoined(false);
-  setRoomId('');
-  setPlayerId('');
-};
-```
-
-**useWebSocket Cleanup:**
-
-```javascript
-useEffect(() => {
-  if (!joined) return;
-
-  // ... WebSocket setup ...
-
-  return () => {
-    ws.close(); // ← WebSocket closed
-    wsRef.current = null;
-  };
-}, [joined]); // ← joined changed true → false
-```
-
-**Both Clients Re-render:**
-
-```
-App → GamePage → JoinForm
-```
-
-**Fresh State:** Both Alice and Bob back at join screen, ready to play again
-
----
-
-## Error Handling Flow
-
-### Scenario: Bob Tries to Join Non-Existent Room
-
-#### Bob Enters "ZZZZ" and Clicks Join
-
-**Handler Called:** `handleJoin("ZZZZ", "Bob")`
-
-**State Changes:**
-
-```javascript
-setErrorMessage('');
-setJoined(true); // ← WebSocket connects
-setPlayerId('Bob');
-setRoomId('ZZZZ');
-```
-
-**Message Sent:** `{ type: "JOIN_ROOM", roomId: "ZZZZ", playerId: "Bob" }`
-
-**Component:** Shows "Connecting..."
-
----
-
-#### Server Sends Error
-
-**Bob's Browser Receives:**
-
-```javascript
-{
-  type: "ERROR",
-  message: "Room ZZZZ does not exist"
-}
-```
-
-**useWebSocket Handler:**
-
-```javascript
-if (data.type === 'ERROR') {
-  if (onErrorRef.current && data.message) {
-    onErrorRef.current(data.message); // ← Calls error callback
-  }
-}
-```
-
-**GamePage Error Callback Executes:**
-
-```javascript
-const handleOnError = (message: string) => {
-  // Error occurred (e.g., room doesn't exist)
-  setErrorMessage(message);
-  setJoined(false);
-  setRoomId('');
-};
-```
-
-**Component Re-render:**
-
-```
-App → GamePage → JoinForm (with error message)
-```
-
-**JoinForm Rendered UI:**
-
-- Red error message: "Room ZZZZ does not exist"
-- Input fields still populated: name="Bob", roomId="ZZZZ"
-- Bob can correct room code and try again
-
-**WebSocket:** Closes due to `joined` becoming `false`
-
----
-
-## Key React Patterns Used
-
-### 1. Conditional Rendering Based on State
-
-```javascript
-if (!joined) {
-  return <JoinForm />;
-}
-
-if (!roomState) {
-  return <div>Connecting...</div>;
-}
-
-return <GameRoom />;
-```
-
-**Why:** Clean separation of concerns - each UI state has its own component
-
----
-
-### 2. Nested Conditional Rendering in GameRoom
-
-```javascript
-switch (roomState.status) {
-  case 'waiting':
-    return <LobbyRoom />;
-  case 'playing':
-    return <QuestionView />;
-  case 'results':
-    return <ResultsView />;
-  case 'finished':
-    return <GameOver />;
-}
-```
-
-**Why:** Single GameRoom component coordinates game phases without unmounting
-
----
-
-### 3. WebSocket Lifecycle Tied to Single State
-
-```javascript
-useEffect(() => {
-  if (!joined) return;
-
-  const ws = new WebSocket(WS_URL);
-  // ... setup ...
-
-  return () => {
-    ws.close();
-  };
-}, [joined]); // ← ONLY depends on joined
-```
-
-**Why:** Prevents reconnection loops. Callbacks use refs to avoid triggering reconnects.
-
----
-
-### 4. Callback Refs Pattern
-
-```javascript
-const onRoomClosedRef = useRef(onRoomClosed);
-const onErrorRef = useRef(onError);
-
-useEffect(() => {
-  onRoomClosedRef.current = onRoomClosed;
-  onErrorRef.current = onError;
-}, [onRoomClosed, onError]);
-
-// Later in WebSocket handler:
-onRoomClosedRef.current(); // ← Always calls latest version
-```
-
-**Why:** Allows callbacks to change without triggering WebSocket reconnection
-
----
-
-### 5. One-Time Effect for Room ID Capture
-
-```javascript
-useEffect(() => {
-  if (roomState?.roomId && !roomId) {
-    // ← Only when roomId is empty
-    setRoomId(roomState.roomId);
-  }
-}, [roomState?.roomId, roomId]);
-```
-
-**Why:** Runs once after CREATE_ROOM, never during normal gameplay
-
----
-
-### 6. Component-Local State for Form Inputs
-
-```javascript
-// QuestionView
-const [answer, setAnswer] = useState('');
-const [hasAnswered, setHasAnswered] = useState(false);
-```
-
-**Why:** Answer typing is local until submitted. No need to lift state up.
-
----
-
-### 7. Reset Local State on Question Change
-
-```javascript
-useEffect(() => {
-  setAnswer('');
-  setHasAnswered(false);
-}, [roomState.currentQuestion]);
-```
-
-**Why:** Ensures fresh state for each new question without unmounting component
-
----
-
-## State Flow Summary
-
-### GamePage State Flow
-
-```
-Initial:    { joined: false, roomId: "", playerId: "", errorMessage: "" }
-Create:     { joined: true,  roomId: "", playerId: "Alice", ... }
-Joined:     { joined: true,  roomId: "AB3D", playerId: "Alice", ... }
-Error:      { joined: false, roomId: "", playerId: "", errorMessage: "..." }
-Closed:     { joined: false, roomId: "", playerId: "", errorMessage: "" }
-```
-
-### useWebSocket State Flow
-
-```
-Initial:    { roomState: null, wsRef: null }
-Connected:  { roomState: null, wsRef: <WebSocket> }
-In Game:    { roomState: { status: "playing", ... }, wsRef: <WebSocket> }
-```
-
-### QuestionView Local State Flow
-
-```
-Initial:    { answer: "", hasAnswered: false }
-Typing:     { answer: "Tokyo", hasAnswered: false }
-Submitted:  { answer: "Tokyo", hasAnswered: true }
-Next Q:     { answer: "", hasAnswered: false }  ← Reset
+onRoomClosed?.(); // Triggers navigate('/')
 ```
 
 ---
 
-## Performance Considerations
+## Key Architectural Decisions
 
-1. **Minimal Re-renders:** Only state that changed triggers re-render
-2. **WebSocket Ref:** `wsRef` doesn't cause re-renders (it's a ref, not state)
-3. **Component Unmounting:** GameRoom stays mounted during game, only child components swap
-4. **Timer Independence:** Timer updates locally without WebSocket traffic
-5. **Callback Memoization:** Using refs prevents recreation of WebSocket connection
+### 1. Feature-Based Organization
+
+Game components live in `features/game/` rather than flat in `components/`. This:
+
+- Groups related functionality together
+- Makes the game feature self-contained
+- Improves discoverability
+
+### 2. Context Over Props
+
+`GameContext` eliminates prop drilling for game state. Benefits:
+
+- Components access only what they need
+- Easier to add new game features
+- Cleaner component interfaces
+
+### 3. Separation of Concerns
+
+- **RoomPage**: Connection management, routing, error handling
+- **GameView**: Phase orchestration (which component to show)
+- **Lobby/Question/Results/GameOver**: Individual phase UI
+
+### 4. HTTP + WebSocket Hybrid
+
+- HTTP for room creation, validation, player registration
+- WebSocket for real-time game updates
+- Enables proper error handling and deep linking
 
 ---
+
+## Component Responsibilities
+
+| Component  | Responsibility                                    |
+| ---------- | ------------------------------------------------- |
+| `RoomPage` | URL params, HTTP registration, GameProvider setup |
+| `GameView` | Renders correct phase component based on status   |
+| `Lobby`    | Show players, share link, start game button       |
+| `Question` | Display question, timer, answer form              |
+| `Results`  | Show correct answer, scores, player answers       |
+| `GameOver` | Winner announcement, final scores                 |
+| `Timer`    | Local countdown interpolation                     |

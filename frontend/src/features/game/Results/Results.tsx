@@ -1,23 +1,30 @@
-import { Timer } from "../Timer/Timer";
-import styles from "./ResultsView.module.css";
+/**
+ * Results - Displays results after each question.
+ *
+ * Shows:
+ * - Correct answer
+ * - Player answers with correct/incorrect indicators
+ * - Current scores
+ * - Timer until next question
+ */
 
-interface ResultsViewProps {
-  players: Record<string, number>;
-  correctAnswer: string;
-  playerAnswers: Record<string, string>;
-  playerResults: Record<string, number>;
-  timeRemainingMs: number;
-  currentPlayerId: string;
-}
+import { useGame } from "../../../contexts";
+import { Timer } from "../../../components/common/Timer";
+import styles from "./Results.module.css";
 
-export const ResultsView = ({
-  players,
-  correctAnswer,
-  playerAnswers,
-  playerResults,
-  timeRemainingMs,
-  currentPlayerId,
-}: ResultsViewProps) => {
+export function Results() {
+  const { playerId, roomState } = useGame();
+
+  const players = roomState?.players ?? {};
+  const results = roomState?.results;
+  const timeRemainingMs = roomState?.timeRemainingMs ?? 0;
+
+  if (!results) {
+    return null;
+  }
+
+  const { correctAnswer, playerAnswers, playerResults } = results;
+
   return (
     <div className={styles.gameSection}>
       <h2 className={styles.resultsHeader}>
@@ -44,7 +51,7 @@ export const ResultsView = ({
               .map(([player, score]) => (
                 <div key={player} className={styles.resultsScoreItem}>
                   <span className={styles.resultsPlayerName}>
-                    {player} {player === currentPlayerId && "(you)"}
+                    {player} {player === playerId && "(you)"}
                   </span>
                   <span className={styles.resultsPlayerScore}>{score}</span>
                 </div>
@@ -66,7 +73,7 @@ export const ResultsView = ({
                   }`}
                 >
                   <span className={styles.resultsAnswerPlayer}>
-                    {player} {player === currentPlayerId && "(you)"}
+                    {player} {player === playerId && "(you)"}
                   </span>
                   <span className={styles.resultsAnswerText}>
                     {answer || "(no answer)"}
@@ -89,4 +96,4 @@ export const ResultsView = ({
       </div>
     </div>
   );
-};
+}

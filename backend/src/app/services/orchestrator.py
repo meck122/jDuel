@@ -6,7 +6,7 @@ from typing import Protocol
 from fastapi import WebSocket
 
 from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, RESULTS_TIME_MS
-from app.models import Room, RoomStateMessage
+from app.models import RoomStateMessage
 from app.services.game_service import GameService
 from app.services.room_manager import RoomManager
 from app.services.state_builder import StateBuilder
@@ -29,6 +29,10 @@ class GameOrchestrator:
     This class acts as the central coordinator for game logic, managing
     the interaction between room management, game rules, timers, and
     state broadcasting.
+
+    The join flow is now two-phase:
+    1. HTTP: Player registers via POST /api/rooms/{roomId}/join
+    2. WebSocket: Player connects and handle_connect() binds the connection
     """
 
     def __init__(
@@ -45,61 +49,40 @@ class GameOrchestrator:
         self._state_builder = state_builder
         self._room_closer = room_closer
 
-    async def handle_create_room(
-        self, player_id: int, websocket: WebSocket
-    ) -> tuple[str, str]:
-        """Handle creating a room and player joining the new room
-
-        Args:
-            player_id: The player's identifier
-            websocket: The player's WebSocket connection
-
-        Returns:
-            tuple: (room_id, player_id) - The room ID and player's unique identifier
-        """
-        room: Room = self._room_manager.create_room()
-        await self.handle_join(room.room_id, player_id, websocket)
-        return room.room_id, player_id
-
-    async def handle_join(
+    async def handle_connect(
         self, room_id: str, player_id: str, websocket: WebSocket
     ) -> bool:
-        """Handle player joining a room.
+        """Handle WebSocket connection for a pre-registered player.
+
+        This is the second phase of the join flow. The player must have
+        already registered via HTTP POST /api/rooms/{roomId}/join.
 
         Args:
-            room_id: The room to join
-            player_id: The player's identifier
+            room_id: The room to connect to
+            player_id: The player's identifier (must be pre-registered)
             websocket: The player's WebSocket connection
 
         Returns:
-            bool: True if join was successful, False if room doesn't exist
+            bool: True if connection was successful
         """
         room = self._room_manager.get_room(room_id)
         if not room:
             logger.warning(
-                f"Player tried to join non-existent room: room_id={room_id}, player_id={player_id}"
-            )
-            await websocket.send_json(
-                {"type": "ERROR", "message": f"Room {room_id} does not exist"}
+                f"Player tried to connect to non-existent room: room_id={room_id}, player_id={player_id}"
             )
             return False
 
-        # Check if player name already exists in the room
-        if player_id in room.players:
+        if player_id not in room.players:
             logger.warning(
-                f"Player tried to join with duplicate name: room_id={room_id}, player_id={player_id}"
-            )
-            await websocket.send_json(
-                {
-                    "type": "ERROR",
-                    "message": f"Name '{player_id}' is already taken in this room",
-                }
+                f"Unregistered player tried to connect: room_id={room_id}, player_id={player_id}"
             )
             return False
 
-        self._room_manager.add_player(room_id, player_id, websocket)
-        await self._broadcast_room_state(room_id)
-        return True
+        # Attach the WebSocket connection to the registered player
+        success = self._room_manager.attach_connection(room_id, player_id, websocket)
+        if success:
+            await self._broadcast_room_state(room_id)
+        return success
 
     async def handle_start_game(self, room_id: str) -> None:
         """Handle game start request.
@@ -112,7 +95,7 @@ class GameOrchestrator:
             return
 
         self._game_service.start_game(room)
-        player_list = list(room.players.keys())
+        player_list = list(room.players)
         logger.info(
             f"Game started: room_id={room_id}, players={player_list}, "
             f"total_questions={len(room.questions)}"
@@ -142,17 +125,34 @@ class GameOrchestrator:
     async def handle_disconnect(self, room_id: str, player_id: str) -> None:
         """Handle player disconnect.
 
+        Players are kept registered to allow reconnection (e.g., page refresh).
+        We only detach the WebSocket connection. If all players disconnect,
+        the room will be cleaned up including canceling any active timers.
+
         Args:
             room_id: The room the player was in
             player_id: The disconnected player's ID
         """
         logger.info(f"WebSocket disconnected: room_id={room_id}, player_id={player_id}")
-        self._room_manager.remove_player(room_id, player_id)
+        room = self._room_manager.get_room(room_id)
 
-        if self._room_manager.get_room(room_id):
-            await self._broadcast_room_state(room_id)
-        else:
+        if not room:
+            return
+
+        # Detach WebSocket but keep player registered (allows reconnection)
+        self._room_manager.detach_connection(room_id, player_id)
+
+        # If no players have active connections, clean up the room entirely
+        if not room.connections:
+            logger.info(f"No active connections in room {room_id}, cleaning up room")
+            # Cancel all timers for this room (stops game progression)
             self._timer_service.cancel_all_timers_for_room(room_id)
+            # Delete the room entirely
+            self._room_manager.delete_room(room_id)
+            return
+
+        # Broadcast updated state to remaining players
+        await self._broadcast_room_state(room_id)
 
     async def _broadcast_room_state(self, room_id: str) -> None:
         """Build and broadcast current room state."""

@@ -4,11 +4,11 @@ import contextlib
 import logging
 from pathlib import Path
 
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, Query, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api import handle_websocket
+from app.api import api_router, handle_websocket
 from app.config import CORS_ORIGINS, setup_logging
 
 # Initialize logging
@@ -44,6 +44,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Register HTTP API routes
+app.include_router(api_router)
+
 
 @app.get("/health")
 def health():
@@ -52,9 +55,19 @@ def health():
 
 
 @app.websocket("/ws")
-async def ws_endpoint(websocket: WebSocket):
-    """WebSocket endpoint for real-time game communication."""
-    await handle_websocket(websocket)
+async def ws_endpoint(
+    websocket: WebSocket,
+    roomId: str = Query(..., description="Room ID to connect to"),
+    playerId: str = Query(..., description="Player ID (must be pre-registered)"),
+):
+    """WebSocket endpoint for real-time game communication.
+
+    Players must first register via POST /api/rooms/{roomId}/join before
+    connecting via WebSocket with their roomId and playerId as query params.
+
+    Example: ws://localhost:8000/ws?roomId=ABC123&playerId=Alice
+    """
+    await handle_websocket(websocket, roomId.upper(), playerId)
 
 
 # Serve static files (only mount if dist directory exists - for production)

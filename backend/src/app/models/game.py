@@ -18,12 +18,22 @@ class GameStatus(str, Enum):
 
 
 class Room:
-    """Represents a game room with players and state."""
+    """Represents a game room with players and state.
+
+    Players are decoupled from WebSocket connections to support HTTP pre-registration
+    followed by WebSocket connection. This enables:
+    - Deep linking: Users can share room URLs before connecting
+    - Better error handling: Validate room/player via HTTP before WebSocket
+    - Reconnection: Players can reconnect to their slot after disconnect
+    """
 
     def __init__(self, room_id: str, questions: list[Question]):
         self.room_id = room_id
-        self.players: dict[str, WebSocket] = {}
+        # Registered players and their scores (identity layer)
+        self.players: set[str] = set()
         self.scores: dict[str, int] = {}
+        # Active WebSocket connections (connection layer)
+        self.connections: dict[str, WebSocket] = {}
         self.status = GameStatus.WAITING
         self.question_index = 0
         self.questions = questions.copy()
@@ -38,3 +48,11 @@ class Room:
         ] = {}  # Points gained by each player in current question
         self.results_start_time: datetime | None = None
         self.finish_time: datetime | None = None
+
+    def is_player_connected(self, player_id: str) -> bool:
+        """Check if a player has an active WebSocket connection."""
+        return player_id in self.connections
+
+    def get_connected_players(self) -> list[str]:
+        """Get list of players with active WebSocket connections."""
+        return list(self.connections.keys())

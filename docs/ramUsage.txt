@@ -1,0 +1,16 @@
+
+No CUDA:
+2026-01-12 21:04:45,456 - app.services.answer_service - INFO - Loading spaCy model... (RAM usage before: 775.8 MB)
+2026-01-12 21:04:46,512 - app.services.answer_service - INFO - spaCy loaded. (RAM usage after: 829.2 MB, delta: 53.5 MB)
+2026-01-12 21:04:46,513 - app.services.answer_service - INFO - Loading sentence-transformers embeddings model... (RAM usage before: 829.2 MB)
+2026-01-12 21:04:46,515 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2026-01-12 21:04:46,515 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2026-01-12 21:04:48,435 - app.services.answer_service - INFO - Embeddings model loaded. (RAM usage after: 845.6 MB, delta: 16.4 MB)
+
+With CUDA:
+2026-01-12 21:28:53,969 - app.services.answer_service - INFO - Loading spaCy model... (RAM usage before: 1691.9 MB)
+2026-01-12 21:28:54,742 - app.services.answer_service - INFO - spaCy loaded. (RAM usage after: 1745.8 MB, delta: 53.9 MB)
+2026-01-12 21:28:54,742 - app.services.answer_service - INFO - Loading sentence-transformers embeddings model... (RAM usage before: 1745.8 MB)
+2026-01-12 21:28:54,743 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-01-12 21:28:54,743 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2026-01-12 21:29:14,810 - app.services.answer_service - INFO - Embeddings model loaded. (RAM usage after: 2910.6 MB, delta: 1164.9 MB)

@@ -1,24 +1,26 @@
+/**
+ * Question - Displays current question and accepts answers.
+ *
+ * Shows:
+ * - Question number and category
+ * - Question text
+ * - Timer countdown
+ * - Answer input form
+ */
+
 import { FormEvent, useState, useEffect } from "react";
-import { Timer } from "../Timer/Timer";
-import styles from "./QuestionView.module.css";
+import { useGame } from "../../../contexts";
+import { Timer } from "../../../components/common/Timer";
+import styles from "./Question.module.css";
 
-interface QuestionViewProps {
-  questionIndex: number;
-  questionText: string;
-  questionCategory: string;
-  timeRemainingMs: number;
-  onSubmitAnswer: (answer: string) => void;
-}
-
-export const QuestionView = ({
-  questionIndex,
-  questionText,
-  questionCategory,
-  timeRemainingMs,
-  onSubmitAnswer,
-}: QuestionViewProps) => {
+export function Question() {
+  const { roomState, submitAnswer } = useGame();
   const [answer, setAnswer] = useState<string>("");
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
+
+  const questionIndex = roomState?.questionIndex ?? 0;
+  const currentQuestion = roomState?.currentQuestion;
+  const timeRemainingMs = roomState?.timeRemainingMs ?? 0;
 
   // Reset submission state when question changes
   useEffect(() => {
@@ -29,10 +31,14 @@ export const QuestionView = ({
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (answer && !hasSubmitted) {
-      onSubmitAnswer(answer);
+      submitAnswer(answer);
       setHasSubmitted(true);
     }
   };
+
+  if (!currentQuestion) {
+    return null;
+  }
 
   return (
     <div className={styles.gameSection}>
@@ -41,9 +47,9 @@ export const QuestionView = ({
       </h2>
       <p className={styles.questionCategory}>
         <span className={styles.categoryLabel}>Category:</span>{" "}
-        {questionCategory}
+        {currentQuestion.category}
       </p>
-      <p className={styles.question}>{questionText}</p>
+      <p className={styles.question}>{currentQuestion.text}</p>
       <Timer
         timeRemainingMs={timeRemainingMs}
         resetKey={questionIndex}
@@ -70,4 +76,4 @@ export const QuestionView = ({
       )}
     </div>
   );
-};
+}

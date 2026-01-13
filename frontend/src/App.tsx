@@ -2,9 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import { jeopardyTheme } from "./theme";
-import { Navigation } from "./components/Navigation/Navigation";
-import { GamePage } from "./pages/GamePage";
-import { About } from "./components/About/About";
+import { Navigation, About } from "./components";
+import { HomePage, RoomPage } from "./pages";
 
 function App() {
   return (
@@ -15,7 +14,8 @@ function App() {
           <Navigation />
           <main className="app-main">
             <Routes>
-              <Route path="/" element={<GamePage />} />
+              <Route path="/" element={<HomePage />} />
+              <Route path="/room/:roomId" element={<RoomPage />} />
               <Route path="/about" element={<About />} />
             </Routes>
           </main>

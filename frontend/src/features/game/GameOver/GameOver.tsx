@@ -1,17 +1,23 @@
-import { Timer } from "../Timer/Timer";
+/**
+ * GameOver - Final game screen showing winner and scores.
+ *
+ * Shows:
+ * - Winner announcement
+ * - Final scores for all players
+ * - Room closing countdown
+ */
+
+import { useGame } from "../../../contexts";
+import { Timer } from "../../../components/common/Timer";
 import styles from "./GameOver.module.css";
 
-interface GameOverProps {
-  winner: string;
-  players: Record<string, number>;
-  timeRemainingMs?: number;
-}
+export function GameOver() {
+  const { roomState } = useGame();
 
-export const GameOver = ({
-  winner,
-  players,
-  timeRemainingMs,
-}: GameOverProps) => {
+  const players = roomState?.players ?? {};
+  const winner = roomState?.winner ?? "";
+  const timeRemainingMs = roomState?.timeRemainingMs;
+
   return (
     <div className={styles.gameSection}>
       <h2 className={styles.gameOverHeader}>Game Over!</h2>
@@ -41,4 +47,4 @@ export const GameOver = ({
       </div>
     </div>
   );
-};
+}

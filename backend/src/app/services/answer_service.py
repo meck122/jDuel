@@ -3,6 +3,7 @@
 import logging
 import re
 
+import psutil
 import spacy
 from rapidfuzz import fuzz
 from sentence_transformers import SentenceTransformer, util
@@ -35,18 +36,38 @@ class AnswerService:
         If models are None, they will be loaded once (slow at startup).
         """
         self.threshold = threshold
+        process = psutil.Process()
 
         if nlp_model is None:
-            logger.info("Loading spaCy model...")
+            mem_before = process.memory_info().rss / (1024 * 1024)  # MB
+            logger.info(
+                "Loading spaCy model... (RAM usage before: %.1f MB)", mem_before
+            )
             self.nlp = spacy.load("en_core_web_sm")
-            logger.info("spaCy loaded.")
+            mem_after = process.memory_info().rss / (1024 * 1024)  # MB
+            mem_delta = mem_after - mem_before
+            logger.info(
+                "spaCy loaded. (RAM usage after: %.1f MB, delta: %.1f MB)",
+                mem_after,
+                mem_delta,
+            )
         else:
             self.nlp = nlp_model
 
         if embedding_model is None:
-            logger.info("Loading sentence-transformers embeddings model...")
+            mem_before = process.memory_info().rss / (1024 * 1024)  # MB
+            logger.info(
+                "Loading sentence-transformers embeddings model... (RAM usage before: %.1f MB)",
+                mem_before,
+            )
             self.model = SentenceTransformer("all-MiniLM-L6-v2")
-            logger.info("Embeddings model loaded.")
+            mem_after = process.memory_info().rss / (1024 * 1024)  # MB
+            mem_delta = mem_after - mem_before
+            logger.info(
+                "Embeddings model loaded. (RAM usage after: %.1f MB, delta: %.1f MB)",
+                mem_after,
+                mem_delta,
+            )
         else:
             self.model = embedding_model
 

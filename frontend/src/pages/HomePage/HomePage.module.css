@@ -1,0 +1,116 @@
+.container {
+  width: 100%;
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+.logo {
+  font-size: 5rem;
+  font-weight: 900;
+  margin-bottom: var(--spacing-md);
+  letter-spacing: 2px;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.logoJ {
+  color: var(--color-accent);
+}
+
+.logoDuel {
+  color: var(--color-accent-red);
+}
+
+.tagline {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-dim);
+  margin-bottom: var(--spacing-3xl);
+}
+
+.error {
+  color: var(--color-accent-red);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--color-accent-red);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .cards {
+    flex-direction: row;
+    max-width: 800px;
+  }
+}
+
+.card {
+  flex: 1;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-lg);
+  border: 3px solid var(--color-border);
+  padding: var(--spacing-xl);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.cardActive {
+  border-color: var(--color-accent);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.cardTitle {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text);
+}
+
+.cardDescription {
+  color: var(--color-text-dim);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.form input[type="text"] {
+  font-size: var(--font-size-md);
+  text-align: center;
+}
+
+.roomCodeInput {
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  font-weight: 700;
+}
+
+.form button[type="submit"] {
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-md);
+}
+
+.form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,34 +1,48 @@
-# jDuel
+# jDuel (this doc needs major update)
 
 A real-time multiplayer Josh-style trivia game built with React and FastAPI.
 
 ## Project Overview
 
-jDuel is a WebSocket-based multiplayer trivia game where players compete in real-time to answer questions. Players can create or join game rooms using short alphanumeric codes, answer timed trivia questions, and see live scoreboards.
+jDuel is a multiplayer trivia game where players compete in real-time to answer questions. Players can create or join game rooms using short alphanumeric codes, answer timed trivia questions, and see live scoreboards.
 
 ### Key Features
 
 - **Room-based Multiplayer**: Create or join rooms with 4-character uppercase room codes (e.g., "AB3D")
+- **Deep Linking**: Share room URLs directly (e.g., `/room/AB3D`) - friends can join with one click
 - **Real-time Gameplay**: WebSocket-powered instant updates for all players
 - **Live Results**: See all player answers and correct answer after each question
+- **Player Persistence**: Names saved in localStorage for returning players
 - **Automatic Cleanup**: Rooms auto-close 60 seconds after game completion
 
 ## Architecture
+
+### Hybrid HTTP/WebSocket Design
+
+jDuel uses a hybrid architecture:
+
+- **HTTP REST API**: Room creation, validation, and player registration
+- **WebSocket**: Real-time game communication after joining
+
+This enables deep linking, proper error handling, and clean state management.
 
 ### Tech Stack
 
 **Frontend:**
 
 - React 19 with TypeScript
+- React Router for page navigation and deep links
 - Vite for build tooling
 - Material-UI (MUI) components
 - CSS Modules for styling
+- HTTP fetch for API calls
 - WebSocket for real-time communication
 
 **Backend:**
 
 - FastAPI (Python 3.13+)
-- WebSockets for bidirectional communication
+- REST API for room management
+- WebSockets for bidirectional game communication
 - In-memory data structures (no database)
 - Pandas for CSV question import
 - **Answer Verification**:
@@ -48,6 +62,7 @@ jDuel/
 │       │   ├── main.py         # FastAPI app entry point + lifespan
 │       │   ├── config.py       # Configuration constants
 │       │   ├── api/
+│       │   │   ├── routes.py   # HTTP REST endpoints
 │       │   │   └── websocket_handler.py  # WebSocket message handling
 │       │   ├── db/
 │       │   │   └── database.py # Question loading from CSV
@@ -75,9 +90,15 @@ jDuel/
         ├── main.tsx            # React entry point
         ├── App.tsx             # Router setup
         ├── config.tsx          # API/WebSocket URLs
+        ├── services/
+        │   └── api.ts          # HTTP API client
+        ├── hooks/
+        │   └── useWebSocket.tsx # WebSocket hook
+        ├── pages/
+        │   ├── HomePage/       # Landing page (create/join)
+        │   └── RoomPage/       # Game room with deep link support
         ├── components/
-        │   ├── JoinForm/       # Room creation/join UI
-        │   ├── LobbyRoom/      # Waiting room UI
+        │   ├── LobbyRoom/      # Waiting room UI + share link
         │   ├── GameRoom/       # Main game coordinator
         │   ├── QuestionView/   # Question display
         │   ├── ResultsView/    # Answer results
@@ -151,7 +172,7 @@ The game uses WebSocket for all real-time communication.
 2. **Question Phase** (`status: "playing"`):
 
    - Question displayed with category
-   - 15-second countdown timer
+   - N-second countdown timer
    - Players submit answers once
    - Transitions to results when all answer or timer expires
 

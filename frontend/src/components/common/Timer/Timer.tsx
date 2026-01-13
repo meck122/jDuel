@@ -1,3 +1,12 @@
+/**
+ * Timer - Displays countdown timer with local interpolation.
+ *
+ * This component:
+ * - Receives time from server state
+ * - Interpolates locally for smooth countdown
+ * - Resets when resetKey changes (new question/phase)
+ */
+
 import { useState, useEffect } from "react";
 import styles from "./Timer.module.css";
 
@@ -8,12 +17,12 @@ interface TimerProps {
   label?: string;
 }
 
-export const Timer = ({
+export function Timer({
   timeRemainingMs,
   resetKey,
   className,
   label = "Time remaining",
-}: TimerProps) => {
+}: TimerProps) {
   const [displayTime, setDisplayTime] = useState<number>(timeRemainingMs);
 
   useEffect(() => {
@@ -38,4 +47,4 @@ export const Timer = ({
       {label}: {Math.ceil(displayTime / 1000)}s
     </p>
   );
-};
+}

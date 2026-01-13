@@ -1,5 +1,7 @@
 """Builds room state for client communication."""
 
+from datetime import UTC, datetime
+
 from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, RESULTS_TIME_MS
 from app.models import GameStatus, Room
 from app.models.state import (
@@ -52,9 +54,14 @@ class StateBuilder:
             category=current_question.category,
         )
 
-        # if a player disconnected this same time will be sent...
-        # BUT it's ok because the prop doesn't update and the component does not re-rerender
-        state.timeRemainingMs = QUESTION_TIME_MS
+        # Calculate live remaining time for reconnecting players
+        if room.question_start_time:
+            elapsed_ms = int(
+                (datetime.now(UTC) - room.question_start_time).total_seconds() * 1000
+            )
+            state.timeRemainingMs = max(0, QUESTION_TIME_MS - elapsed_ms)
+        else:
+            state.timeRemainingMs = QUESTION_TIME_MS
 
     def _add_results_state(self, state: RoomStateData, room: Room) -> None:
         """Add results state details.
@@ -70,7 +77,15 @@ class StateBuilder:
             playerAnswers=room.player_answers,
             playerResults=room.question_points,
         )
-        state.timeRemainingMs = RESULTS_TIME_MS
+
+        # Calculate live remaining time for reconnecting players
+        if room.results_start_time:
+            elapsed_ms = int(
+                (datetime.now(UTC) - room.results_start_time).total_seconds() * 1000
+            )
+            state.timeRemainingMs = max(0, RESULTS_TIME_MS - elapsed_ms)
+        else:
+            state.timeRemainingMs = RESULTS_TIME_MS
 
     def _add_finished_state(self, state: RoomStateData, room: Room) -> None:
         """Add finished state details.
@@ -83,5 +98,11 @@ class StateBuilder:
             max(room.scores.items(), key=lambda x: x[1])[0] if room.scores else None
         )
 
+        # Calculate live remaining time for reconnecting players
         if room.finish_time:
+            elapsed_ms = int(
+                (datetime.now(UTC) - room.finish_time).total_seconds() * 1000
+            )
+            state.timeRemainingMs = max(0, GAME_OVER_TIME_MS - elapsed_ms)
+        else:
             state.timeRemainingMs = GAME_OVER_TIME_MS
