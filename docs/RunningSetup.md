@@ -98,8 +98,7 @@ cd frontend
 npm install
 
 # Build frontend with production WebSocket URL
-# Replace <public-domain-ip> with your public domain ip or EC2 instance's public IP
-VITE_WS_URL='ws://<public-domain-ip>/ws' npm run build
+VITE_WS_URL=ws://jduel.xyz/ws VITE_API_URL=http://jduel.xyz/api npm run build
 
 # Install backend dependencies
 cd ../backend
@@ -120,15 +119,25 @@ Create nginx configuration:
 sudo vim /etc/nginx/sites-enabled/jduel
 ```
 
-Paste the following configuration (replace `<public-domain-ip>` with your 
 EC2 public IP or public domain IP if you have one):
 
 ```nginx
 server {
     listen 80;
-    server_name <public-domain-ip>;
+    server_name jduel.xyz www.jduel.xyz;
 
-    location / {
+    # API routes - no WebSocket headers
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # WebSocket endpoint - WITH WebSocket headers
+    location /ws {
         proxy_pass http://127.0.0.1:8000;
 
         # WebSocket support (required for real-time game functionality)
@@ -136,7 +145,28 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
 
-        # Standard proxy headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # WebSocket timeouts
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+    }
+
+    # Health check endpoint
+    location /health {
+        proxy_pass http://127.0.0.1:8000;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Static files - served by FastAPI
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -179,7 +209,7 @@ ExecStart=/home/ubuntu/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 -
 Restart=always
 RestartSec=3
 Environment=PYTHONUNBUFFERED=1
-Environment=FRONTEND_URL=<public-domain-ip>
+Environment=FRONTEND_URL=http://jduel.xyz
 
 [Install]
 WantedBy=multi-user.target
@@ -190,6 +220,9 @@ WantedBy=multi-user.target
 Enable and start the service:
 
 ```bash
+# Stop the service if needed
+sudo systemctl stop jduel-backend
+
 # Reload systemd to recognize new service
 sudo systemctl daemon-reload
 
@@ -212,7 +245,7 @@ sudo systemctl status jduel-backend
 journalctl -u jduel-backend -f
 ```
 
-Test the application by visiting `http://<public-domain-ip>` in your browser.
+Test the application by visiting `http://www.jduel.xyz/` in your browser.
 
 ### Managing the Service
 
@@ -244,7 +277,7 @@ git pull
 
 # Rebuild frontend (if frontend changed)
 cd frontend
-VITE_WS_URL='ws://<public-domain-ip>/ws' npm run build
+VITE_WS_URL=ws://jduel.xyz/ws VITE_API_URL=http://jduel.xyz/api npm run build
 
 # Restart backend service
 cd ..

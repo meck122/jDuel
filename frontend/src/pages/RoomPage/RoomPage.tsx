@@ -53,7 +53,7 @@ function RoomPageContent() {
         return;
       }
 
-      const normalizedRoomId = urlRoomId.toUpperCase();
+      const normalizedRoomId = urlRoomId.toUpperCase(); // TODO: does this need to be normalize?
       setRoomId(normalizedRoomId);
 
       try {

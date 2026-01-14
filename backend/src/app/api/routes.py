@@ -53,7 +53,7 @@ class ErrorResponse(BaseModel):
 
 
 @router.post("/rooms", response_model=CreateRoomResponse)
-async def create_room() -> CreateRoomResponse:
+def create_room() -> CreateRoomResponse:
     """Create a new game room.
 
     Returns:
@@ -72,7 +72,7 @@ async def create_room() -> CreateRoomResponse:
 
 
 @router.get("/rooms/{room_id}", response_model=RoomInfoResponse)
-async def get_room(room_id: str) -> RoomInfoResponse:
+def get_room(room_id: str) -> RoomInfoResponse:
     """Get information about a room.
 
     Args:
@@ -102,7 +102,7 @@ async def get_room(room_id: str) -> RoomInfoResponse:
 
 
 @router.post("/rooms/{room_id}/join", response_model=JoinRoomResponse)
-async def join_room(room_id: str, request: JoinRoomRequest) -> JoinRoomResponse:
+def join_room(room_id: str, request: JoinRoomRequest) -> JoinRoomResponse:
     """Pre-register a player to join a room.
 
     This validates and reserves the player name before WebSocket connection.

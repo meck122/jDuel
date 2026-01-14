@@ -31,7 +31,8 @@ export function GameView() {
     <div className={styles.container}>
       <h1 className={styles.title}>
         <span className={styles.titleJ}>j</span>
-        <span className={styles.titleDuel}>Duel</span>
+        <span className={styles.titleDuel}>Duel</span>{" "}
+        {/* TODO: change these */}
         <span className={styles.titleRoom}> - Room: {roomId}</span>
       </h1>
 
