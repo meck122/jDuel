@@ -11,7 +11,6 @@ from fastapi.staticfiles import StaticFiles
 from app.api import api_router, handle_websocket
 from app.config import CORS_ORIGINS, setup_logging
 
-# Initialize logging
 setup_logging()
 logger = logging.getLogger(__name__)
 
@@ -19,14 +18,9 @@ logger = logging.getLogger(__name__)
 @contextlib.asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Manage application lifespan events."""
-    from app.services.answer_service import AnswerService
-    from app.services.container import init_services
+    from app.services import init_services, load_answer_service
 
-    # Initialize all services at startup
-    logger.info("Initializing AnswerService...")
-    answer_service = AnswerService()
-    logger.info("AnswerService ready!")
-
+    answer_service = load_answer_service()
     init_services(answer_service)
 
     yield

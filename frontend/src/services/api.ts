@@ -77,43 +77,6 @@ export async function createRoom(): Promise<CreateRoomResponse> {
 }
 
 /**
- * Get information about a room.
- * Used to validate room exists before connecting via WebSocket.
- * @param roomId The room ID to look up
- * @returns Room info or null if not found
- */
-export async function getRoom(
-  roomId: string,
-): Promise<RoomInfoResponse | null> {
-  try {
-    const response = await fetch(`${API_URL}/rooms/${roomId.toUpperCase()}`, {
-      method: "GET",
-    });
-
-    if (response.status === 404) {
-      return null;
-    }
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new ApiError(
-        error.detail?.code || "NETWORK_ERROR",
-        error.detail?.error || "Failed to get room",
-        response.status,
-      );
-    }
-
-    return response.json();
-  } catch (error) {
-    if (error instanceof ApiError) throw error;
-    throw new ApiError(
-      "NETWORK_ERROR",
-      "Network error: Unable to connect to server",
-    );
-  }
-}
-
-/**
  * Pre-register a player to join a room.
  * Must be called before connecting via WebSocket.
  * @param roomId The room ID to join

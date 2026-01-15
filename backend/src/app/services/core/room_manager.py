@@ -25,12 +25,12 @@ class RoomManager:
         self.logger = logging.getLogger(__name__)
 
     def create_room(self) -> Room:
-        """Create a room with a unique room code
+        """Create a room with a unique room code.
 
         Returns:
-            The roomId
+            The newly created Room
         """
-        room_id: str = self.generate_unique_room_code()
+        room_id: str = self._generate_unique_room_code()
         questions: list[Question] = get_random_questions(count=10)
         self.rooms[room_id] = Room(room_id, questions)
 
@@ -126,7 +126,7 @@ class RoomManager:
                 f"WebSocket detached: room_id={room_id}, player_id={player_id}"
             )
 
-    def generate_unique_room_code(self) -> str:
+    def _generate_unique_room_code(self) -> str:
         """Generate a unique 4-character alphanumeric room code.
 
         Returns:
@@ -157,5 +157,6 @@ class RoomManager:
                 await ws.send_json(state)
             except Exception as e:
                 self.logger.warning(
-                    f"Failed to broadcast to player: room_id={room_id}, player_id={player_id}, error={e!s}"
+                    f"Failed to broadcast to player: room_id={room_id}, "
+                    f"player_id={player_id}, error={e!s}"
                 )

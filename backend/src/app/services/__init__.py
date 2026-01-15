@@ -1,13 +1,18 @@
-"""Business logic services."""
+"""Business logic services.
 
+Services are organized into subpackages:
+- answer: Answer verification with NLP
+- core: Room management, game logic, timing
+- orchestration: Game flow coordination
+"""
+
+from app.services.answer import AnswerService, load_answer_service
 from app.services.container import ServiceContainer, get_container, init_services
-from app.services.game_service import GameService
-from app.services.orchestrator import GameOrchestrator
-from app.services.room_manager import RoomManager
-from app.services.state_builder import StateBuilder
-from app.services.timer_service import TimerService
+from app.services.core import GameService, RoomManager, TimerService
+from app.services.orchestration import GameOrchestrator, StateBuilder
 
 __all__ = [
+    "AnswerService",
     "GameOrchestrator",
     "GameService",
     "RoomManager",
@@ -16,4 +21,5 @@ __all__ = [
     "TimerService",
     "get_container",
     "init_services",
+    "load_answer_service",
 ]

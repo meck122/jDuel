@@ -81,6 +81,17 @@ class TimerService:
         self._cancel_timer(self._result_timers, room_id)
         self._cancel_timer(self._game_over_timers, room_id)
 
+    def _cancel_timer(self, timer_dict: dict[str, asyncio.Task], room_id: str) -> None:
+        """Cancel a specific timer.
+
+        Args:
+            timer_dict: The dictionary storing timers
+            room_id: The room ID
+        """
+        if room_id in timer_dict:
+            timer_dict[room_id].cancel()
+            del timer_dict[room_id]
+
     async def _run_timer(
         self,
         duration_ms: int,
@@ -97,14 +108,3 @@ class TimerService:
             await callback()
         except asyncio.CancelledError:
             logger.debug("Timer cancelled")
-
-    def _cancel_timer(self, timer_dict: dict[str, asyncio.Task], room_id: str) -> None:
-        """Cancel a specific timer.
-
-        Args:
-            timer_dict: The dictionary storing timers
-            room_id: The room ID
-        """
-        if room_id in timer_dict:
-            timer_dict[room_id].cancel()
-            del timer_dict[room_id]

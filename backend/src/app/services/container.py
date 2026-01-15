@@ -10,12 +10,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.services.answer_service import AnswerService
-    from app.services.game_service import GameService
-    from app.services.orchestrator import GameOrchestrator
-    from app.services.room_manager import RoomManager
-    from app.services.state_builder import StateBuilder
-    from app.services.timer_service import TimerService
+    from app.services.answer import AnswerService
+    from app.services.core import GameService, RoomManager, TimerService
+    from app.services.orchestration import GameOrchestrator, StateBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -75,11 +72,8 @@ def init_services(answer_service: "AnswerService") -> ServiceContainer:
 
     # Import here to avoid circular imports
     from app.api.websocket_handler import WebSocketRoomCloser
-    from app.services.game_service import GameService
-    from app.services.orchestrator import GameOrchestrator
-    from app.services.room_manager import RoomManager
-    from app.services.state_builder import StateBuilder
-    from app.services.timer_service import TimerService
+    from app.services.core import GameService, RoomManager, TimerService
+    from app.services.orchestration import GameOrchestrator, StateBuilder
 
     logger.info("Initializing service container...")
 

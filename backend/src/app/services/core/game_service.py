@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 from app.config import MAX_SCORE_PER_QUESTION, QUESTION_TIME_MS
 from app.models import GameStatus, Room
-from app.services.answer_service import AnswerService
+from app.services.answer import AnswerService
 
 
 class GameService:
@@ -60,9 +60,7 @@ class GameService:
             )
 
             # Validate time is within bounds
-            if (
-                elapsed_ms <= QUESTION_TIME_MS
-            ):  # TODO: is this if necessary? maybe security?
+            if elapsed_ms <= QUESTION_TIME_MS:
                 # Count how many correct answers were already submitted
                 correct_count = len(room.correct_players) - 1
                 score = self._calculate_score(correct_count)

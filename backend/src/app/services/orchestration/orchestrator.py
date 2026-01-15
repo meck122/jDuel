@@ -7,10 +7,8 @@ from fastapi import WebSocket
 
 from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, RESULTS_TIME_MS
 from app.models import RoomStateMessage
-from app.services.game_service import GameService
-from app.services.room_manager import RoomManager
-from app.services.state_builder import StateBuilder
-from app.services.timer_service import TimerService
+from app.services.core import GameService, RoomManager, TimerService
+from app.services.orchestration.state_builder import StateBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -68,13 +66,15 @@ class GameOrchestrator:
         room = self._room_manager.get_room(room_id)
         if not room:
             logger.warning(
-                f"Player tried to connect to non-existent room: room_id={room_id}, player_id={player_id}"
+                f"Player tried to connect to non-existent room: "
+                f"room_id={room_id}, player_id={player_id}"
             )
             return False
 
         if player_id not in room.players:
             logger.warning(
-                f"Unregistered player tried to connect: room_id={room_id}, player_id={player_id}"
+                f"Unregistered player tried to connect: "
+                f"room_id={room_id}, player_id={player_id}"
             )
             return False
 

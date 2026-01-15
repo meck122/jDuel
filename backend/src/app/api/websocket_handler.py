@@ -6,9 +6,8 @@ import logging
 
 from fastapi import WebSocket, WebSocketDisconnect
 
-from app.services.orchestrator import RoomCloser
-from app.services.room_manager import RoomManager
-from app.services.timer_service import TimerService
+from app.services.core import RoomManager, TimerService
+from app.services.orchestration import RoomCloser
 
 logger = logging.getLogger(__name__)
 

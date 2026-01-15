@@ -103,7 +103,11 @@ jDuel/
 │   └── src/
 │       ├── app/
 │       │   ├── main.py         # FastAPI app entry point + lifespan
-│       │   ├── config.py       # Configuration constants
+│       │   ├── config/         # Configuration package
+│       │   │   ├── __init__.py
+│       │   │   ├── game.py     # Game constants (timing, scoring)
+│       │   │   ├── environment.py  # CORS and environment settings
+│       │   │   └── logging.py  # Logging configuration
 │       │   ├── api/
 │       │   │   ├── routes.py   # HTTP REST endpoints
 │       │   │   └── websocket_handler.py  # WebSocket message handling
@@ -115,12 +119,19 @@ jDuel/
 │       │   │   └── state.py    # Room state messages
 │       │   └── services/
 │       │       ├── container.py         # Service container (DI)
-│       │       ├── answer_service.py    # AI-powered answer checking
-│       │       ├── game_service.py      # Game logic (answers, scoring)
-│       │       ├── orchestrator.py      # Game flow coordination
-│       │       ├── room_manager.py      # Room/player management
-│       │       ├── state_builder.py     # State message construction
-│       │       └── timer_service.py     # Question/results timers
+│       │       ├── answer/              # Answer verification package
+│       │       │   ├── __init__.py
+│       │       │   ├── answer_service.py  # NLP-based answer verification
+│       │       │   └── loader.py          # Model loading utilities
+│       │       ├── core/                # Core game services
+│       │       │   ├── __init__.py
+│       │       │   ├── game_service.py    # Game logic & scoring
+│       │       │   ├── room_manager.py    # Room/player management
+│       │       │   └── timer_service.py   # Question/results timers
+│       │       └── orchestration/       # Game flow coordination
+│       │           ├── __init__.py
+│       │           ├── orchestrator.py    # Coordinates game flow
+│       │           └── state_builder.py   # State message construction
 │       └── scripts/
 │           ├── import_questions.py      # CSV import utility
 │           ├── answer_service_testing.py # Answer checking tests
@@ -228,17 +239,37 @@ See [EventProtocol.md](docs/EventProtocol.md) for complete protocol details.
 
 ### Backend Services
 
-- **ServiceContainer**: Dependency injection container that manages all service instances using the Composition Root pattern
+The backend services are organized into modular packages for better maintainability:
+
+**Configuration (`config/`)**:
+
+- **game.py**: Game constants (timing, scoring rules)
+- **environment.py**: CORS origins and environment-specific settings
+- **logging.py**: Centralized logging configuration
+
+**Answer Verification (`services/answer/`)**:
+
 - **AnswerService**: AI-powered answer verification using:
   - Fuzzy string matching (RapidFuzz) for typo tolerance
   - Semantic similarity (sentence-transformers embeddings) for synonyms
   - Lemmatization (spaCy) for grammatical variations
   - Exact matching for numeric answers
+- **loader.py**: Dedicated model loading utility for clean startup
+
+**Core Services (`services/core/`)**:
+
 - **RoomManager**: Manages room lifecycle, player connections, generates room codes, handles duplicate name detection
 - **GameService**: Validates answers through AnswerService, calculates scores (time-based bonus), tracks correct/incorrect answers
-- **GameOrchestrator**: Coordinates game flow between services, handles state transitions
 - **TimerService**: Manages question timers and results timers per room
+
+**Orchestration (`services/orchestration/`)**:
+
+- **GameOrchestrator**: Coordinates game flow between all services, handles state transitions
 - **StateBuilder**: Constructs room state messages with current question, timer, results, and correct player tracking
+
+**Dependency Injection**:
+
+- **ServiceContainer**: Manages all service instances using the Composition Root pattern for clean dependency management
 
 ### Frontend Architecture
 
@@ -263,7 +294,11 @@ See [EventProtocol.md](docs/EventProtocol.md) for complete protocol details.
 
 ### Timing Configuration
 
-Timing configuration constants in `backend/src/app/config.py`:
+Timing configuration constants in `backend/src/app/config/game.py`:
+
+- `QUESTION_TIME_MS = 15000` (15 seconds per question)
+- `RESULTS_TIME_MS = 10000` (10 seconds for results display)
+- `GAME_OVER_TIME_MS = 60000` (60 seconds before room auto-closes)
 
 ## Environment Variables
 
@@ -313,4 +348,4 @@ Commercial use is prohibited.
 
 Mark Liao  
 Joshua Strutt  
-Justin Cedillo  
+Justin Cedillo
