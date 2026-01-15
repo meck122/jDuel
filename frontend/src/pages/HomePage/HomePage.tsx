@@ -5,39 +5,35 @@
  * 1. "Host a Game" - Create a new room and become the host
  * 2. "Join a Game" - Enter a room code to join an existing game
  *
+ * Also handles deep link redirects via ?join=XXXX query param.
  * Player names are persisted in localStorage for convenience.
  */
 
-import { FormEvent, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { FormEvent, useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { createRoom, joinRoom, ApiError } from "../../services/api";
+import { usePlayerName } from "../../hooks";
 import styles from "./HomePage.module.css";
-
-const PLAYER_NAME_KEY = "jduel_player_name";
 
 export const HomePage = () => {
   const navigate = useNavigate();
-  const [playerName, setPlayerName] = useState<string>("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { playerName, setPlayerName } = usePlayerName();
   const [roomCode, setRoomCode] = useState<string>("");
   const [activeCard, setActiveCard] = useState<"host" | "join" | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  // Load saved player name on mount
+  // Handle deep link redirect: ?join=XXXX
   useEffect(() => {
-    const savedName = localStorage.getItem(PLAYER_NAME_KEY);
-    if (savedName) {
-      setPlayerName(savedName);
+    const joinRoomCode = searchParams.get("join");
+    if (joinRoomCode) {
+      setRoomCode(joinRoomCode.toUpperCase());
+      setActiveCard("join");
+      // Clear the query param from URL (cleaner UX)
+      setSearchParams({}, { replace: true });
     }
-  }, []);
-
-  // Save player name when it changes
-  const handleNameChange = (name: string) => {
-    setPlayerName(name);
-    if (name.trim()) {
-      localStorage.setItem(PLAYER_NAME_KEY, name.trim());
-    }
-  };
+  }, [searchParams, setSearchParams]);
 
   const handleCreateRoom = async (e: FormEvent) => {
     e.preventDefault();
@@ -53,9 +49,9 @@ export const HomePage = () => {
       // Step 2: Register the creator as a player
       await joinRoom(room.roomId, playerName.trim());
 
-      // Step 3: Navigate to the room page
+      // Step 3: Navigate to the game page
       navigate(
-        `/room/${room.roomId}?player=${encodeURIComponent(playerName.trim())}`,
+        `/game/${room.roomId}?player=${encodeURIComponent(playerName.trim())}`,
       );
     } catch (err) {
       if (err instanceof ApiError) {
@@ -78,9 +74,9 @@ export const HomePage = () => {
       // Register the player via HTTP
       await joinRoom(roomCode.toUpperCase(), playerName.trim());
 
-      // Navigate to the room page
+      // Navigate to the game page
       navigate(
-        `/room/${roomCode.toUpperCase()}?player=${encodeURIComponent(playerName.trim())}`,
+        `/game/${roomCode.toUpperCase()}?player=${encodeURIComponent(playerName.trim())}`,
       );
     } catch (err) {
       if (err instanceof ApiError) {
@@ -128,7 +124,7 @@ export const HomePage = () => {
                 type="text"
                 placeholder="Your Name"
                 value={playerName}
-                onChange={(e) => handleNameChange(e.target.value)}
+                onChange={(e) => setPlayerName(e.target.value)}
                 maxLength={20}
                 autoFocus
               />
@@ -155,7 +151,7 @@ export const HomePage = () => {
                 type="text"
                 placeholder="Your Name"
                 value={playerName}
-                onChange={(e) => handleNameChange(e.target.value)}
+                onChange={(e) => setPlayerName(e.target.value)}
                 maxLength={20}
               />
               <input

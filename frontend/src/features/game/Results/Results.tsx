@@ -27,15 +27,18 @@ export function Results() {
 
   return (
     <div className={styles.gameSection}>
-      <h2 className={styles.resultsHeader}>
-        <span className={styles.resultsQuestion}>Question Results</span>
-      </h2>
-      <Timer
-        timeRemainingMs={timeRemainingMs}
-        resetKey={correctAnswer}
-        className="results-timer"
-        label="Next question in"
-      />
+      <div className={styles.resultsHeader}>
+        <span className={styles.resultsTitle}>Round Results</span>
+      </div>
+
+      <div className={styles.timerSection}>
+        <p className={styles.nextQuestionText}>Next question in</p>
+        <Timer
+          timeRemainingMs={timeRemainingMs}
+          resetKey={correctAnswer}
+          className="results-timer"
+        />
+      </div>
 
       <div className={styles.correctAnswerBanner}>
         <span className={styles.correctLabel}>Correct Answer:</span>

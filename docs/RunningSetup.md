@@ -53,7 +53,7 @@ ruff check .
 npm run format
 ```
 
-Frontend runs on `http://localhost:5173`
+Frontend runs on `http://localhost:3000`
 
 ### Import Questions
 
@@ -290,7 +290,7 @@ sudo systemctl restart jduel-backend
 
 ### Development Mode
 
-- Frontend dev server (port 5173) with hot-reload
+- Frontend dev server (port 3000) with hot-reload
 - Backend server (port 8000) with auto-reload
 - Separate processes for faster iteration
 

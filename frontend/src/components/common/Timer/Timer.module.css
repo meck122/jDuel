@@ -1,18 +1,58 @@
-.timer {
-  font-size: var(--font-size-xl);
-  color: var(--color-warning);
-  margin: var(--spacing-md) 0;
+.timerWrapper {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin: var(--spacing-lg) auto;
 }
 
-.resultsTimer {
-  composes: timer;
-  font-weight: 600;
+.resultsTimerWrapper {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  margin: var(--spacing-md) auto;
 }
 
-.gameOverTimer {
-  font-size: var(--font-size-lg);
-  color: var(--color-error);
-  margin: var(--spacing-md) 0;
-  font-weight: 600;
-  font-style: italic;
+.gameOverTimerWrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: var(--spacing-lg) auto;
+}
+
+.timerSvg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+
+.timerCircleBackground {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 8;
+}
+
+.timerCircleProgress {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition:
+    stroke-dashoffset 0.1s linear,
+    stroke 0.3s ease;
+}
+
+.timerText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.resultsTimerWrapper .timerText {
+  font-size: 1.25rem;
+}
+
+.gameOverTimerWrapper .timerText {
+  font-size: 1.5rem;
 }

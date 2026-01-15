@@ -3,30 +3,64 @@
 }
 
 .questionHeader {
-  composes: game-header from global;
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  justify-content: center;
+  margin-bottom: var(--spacing-xl);
 }
 
-.categoryLabel {
-  color: var(--color-accent-red);
+.questionNumber {
+  font-size: var(--font-size-3xl);
   font-weight: 700;
+  color: var(--color-accent);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.questionTotal {
+  font-size: var(--font-size-xl);
+  font-weight: 500;
+  color: var(--color-text-muted);
 }
 
 .questionCategory {
-  font-size: var(--font-size-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-bg-darker);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-sm);
+  border: 1px solid rgba(255, 191, 0, 0.2);
+}
+
+.categoryLabel {
+  font-size: var(--font-size-md);
+  color: var(--color-accent);
   font-weight: 600;
-  color: var(--color-warning);
-  margin: var(--spacing-md) 0;
+}
+
+.categoryValue {
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.questionBox {
+  margin: var(--spacing-lg) 0;
 }
 
 .question {
   font-size: var(--font-size-2xl);
-  font-weight: bold;
+  font-weight: 600;
   color: var(--color-text-primary);
-  margin: var(--spacing-xl) 0;
-  padding: var(--spacing-lg);
+  margin: 0;
+  padding: var(--spacing-xl);
   background: var(--color-bg-darker);
-  border-radius: var(--radius-md);
-  line-height: 1.4;
+  border-radius: var(--radius-lg);
+  line-height: 1.5;
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .answerForm {

@@ -10,9 +10,9 @@ RESULTS_TIME_MS = 10000  # 10 seconds for results screen
 GAME_OVER_TIME_MS = 60000  # 60 seconds (1 minute) before closing room
 
 # Environmnet-specific config # TODO: this code kinda nasty
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 CORS_ORIGINS = (
-    [FRONTEND_URL, "http://127.0.0.1:5173"]
+    [FRONTEND_URL, "http://127.0.0.1:3000"]
     if "localhost" in FRONTEND_URL
     else [
         FRONTEND_URL,

@@ -3,11 +3,33 @@
 }
 
 .resultsHeader {
-  composes: game-header from global;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
 }
 
-.resultsQuestion {
+.resultsIcon {
+  font-size: var(--font-size-3xl);
+}
+
+.resultsTitle {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
   color: var(--color-accent);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.timerSection {
+  margin: var(--spacing-lg) 0;
+}
+
+.nextQuestionText {
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500;
 }
 
 .correctAnswerBanner {
@@ -54,7 +76,9 @@
 }
 
 .resultsPlayerName {
-  composes: score-player-name from global;
+  font-weight: 600;
+  color: #60a5fa;
+  font-size: var(--font-size-md);
 }
 
 .resultsPlayerScore {

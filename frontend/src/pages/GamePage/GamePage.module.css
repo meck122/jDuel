@@ -1,0 +1,49 @@
+.message {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-dim);
+  text-align: center;
+}
+
+.errorContainer {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  background: var(--gradient-primary);
+  border-radius: var(--radius-lg);
+  border: 3px solid var(--color-accent-red);
+}
+
+.errorTitle {
+  font-size: var(--font-size-xl);
+  color: var(--color-accent-red);
+  margin-bottom: var(--spacing-md);
+}
+
+.errorMessage {
+  color: var(--color-text-dim);
+  margin-bottom: var(--spacing-xl);
+}
+
+.errorActions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.primaryButton {
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-md);
+}
+
+.secondaryButton {
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-md);
+  background: transparent;
+  border: 2px solid var(--color-accent);
+  color: var(--color-accent);
+}
+
+.secondaryButton:hover {
+  background: var(--color-accent);
+  color: var(--color-text);
+}

@@ -107,22 +107,6 @@ button:focus-visible {
 }
 
 /* ============================================
-   LAYOUT UTILITIES
-   ============================================ */
-.app-layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  width: 100%;
-}
-
-.app-main {
-  flex-grow: 1;
-  padding-top: 64px; /* AppBar height */
-  width: 100%;
-}
-
-/* ============================================
    REUSABLE COMPONENT CLASSES
    ============================================ */
 .card {
@@ -146,37 +130,6 @@ button:focus-visible {
   color: var(--color-accent);
 }
 
-/* Score display pattern used across components */
-.score-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-bg-darker);
-  border-radius: var(--radius-sm);
-  border-left: 3px solid var(--color-accent);
-}
-
-.score-player-name {
-  font-weight: 600;
-  color: var(--color-accent);
-}
-
-.score-value {
-  font-size: var(--font-size-xl);
-  font-weight: bold;
-  color: var(--color-warning);
-}
-
-/* Grid for player cards/items */
-.player-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: var(--spacing-lg);
-  margin: var(--spacing-xl) 0;
-}
-
-/* Box/container pattern */
 .content-box {
   background: var(--color-bg-dark);
   padding: var(--spacing-lg);
@@ -189,6 +142,29 @@ button:focus-visible {
   margin-bottom: var(--spacing-md);
   color: var(--color-accent);
   font-size: var(--font-size-xl);
+}
+
+.score-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-darker);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-accent);
+}
+
+.score-value {
+  font-size: var(--font-size-xl);
+  font-weight: bold;
+  color: var(--color-warning);
+}
+
+.player-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+  margin: var(--spacing-xl) 0;
 }
 
 /* ============================================

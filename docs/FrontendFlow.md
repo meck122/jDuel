@@ -29,9 +29,12 @@ frontend/src/
 │       ├── Results/          # Post-question results
 │       └── GameOver/         # Final scores display
 │
+├── hooks/                     # Custom React hooks
+│   └── usePlayerName.ts      # localStorage player name management
+│
 ├── pages/                     # Route-level components
 │   ├── HomePage/             # Landing page (create/join)
-│   └── RoomPage/             # Game room page
+│   └── GamePage/             # Active game session
 │
 ├── services/                  # API services
 │   └── api.ts                # HTTP API client
@@ -53,13 +56,14 @@ frontend/src/
 App (Router)
 ├── Route "/" → HomePage
 │   ├── "Host a Game" card → Create room flow
-│   └── "Join a Game" card → Join room flow
+│   ├── "Join a Game" card → Join room flow
+│   └── ?join=XXXX param → Auto-activate join card with room code
 │
-├── Route "/room/:roomId" → RoomPage
+├── Route "/room/:roomId" → Redirect to /?join=:roomId
+│
+├── Route "/game/:roomId" → GamePage
 │   └── GameProvider (context)
-│       └── RoomPageContent
-│           ├── Loading state
-│           ├── Name prompt (deep link)
+│       └── GamePageContent
 │           ├── Error state
 │           ├── Connecting state
 │           └── GameView (connected)
@@ -151,7 +155,7 @@ This traces the HTTP calls, WebSocket connections, and React state changes for a
 
 #### Step 1: Alice Opens App
 
-**URL:** `http://localhost:5173/`
+**URL:** `http://localhost:3000/`
 
 **Component Tree:**
 
@@ -179,20 +183,20 @@ await joinRoom('AB3D', 'Alice');
 // Response: { roomId: "AB3D", playerId: "Alice", status: "waiting" }
 ```
 
-#### Step 4: Navigate to Room
+#### Step 4: Navigate to Game
 
 **Navigation:**
 
 ```javascript
-navigate('/room/AB3D?player=Alice');
+navigate('/game/AB3D?player=Alice');
 ```
 
-**URL:** `http://localhost:5173/room/AB3D?player=Alice`
+**URL:** `http://localhost:3000/game/AB3D?player=Alice`
 
 **Component Tree:**
 
 ```
-App → RoomPage → GameProvider → RoomPageContent → GameView → Lobby
+App → GamePage → GameProvider → GamePageContent → GameView → Lobby
 ```
 
 #### Step 5: WebSocket Connection
@@ -222,30 +226,24 @@ connect('AB3D', 'Alice');
 
 ### Phase 2: Bob Joins via Deep Link
 
-Alice shares the link: `http://localhost:5173/room/AB3D`
+Alice shares the link: `http://localhost:3000/room/AB3D`
 
 #### Step 1: Bob Opens Deep Link
 
-**URL:** `http://localhost:5173/room/AB3D` (no `?player=` param)
+**URL:** `http://localhost:3000/room/AB3D`
+
+**Router redirects to:** `http://localhost:3000/?join=AB3D`
 
 **Component Tree:**
 
 ```
-App → RoomPage → GameProvider → RoomPageContent (loading)
+App → HomePage (with join card active, room code prefilled)
 ```
 
-#### Step 2: Validate Room Exists
+#### Step 2: Bob Enters Name and Joins
 
-**API Call:**
-
-```javascript
-const room = await getRoom('AB3D');
-// Response: { roomId: "AB3D", status: "waiting", playerCount: 1, players: ["Alice"] }
-```
-
-**RoomPageContent shows:** Name prompt form
-
-#### Step 3: Bob Enters Name and Joins
+Bob sees the "Join a Game" card already active with room code "AB3D" prefilled.
+He enters his name and clicks "Join Room".
 
 **API Call:**
 
@@ -254,7 +252,15 @@ await joinRoom('AB3D', 'Bob');
 // Response: { roomId: "AB3D", playerId: "Bob", status: "waiting" }
 ```
 
-**URL Update:** `/room/AB3D?player=Bob`
+#### Step 3: Navigate to Game
+
+**Navigation:**
+
+```javascript
+navigate('/game/AB3D?player=Bob');
+```
+
+**URL:** `http://localhost:3000/game/AB3D?player=Bob`
 
 #### Step 4: WebSocket Connection
 
@@ -427,7 +433,8 @@ Game components live in `features/game/` rather than flat in `components/`. This
 
 ### 3. Separation of Concerns
 
-- **RoomPage**: Connection management, routing, error handling
+- **HomePage**: Room creation, join flow, deep link handling
+- **GamePage**: WebSocket connection, GameProvider setup
 - **GameView**: Phase orchestration (which component to show)
 - **Lobby/Question/Results/GameOver**: Individual phase UI
 
@@ -437,16 +444,25 @@ Game components live in `features/game/` rather than flat in `components/`. This
 - WebSocket for real-time game updates
 - Enables proper error handling and deep linking
 
+### 5. Deep Link via Redirect
+
+Deep links (`/room/AB3D`) redirect to `/?join=AB3D` instead of having a separate page:
+
+- Consolidates all entry logic in HomePage
+- Simpler architecture with fewer components
+- Consistent UX for all join flows
+
 ---
 
 ## Component Responsibilities
 
-| Component  | Responsibility                                    |
-| ---------- | ------------------------------------------------- |
-| `RoomPage` | URL params, HTTP registration, GameProvider setup |
-| `GameView` | Renders correct phase component based on status   |
-| `Lobby`    | Show players, share link, start game button       |
-| `Question` | Display question, timer, answer form              |
-| `Results`  | Show correct answer, scores, player answers       |
-| `GameOver` | Winner announcement, final scores                 |
-| `Timer`    | Local countdown interpolation                     |
+| Component  | Responsibility                                       |
+| ---------- | ---------------------------------------------------- |
+| `HomePage` | Room creation, join flow, deep link redirect handler |
+| `GamePage` | GameProvider setup, WebSocket connection management  |
+| `GameView` | Renders correct phase component based on status      |
+| `Lobby`    | Show players, share link, start game button          |
+| `Question` | Display question, timer, answer form                 |
+| `Results`  | Show correct answer, scores, player answers          |
+| `GameOver` | Winner announcement, final scores                    |
+| `Timer`    | Local countdown interpolation                        |

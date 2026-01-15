@@ -21,7 +21,7 @@ import { GameOver } from "../GameOver";
 import styles from "./GameView.module.css";
 
 export function GameView() {
-  const { roomId, roomState } = useGame();
+  const { roomState } = useGame();
 
   if (!roomState) {
     return null;
@@ -29,13 +29,6 @@ export function GameView() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>
-        <span className={styles.titleJ}>j</span>
-        <span className={styles.titleDuel}>Duel</span>{" "}
-        {/* TODO: change these */}
-        <span className={styles.titleRoom}> - Room: {roomId}</span>
-      </h1>
-
       {roomState.status === "waiting" && <Lobby />}
 
       {roomState.status === "playing" &&

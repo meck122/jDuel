@@ -37,8 +37,8 @@ src/
 │       └── GameOver/         # Final scores
 │
 ├── pages/                     # Route components
-│   ├── HomePage/             # Landing page
-│   └── RoomPage/             # Game room
+│   ├── HomePage/             # Landing page (create/join)
+│   └── GamePage/             # Active game session
 │
 ├── services/                  # API layer
 │   └── api.ts                # HTTP client
@@ -72,7 +72,7 @@ npm install
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`
+The app will be available at `http://localhost:3000`
 
 ### Build
 
@@ -103,7 +103,8 @@ The app uses React Context for game state management:
 
 ```
 /              → HomePage (create/join room)
-/room/:roomId  → RoomPage (game room)
+/room/:roomId  → Redirects to /?join=:roomId (deep link handling)
+/game/:roomId  → GamePage (active game session)
 /about         → About page
 ```
 
@@ -120,7 +121,7 @@ The `GameView` component renders different UI based on game status:
 
 ## Key Features
 
-- **Deep Linking** - Share room URLs directly (`/room/AB3D`)
+- **Deep Linking** - Share room URLs directly (`/room/AB3D` redirects to home with room code prefilled)
 - **Session Persistence** - Player names saved in localStorage
 - **Real-time Updates** - WebSocket for instant game state sync
 - **Responsive Design** - Works on desktop and mobile

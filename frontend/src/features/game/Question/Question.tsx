@@ -42,19 +42,23 @@ export function Question() {
 
   return (
     <div className={styles.gameSection}>
-      <h2 className={styles.questionHeader}>
-        Question {questionIndex + 1} / 10
-      </h2>
-      <p className={styles.questionCategory}>
-        <span className={styles.categoryLabel}>Category:</span>{" "}
-        {currentQuestion.category}
-      </p>
-      <p className={styles.question}>{currentQuestion.text}</p>
+      <div className={styles.questionHeader}>
+        <span className={styles.questionNumber}>
+          Question {questionIndex + 1}
+        </span>
+        <span className={styles.questionTotal}>of 10</span>
+      </div>
+      <div className={styles.questionCategory}>
+        <span className={styles.categoryLabel}>Category:</span>
+        <span className={styles.categoryValue}>{currentQuestion.category}</span>
+      </div>
+      <div className={styles.questionBox}>
+        <p className={styles.question}>{currentQuestion.text}</p>
+      </div>
       <Timer
         timeRemainingMs={timeRemainingMs}
         resetKey={questionIndex}
         className="timer"
-        label="Time remaining"
       />
 
       {!hasSubmitted ? (

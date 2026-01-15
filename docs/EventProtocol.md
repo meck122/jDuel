@@ -289,26 +289,9 @@ ws://localhost:8000/ws?roomId=AB3D&playerId=Alice
 
 Alice shares the link: `https://jduel.com/room/AB3D`
 
-#### Step 1: Bob opens deep link, enters name
+The frontend redirects this to `/?join=AB3D`, which prefills the room code on the HomePage.
 
-Frontend fetches room info:
-
-```
-GET /api/rooms/AB3D
-```
-
-**HTTP Response (200):**
-
-```json
-{
-  "roomId": "AB3D",
-  "status": "waiting",
-  "playerCount": 1,
-  "players": ["Alice"]
-}
-```
-
-#### Step 2: Bob registers as player
+#### Step 1: Bob enters name and joins
 
 **HTTP Request:**
 
@@ -329,7 +312,7 @@ Content-Type: application/json
 }
 ```
 
-#### Step 3: Bob connects WebSocket
+#### Step 2: Bob connects WebSocket
 
 **WebSocket Connect:**
 

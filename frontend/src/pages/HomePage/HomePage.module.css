@@ -1,15 +1,19 @@
 .container {
+  min-height: calc(100vh - var(--navbar-height));
   width: 100%;
   text-align: center;
-  padding: var(--spacing-xl);
+  padding: var(--spacing-3xl) var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .logo {
   font-size: 5rem;
   font-weight: 900;
-  margin-bottom: var(--spacing-md);
-  letter-spacing: 2px;
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  margin-bottom: var(--spacing-lg);
+  letter-spacing: 3px;
+  line-height: 1;
 }
 
 .logoJ {
@@ -21,9 +25,11 @@
 }
 
 .tagline {
-  font-size: var(--font-size-lg);
-  color: var(--color-text-dim);
+  font-size: var(--font-size-xl);
+  color: var(--color-text-muted);
   margin-bottom: var(--spacing-3xl);
+  font-weight: 300;
+  letter-spacing: 0.5px;
 }
 
 .error {
@@ -57,22 +63,25 @@
   flex: 1;
   background: var(--gradient-primary);
   border-radius: var(--radius-lg);
-  border: 3px solid var(--color-border);
-  padding: var(--spacing-xl);
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  padding: var(--spacing-2xl);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .card:hover {
   border-color: var(--color-accent);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(255, 191, 0, 0.3);
 }
 
 .cardActive {
   border-color: var(--color-accent);
   box-shadow:
-    var(--shadow-lg),
-    0 0 20px rgba(59, 130, 246, 0.3);
+    0 12px 32px rgba(255, 191, 0, 0.4),
+    0 0 0 1px rgba(255, 191, 0, 0.2) inset;
+  transform: translateY(-2px);
 }
 
 .cardTitle {

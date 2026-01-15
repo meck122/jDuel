@@ -18,32 +18,59 @@ export function GameOver() {
   const winner = roomState?.winner ?? "";
   const timeRemainingMs = roomState?.timeRemainingMs;
 
+  const sortedPlayers = Object.entries(players).sort(([, a], [, b]) => b - a);
+  const firstPlace = sortedPlayers[0];
+
   return (
     <div className={styles.gameSection}>
+      <div className={styles.confetti}>
+        <div className={styles.confettiPiece} />
+        <div className={styles.confettiPiece} />
+        <div className={styles.confettiPiece} />
+        <div className={styles.confettiPiece} />
+        <div className={styles.confettiPiece} />
+      </div>
+
       <h2 className={styles.gameOverHeader}>Game Over!</h2>
-      <p className={styles.winner}>
-        <span className={styles.winnerLabel}>Winner:</span> {winner} 🎉
-      </p>
+
+      <div className={styles.winnerCard}>
+        <div className={styles.trophy}>🏆</div>
+        <div className={styles.winnerContent}>
+          <div className={styles.winnerLabel}>Champion</div>
+          <div className={styles.winnerName}>{winner}</div>
+          {firstPlace && (
+            <div className={styles.winnerScore}>{firstPlace[1]} points</div>
+          )}
+        </div>
+      </div>
 
       {timeRemainingMs !== undefined && (
-        <Timer
-          timeRemainingMs={timeRemainingMs}
-          resetKey={winner}
-          className="game-over-timer"
-          label="Room closing in"
-        />
+        <div className={styles.timerSection}>
+          <p className={styles.closingText}>Room closing in</p>
+          <Timer
+            timeRemainingMs={timeRemainingMs}
+            resetKey={winner}
+            className="game-over-timer"
+          />
+        </div>
       )}
 
-      <h3>Final Scores:</h3>
-      <div className={styles.finalScores}>
-        {Object.entries(players)
-          .sort(([, a], [, b]) => b - a)
-          .map(([player, score]) => (
-            <div key={player} className={styles.finalScoreItem}>
-              <span>{player}</span>
-              <span>{score}</span>
+      <div className={styles.finalScoresSection}>
+        <h3 className={styles.finalScoresHeader}>Final Standings</h3>
+        <div className={styles.finalScores}>
+          {sortedPlayers.map(([player, score], index) => (
+            <div
+              key={player}
+              className={`${styles.finalScoreItem} ${
+                index === 0 ? styles.firstPlace : ""
+              }`}
+            >
+              <span className={styles.rank}>{index + 1}</span>
+              <span className={styles.playerName}>{player}</span>
+              <span className={styles.score}>{score}</span>
             </div>
           ))}
+        </div>
       </div>
     </div>
   );

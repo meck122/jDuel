@@ -1,6 +1,6 @@
-# jDuel (this doc needs major update)
+# jDuel
 
-A real-time multiplayer Josh-style trivia game built with React and FastAPI.
+A real-time multiplayer trivia game built with React and FastAPI.
 
 ## Project Overview
 
@@ -9,7 +9,7 @@ jDuel is a multiplayer trivia game where players compete in real-time to answer 
 ### Key Features
 
 - **Room-based Multiplayer**: Create or join rooms with 4-character uppercase room codes (e.g., "AB3D")
-- **Deep Linking**: Share room URLs directly (e.g., `/room/AB3D`) - friends can join with one click
+- **Deep Linking**: Share room URLs (e.g., `/room/AB3D`) that redirect to home page with room code prefilled
 - **Real-time Gameplay**: WebSocket-powered instant updates for all players
 - **Live Results**: See all player answers and correct answer after each question
 - **Player Persistence**: Names saved in localStorage for returning players
@@ -25,6 +25,49 @@ jDuel uses a hybrid architecture:
 - **WebSocket**: Real-time game communication after joining
 
 This enables deep linking, proper error handling, and clean state management.
+
+## Getting Started
+
+### Prerequisites
+
+- **Backend**: Python 3.13+, uv package manager
+- **Frontend**: Node.js 18+, npm or yarn
+
+### Installation
+
+**Backend:**
+
+```bash
+cd backend
+uv sync  # Install dependencies
+```
+
+**Frontend:**
+
+```bash
+cd frontend
+npm install
+```
+
+### Running the Application
+
+**Backend:**
+
+```bash
+cd backend
+uv run uvicorn app.main:app --reload
+# Server runs at http://localhost:8000
+```
+
+**Frontend:**
+
+```bash
+cd frontend
+npm run dev
+# App runs at http://localhost:3000
+```
+
+Open `http://localhost:3000` in two browser windows to test multiplayer functionality.
 
 ### Tech Stack
 
@@ -90,104 +133,96 @@ jDuel/
         ├── main.tsx            # React entry point
         ├── App.tsx             # Router setup
         ├── config.tsx          # API/WebSocket URLs
+        ├── theme.ts            # MUI theme configuration
         ├── services/
         │   └── api.ts          # HTTP API client
+        ├── contexts/
+        │   └── GameContext.tsx # Game state & WebSocket management
         ├── hooks/
-        │   └── useWebSocket.tsx # WebSocket hook
+        │   └── usePlayerName.ts # Player name localStorage hook
         ├── pages/
-        │   ├── HomePage/       # Landing page (create/join)
-        │   └── RoomPage/       # Game room with deep link support
+        │   ├── HomePage/       # Landing page (create/join + deep link)
+        │   └── GamePage/       # Active game session
+        ├── features/
+        │   └── game/           # Game feature components
+        │       ├── GameView/   # Main game orchestrator
+        │       ├── Lobby/      # Waiting room + share link
+        │       ├── Question/   # Question display
+        │       ├── Results/    # Answer results
+        │       └── GameOver/   # Final scores
         ├── components/
-        │   ├── LobbyRoom/      # Waiting room UI + share link
-        │   ├── GameRoom/       # Main game coordinator
-        │   ├── QuestionView/   # Question display
-        │   ├── ResultsView/    # Answer results
-        │   ├── GameOver/       # Final scores
-        │   └── Timer/          # Countdown display
-        ├── hooks/
-        │   └── useWebSocket.tsx # WebSocket hook
-        ├── pages/
-        │   └── GamePage.tsx    # Main game page
+        │   ├── common/         # Shared components (Timer)
+        │   ├── layout/         # Layout components (PageContainer)
+        │   ├── Navigation/     # Top navigation bar
+        │   └── About/          # About page content
+        ├── styles/             # Global CSS
         └── types/
             └── index.ts        # TypeScript interfaces
 ```
 
-## WebSocket Protocol
+## Communication Protocol
 
-The game uses WebSocket for all real-time communication.
+### HTTP REST API
 
-### Client → Server Messages
+Used for room management:
 
-```typescript
-// Create a new room
-{ type: "CREATE_ROOM", playerId: string }
+- `POST /api/rooms` - Create a new room
+- `GET /api/rooms/:roomId` - Get room info (validation)
+- `POST /api/rooms/:roomId/join` - Register player before WebSocket
 
-// Join an existing room
-{ type: "JOIN_ROOM", roomId: string, playerId: string }
+### WebSocket Protocol
 
-// Start the game (host only)
-{ type: "START_GAME" }
+Used for real-time game communication after joining.
 
-// Submit an answer
-{ type: "ANSWER", answer: string }
-```
+**Client → Server:**
 
-### Server → Client Messages
+- `START_GAME` - Host starts the game
+- `ANSWER` - Submit an answer with `answer` field
 
-```typescript
-// Room state update (sent on every state change)
-{
-  type: "ROOM_STATE",
-  roomState: {
-    roomId: string,
-    players: { [playerId: string]: score },
-    status: "waiting" | "playing" | "results" | "finished",
-    questionIndex: number,
-    currentQuestion?: { text: string, category: string },
-    timeRemainingMs?: number,
-    winner?: string,
-    results?: {
-      correctAnswer: string,
-      playerAnswers: { [playerId: string]: answer },
-      playerResults: { [playerId: string]: number }  // Points gained in this question (0 if incorrect)
-    }
-  }
-}
+**Server → Client:**
 
-// Error occurred (e.g., room doesn't exist, name taken)
-{ type: "ERROR", message: string }
+- `ROOM_STATE` - Broadcast current game state (on every change)
+- `ERROR` - Error occurred with `message` field
+- `ROOM_CLOSED` - Room closed by server
 
-// Room was closed by server
-{ type: "ROOM_CLOSED" }
-```
+See [EventProtocol.md](docs/EventProtocol.md) for complete protocol details.
 
 ## Game Flow
 
-1. **Lobby Phase** (`status: "waiting"`):
+### User Journey
 
-   - Players join the room
-   - Host can see all players and start the game
-   - Room code displayed for sharing
+1. **Create/Join Room** (HomePage):
 
-2. **Question Phase** (`status: "playing"`):
+   - Host: Enter name → Create room → Navigate to `/game/:roomId`
+   - Joiner: Enter name + room code → Join room → Navigate to `/game/:roomId`
+   - Deep Link: Visit `/room/AB3D` → Redirects to `/?join=AB3D` → Prefills room code
 
-   - Question displayed with category
-   - N-second countdown timer
+2. **Lobby Phase** (GamePage → Lobby):
+
+   - WebSocket connects
+   - Shows room code and shareable link
+   - Displays all joined players
+   - Any player can click "Start Game"
+
+3. **Question Phase** (GamePage → Question):
+
+   - Question text and category displayed
+   - 15-second countdown timer
    - Players submit answers once
-   - Transitions to results when all answer or timer expires
+   - Transitions to results when timer expires
 
-3. **Results Phase** (`status: "results"`):
+4. **Results Phase** (GamePage → Results):
 
    - Shows correct answer
-   - Displays all player answers with backend-determined correctness (AI-powered verification)
-   - Color-coded indicators: green checkmark for correct, red X for incorrect
-   - 10-second display
-   - Auto-advances to next question or game over
+   - Displays all player answers with AI-verified correctness
+   - Color-coded: green ✓ for correct, red ✗ for incorrect
+   - Shows points gained
+   - 10-second display, auto-advances to next question
 
-4. **Game Over** (`status: "finished"`):
+5. **Game Over** (GamePage → GameOver):
    - Final scores displayed
    - Winner announced
-   - Room auto-closes after 60 seconds
+   - Room auto-closes after 60 seconds, redirects to home
 
 ## Key Implementation Details
 
@@ -205,15 +240,19 @@ The game uses WebSocket for all real-time communication.
 - **TimerService**: Manages question timers and results timers per room
 - **StateBuilder**: Constructs room state messages with current question, timer, results, and correct player tracking
 
-### Frontend Hooks
+### Frontend Architecture
 
-- **useWebSocket**: Manages WebSocket connection, message handling, auto-reconnect prevention using refs to avoid dependency issues
+- **GameContext**: Centralized game state management with WebSocket connection
+- **usePlayerName**: Custom hook for localStorage player name persistence
+- **Feature-based structure**: Game components organized in `features/game/`
+- **React Router**: Client-side routing with deep link redirect support
 
 ### State Management
 
-- Backend: In-memory dictionaries keyed by room ID (no persistence)
-- Frontend: React state with WebSocket-driven updates
-- WebSocket connection lifecycle tied to `joined` state only (not `roomId` or `playerId` to prevent reconnection loops)
+- **Backend**: In-memory dictionaries keyed by room ID (no persistence)
+- **Frontend**: GameContext provides centralized state via React Context API
+- **WebSocket**: Connection managed by GameContext, state updates via `ROOM_STATE` messages
+- **localStorage**: Player names persisted for convenience across sessions
 
 ### Validation & Error Handling
 
@@ -232,7 +271,7 @@ Timing configuration constants in `backend/src/app/config.py`:
 
 ```bash
 LOG_LEVEL=INFO                           # DEBUG, INFO, WARNING, ERROR
-FRONTEND_URL=http://localhost:5173       # For CORS configuration
+FRONTEND_URL=http://localhost:3000       # For CORS configuration
 ```
 
 **Frontend** (`frontend/src/config.tsx`):
