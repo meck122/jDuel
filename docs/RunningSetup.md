@@ -126,82 +126,6 @@ server {
     listen 80;
     server_name jduel.xyz www.jduel.xyz;
 
-    # API routes - no WebSocket headers
-    location /api/ {
-        proxy_pass http://127.0.0.1:8000;
-
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # WebSocket endpoint - WITH WebSocket headers
-    location /ws {
-        proxy_pass http://127.0.0.1:8000;
-
-        # WebSocket support (required for real-time game functionality)
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # WebSocket timeouts
-        proxy_read_timeout 86400;
-        proxy_send_timeout 86400;
-    }
-
-    # Health check endpoint
-    location /health {
-        proxy_pass http://127.0.0.1:8000;
-
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-
-    # Static files - served by FastAPI
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-Test and reload nginx:
-
-```bash
-# Test configuration syntax
-sudo nginx -t
-
-# Reload nginx to apply changes
-sudo systemctl reload nginx
-```
-
-### Step 4: Configure Systemd Service
-
-Set up systemd to automatically start the backend and keep it running.
-
-Create service file:
-
-```bash
-sudo vim /etc/systemd/system/jduel-backend.service
-```
-
-Paste the following configuration (adjust paths if needed):
-
-```ini
-server {
-    listen 80;
-    server_name jduel.xyz www.jduel.xyz;
-
     # Where your built React/Vue/etc app lives
     # Build your frontend: npm run build
     # Copy dist folder to: /var/www/jduel-frontend/
@@ -261,6 +185,46 @@ server {
         try_files $uri $uri/ /index.html;
     }
 }
+```
+
+Test and reload nginx:
+
+```bash
+# Test configuration syntax
+sudo nginx -t
+
+# Reload nginx to apply changes
+sudo systemctl reload nginx
+```
+
+### Step 4: Configure Systemd Service
+
+Set up systemd to automatically start the backend and keep it running.
+
+Create service file:
+
+```bash
+sudo vim /etc/systemd/system/jduel-backend.service
+```
+
+Paste the following configuration (adjust paths if needed):
+
+```ini
+[Unit]
+Description=jDuel FastAPI Backend
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/jDuel/backend
+ExecStart=/home/ubuntu/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+Environment=PYTHONUNBUFFERED=1
+Environment=FRONTEND_URL=http://jduel.xyz
+
+[Install]
+WantedBy=multi-user.target
 ```
 
 > **Note:** Set `FRONTEND_URL` to your EC2 public IP for CORS configuration.
