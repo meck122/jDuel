@@ -119,7 +119,7 @@ Create nginx configuration:
 sudo vim /etc/nginx/sites-enabled/jduel
 ```
 
-EC2 public IP or public domain IP if you have one):
+EC2 public IP or public domain IP if you have one:
 
 ```nginx
 server {
@@ -198,21 +198,69 @@ sudo vim /etc/systemd/system/jduel-backend.service
 Paste the following configuration (adjust paths if needed):
 
 ```ini
-[Unit]
-Description=jDuel FastAPI Backend
-After=network.target
+server {
+    listen 80;
+    server_name jduel.xyz www.jduel.xyz;
 
-[Service]
-User=ubuntu
-WorkingDirectory=/home/ubuntu/jDuel/backend
-ExecStart=/home/ubuntu/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
-Restart=always
-RestartSec=3
-Environment=PYTHONUNBUFFERED=1
-Environment=FRONTEND_URL=http://jduel.xyz
+    # Where your built React/Vue/etc app lives
+    # Build your frontend: npm run build
+    # Copy dist folder to: /var/www/jduel-frontend/
+    root /var/www/jduel-frontend/dist;
+    index index.html index.htm;
 
-[Install]
-WantedBy=multi-user.target
+    # API endpoints - handled by FastAPI
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        
+        # Preserve original request info
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # CORS headers (if needed)
+        add_header Access-Control-Allow-Origin *;
+    }
+
+    # WebSocket - handled by FastAPI
+    location /ws {
+        proxy_pass http://127.0.0.1:8000;
+        
+        # WebSocket upgrade headers
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Preserve original request info
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Long timeouts for WebSocket
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+    }
+
+    # Health check
+    location /health {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Static assets with caching
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        # Nginx serves these directly from /var/www/jduel-frontend/dist
+    }
+
+    # SPA fallback - serves index.html for client-side routing
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
 ```
 
 > **Note:** Set `FRONTEND_URL` to your EC2 public IP for CORS configuration.
