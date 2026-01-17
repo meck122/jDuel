@@ -306,7 +306,6 @@ Timing configuration constants in `backend/src/app/config/game.py`:
 
 ```bash
 LOG_LEVEL=INFO                           # DEBUG, INFO, WARNING, ERROR
-FRONTEND_URL=http://localhost:3000       # For CORS configuration
 ```
 
 **Frontend** (`frontend/src/config.tsx`):

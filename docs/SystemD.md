@@ -31,7 +31,6 @@ ExecStart=/home/ubuntu/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 -
 Restart=always
 RestartSec=3
 Environment=PYTHONUNBUFFERED=1
-Environment=FRONTEND_URL=http://jduel.xyz
 
 [Install]
 WantedBy=multi-user.target
@@ -42,7 +41,6 @@ WantedBy=multi-user.target
 - `User` - Your server username (typically `ubuntu` on EC2)
 - `WorkingDirectory` - Path to your backend directory
 - `ExecStart` - Path to uv binary (check with `which uv`)
-- `FRONTEND_URL` - Your domain for CORS configuration
 
 ## Enable and Start Service
 
@@ -134,12 +132,10 @@ RestartSec=3
 
 ```ini
 Environment=PYTHONUNBUFFERED=1
-Environment=FRONTEND_URL=http://jduel.xyz
 ```
 
 - Environment variables for the application
 - `PYTHONUNBUFFERED=1` - Show logs immediately
-- `FRONTEND_URL` - Used for CORS configuration
 
 ### [Install] Section
 

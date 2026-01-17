@@ -155,7 +155,3 @@ journalctl -u jduel-backend -n 50
 - Verify security group allows port 80 inbound
 - Check nginx: `sudo systemctl status nginx`
 - Check DNS resolves to server IP
-
-**Backend shows wrong URL in logs:**
-
-- Update `FRONTEND_URL` in SystemD service file (see [SystemD.md](SystemD.md))
