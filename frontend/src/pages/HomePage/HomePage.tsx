@@ -103,7 +103,7 @@ export const HomePage = () => {
         <span className={styles.logoDuel}>Duel</span>
       </h1>
 
-      <p className={styles.tagline}>Trivia battles with friends</p>
+      <p className={styles.tagline}>Trivia battles with friends :)</p>
 
       {error && <div className={styles.error}>{error}</div>}
 

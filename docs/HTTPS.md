@@ -66,8 +66,9 @@ sudo systemctl reload nginx
 
 **WebSocket fails after HTTPS:**
 
-- Update frontend to use `wss://` instead of `ws://`
-- Rebuild and redeploy frontend
+- Frontend automatically uses `wss://` on HTTPS
+- Check browser console for connection errors
+- Verify nginx WebSocket configuration
 
 **View certificates:**
 

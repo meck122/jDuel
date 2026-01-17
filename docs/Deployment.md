@@ -31,8 +31,6 @@ cd jDuel
 
 ### 3. Build Frontend
 
-Replace `jduel.xyz` with your domain:
-
 ```bash
 cd frontend
 npm install
