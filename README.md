@@ -302,11 +302,7 @@ Timing configuration constants in `backend/src/app/config/game.py`:
 
 ## Environment Variables
 
-**Backend** (`backend/.env`):
-
-```bash
-LOG_LEVEL=INFO                           # DEBUG, INFO, WARNING, ERROR
-```
+Current config has no ENV vars.
 
 **Frontend** (`frontend/src/config.tsx`):
 
