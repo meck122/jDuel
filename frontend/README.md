@@ -80,16 +80,6 @@ The app will be available at `http://localhost:3000`
 npm run build
 ```
 
-### Configuration
-
-The frontend connects to the backend via environment variables:
-
-```typescript
-// src/config.tsx
-export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-export const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000/ws";
-```
-
 ## Architecture
 
 ### State Management
