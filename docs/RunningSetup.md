@@ -135,32 +135,32 @@ server {
     # API endpoints - handled by FastAPI
     location /api/ {
         proxy_pass http://127.0.0.1:8000;
-        
+
         # Preserve original request info
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        
+
         # CORS headers (if needed)
-        add_header Access-Control-Allow-Origin *;
+        # add_header Access-Control-Allow-Origin *;
     }
 
     # WebSocket - handled by FastAPI
     location /ws {
         proxy_pass http://127.0.0.1:8000;
-        
+
         # WebSocket upgrade headers
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        
+
         # Preserve original request info
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        
+
         # Long timeouts for WebSocket
         proxy_read_timeout 86400;
         proxy_send_timeout 86400;

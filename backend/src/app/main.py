@@ -3,11 +3,9 @@
 import contextlib
 import logging
 
-# from pathlib import Path
 from fastapi import FastAPI, Query, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
-# from fastapi.staticfiles import StaticFiles
 from app.api import api_router, handle_websocket
 from app.config import CORS_ORIGINS, setup_logging
 
@@ -62,9 +60,3 @@ async def ws_endpoint(
     Example: ws://localhost:8000/ws?roomId=ABC123&playerId=Alice
     """
     await handle_websocket(websocket, roomId.upper(), playerId)
-
-
-# Serve static files (only mount if dist directory exists - for production)
-# BUILD_DIR = Path(__file__).parent.parent.parent.parent / "frontend" / "dist"
-# if BUILD_DIR.exists():
-#     app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="static")
