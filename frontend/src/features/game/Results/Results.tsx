@@ -9,7 +9,7 @@
  */
 
 import { useGame } from "../../../contexts";
-import { Timer } from "../../../components/common/Timer";
+import { Timer } from "../../../components";
 import styles from "./Results.module.css";
 
 export function Results() {

@@ -302,17 +302,11 @@ Timing configuration constants in `backend/src/app/config/game.py`:
 
 ## Environment Variables
 
-Current config has no ENV vars.
-
-**Frontend** (`frontend/src/config.tsx`):
-
-```typescript
-export const WS_URL = 'ws://localhost:8000/ws';
-```
+Current config has no ENV vars. Except `LOG_LEVEL` which defaults to `INFO`.
 
 ## Testing
 
-Currently no automated tests. Manual testing workflow:
+Currently no automated tests. Repo structure changes too often. Manual testing workflow:
 
 1. Open two browser windows (or incognito + normal)
 2. Create room in window 1, note room code

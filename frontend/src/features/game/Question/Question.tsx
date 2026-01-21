@@ -10,7 +10,7 @@
 
 import { FormEvent, useState, useEffect } from "react";
 import { useGame } from "../../../contexts";
-import { Timer } from "../../../components/common/Timer";
+import { Timer } from "../../../components";
 import styles from "./Question.module.css";
 
 export function Question() {

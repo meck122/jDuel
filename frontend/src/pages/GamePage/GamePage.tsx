@@ -14,7 +14,7 @@ import { useEffect, useCallback, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { GameProvider, useGame } from "../../contexts";
 import { GameView } from "../../features/game";
-import { PageContainer } from "../../components/layout/PageContainer";
+import { PageContainer } from "../../components";
 import styles from "./GamePage.module.css";
 
 /**

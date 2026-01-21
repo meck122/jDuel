@@ -9,8 +9,8 @@
  * - GameOver: Final game results
  */
 
-export { GameView } from "./GameView";
-export { Lobby } from "./Lobby";
-export { Question } from "./Question";
-export { Results } from "./Results";
-export { GameOver } from "./GameOver";
+export { GameView } from "./GameView/GameView";
+export { Lobby } from "./Lobby/Lobby";
+export { Question } from "./Question/Question";
+export { Results } from "./Results/Results";
+export { GameOver } from "./GameOver/GameOver";

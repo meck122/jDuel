@@ -1,20 +1,19 @@
 /**
  * Components module exports.
  *
- * Components are organized by type:
+ * Organized by type:
  * - common: Reusable UI components (Timer, etc.)
  * - layout: Page layout components (PageContainer, etc.)
- * - pages: Standalone page components (About, Navigation)
+ * - ui: Standalone UI components (About, Navigation)
  *
  * Game-specific components are in src/features/game/
  */
 
 // Common components
-export * from "./common";
+export { Timer } from "./common/Timer/Timer";
 
 // Layout components
-export { PageContainer } from "./layout/PageContainer";
+export { PageContainer } from "./layout/PageContainer/PageContainer";
 
-// Page-level components
-export { Navigation } from "./Navigation/Navigation";
-export { About } from "./About/About";
+// UI components
+export * from "./ui";

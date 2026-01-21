@@ -14,10 +14,10 @@
  */
 
 import { useGame } from "../../../contexts";
-import { Lobby } from "../Lobby";
-import { Question } from "../Question";
-import { Results } from "../Results";
-import { GameOver } from "../GameOver";
+import { Lobby } from "../Lobby/Lobby";
+import { Question } from "../Question/Question";
+import { Results } from "../Results/Results";
+import { GameOver } from "../GameOver/GameOver";
 import styles from "./GameView.module.css";
 
 export function GameView() {

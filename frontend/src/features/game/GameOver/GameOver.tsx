@@ -8,7 +8,7 @@
  */
 
 import { useGame } from "../../../contexts";
-import { Timer } from "../../../components/common/Timer";
+import { Timer } from "../../../components";
 import styles from "./GameOver.module.css";
 
 export function GameOver() {
