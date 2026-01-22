@@ -1,31 +1,38 @@
 import { createTheme } from "@mui/material/styles";
 
-// Jeopardy-inspired color palette
-// Classic Jeopardy blue background with gold/yellow accents
+// Modern dark theme with purple/teal accents
 export const jeopardyTheme = createTheme({
   palette: {
     mode: "dark",
     primary: {
-      main: "#0A2463", // Deep Jeopardy blue
-      light: "#1E3A8A",
-      dark: "#041633",
+      main: "rgb(139, 92, 246)",
+      light: "rgb(167, 139, 250)",
+      dark: "rgb(109, 40, 217)",
     },
     secondary: {
-      main: "#FFBF00", // Jeopardy gold/yellow
-      light: "#FFD700",
-      dark: "#CC9900",
+      main: "rgb(45, 212, 191)",
+      light: "rgb(94, 234, 212)",
+      dark: "rgb(20, 184, 166)",
     },
     background: {
-      default: "#0A2463",
-      paper: "#1E3A8A",
+      default: "rgb(18, 18, 18)",
+      paper: "rgb(28, 28, 28)",
     },
     text: {
-      primary: "#FFFFFF",
-      secondary: "#FFBF00",
+      primary: "rgb(235, 235, 235)",
+      secondary: "rgba(235, 235, 235, 0.7)",
+    },
+    error: {
+      main: "rgb(239, 68, 68)",
+      light: "rgb(248, 113, 113)",
+    },
+    success: {
+      main: "rgb(34, 197, 94)",
+      light: "rgb(74, 222, 128)",
     },
   },
   typography: {
-    fontFamily: '"Helvetica Neue", "Arial", sans-serif',
+    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
     h1: {
       fontWeight: 700,
       fontSize: "3rem",
@@ -54,6 +61,14 @@ export const jeopardyTheme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 12,
+          backgroundImage: "none",
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundImage: "none",
         },
       },
     },

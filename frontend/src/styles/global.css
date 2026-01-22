@@ -10,12 +10,19 @@
 }
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: dark;
   color: var(--color-text-secondary);
-  background-color: #242424;
+  background-color: var(--color-bg-primary);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -26,6 +33,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--gradient-bg);
 }
 
 #root {
@@ -40,6 +48,7 @@ h4,
 h5,
 h6 {
   margin: 0;
+  color: var(--color-text-primary);
 }
 
 /* ============================================
@@ -49,11 +58,12 @@ input[type="text"],
 input[type="email"],
 input[type="password"],
 textarea {
+  width: 100%;
   padding: var(--spacing-md);
   font-size: var(--font-size-base);
   border-radius: var(--radius-md);
-  border: 2px solid rgba(255, 191, 0, 0.5);
-  background: rgba(30, 58, 138, 0.6);
+  border: 2px solid var(--color-border-default);
+  background: var(--color-bg-secondary);
   color: var(--color-text-primary);
   transition: all var(--transition-base);
   font-family: inherit;
@@ -64,9 +74,9 @@ input[type="email"]:focus,
 input[type="password"]:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 12px rgba(255, 191, 0, 0.5);
-  background: rgba(30, 58, 138, 0.8);
+  border-color: var(--color-accent-purple);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  background: var(--color-bg-elevated);
 }
 
 input::placeholder,
@@ -86,15 +96,16 @@ button {
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-base);
-  background: var(--gradient-accent);
-  color: var(--color-primary);
+  background: var(--gradient-purple);
+  color: var(--color-text-primary);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 
 button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 191, 0, 0.6);
+  box-shadow: var(--shadow-glow-purple);
+  filter: brightness(1.1);
 }
 
 button:active {
@@ -103,18 +114,31 @@ button:active {
 
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid var(--color-accent-purple);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* ============================================
    REUSABLE COMPONENT CLASSES
    ============================================ */
 .card {
-  background: var(--gradient-primary);
-  border: 3px solid var(--color-accent);
+  background: var(--color-bg-secondary);
+  border: 2px solid var(--color-border-default);
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   box-shadow: var(--shadow-lg);
+  transition: all var(--transition-base);
+}
+
+.card:hover {
+  border-color: var(--color-accent-purple);
+  box-shadow: var(--shadow-glow-purple);
 }
 
 .game-section {
@@ -127,20 +151,23 @@ button:focus-visible {
   font-weight: 700;
   margin-bottom: var(--spacing-lg);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  color: var(--color-accent);
+  background: var(--gradient-purple-teal);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .content-box {
-  background: var(--color-bg-dark);
+  background: var(--color-bg-elevated);
   padding: var(--spacing-lg);
   border-radius: var(--radius-md);
-  border: 1px solid var(--color-bg-darker);
+  border: 1px solid var(--color-border-subtle);
 }
 
 .content-box h3 {
   margin-top: 0;
   margin-bottom: var(--spacing-md);
-  color: var(--color-accent);
+  color: var(--color-accent-purple);
   font-size: var(--font-size-xl);
 }
 
@@ -149,15 +176,21 @@ button:focus-visible {
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-bg-darker);
+  background: var(--color-bg-secondary);
   border-radius: var(--radius-sm);
-  border-left: 3px solid var(--color-accent);
+  border-left: 3px solid var(--color-accent-teal);
+  transition: all var(--transition-base);
+}
+
+.score-item:hover {
+  background: var(--color-bg-hover);
+  transform: translateX(4px);
 }
 
 .score-value {
   font-size: var(--font-size-xl);
   font-weight: bold;
-  color: var(--color-warning);
+  color: var(--color-accent-teal);
 }
 
 .player-grid {

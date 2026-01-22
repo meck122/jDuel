@@ -13,7 +13,7 @@
 .questionNumber {
   font-size: var(--font-size-3xl);
   font-weight: 700;
-  color: var(--color-accent);
+  color: var(--color-accent-purple);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
@@ -28,15 +28,15 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-lg);
-  background: var(--color-bg-darker);
+  background: var(--color-bg-elevated);
   border-radius: var(--radius-md);
   margin-bottom: var(--spacing-sm);
-  border: 1px solid rgba(255, 191, 0, 0.2);
+  border: 1px solid var(--color-border-default);
 }
 
 .categoryLabel {
   font-size: var(--font-size-md);
-  color: var(--color-accent);
+  color: var(--color-accent-teal);
   font-weight: 600;
 }
 
@@ -51,16 +51,16 @@
 }
 
 .question {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
+  font-size: var(--font-size-xl);
+  font-weight: 500;
   color: var(--color-text-primary);
   margin: 0;
   padding: var(--spacing-xl);
-  background: var(--color-bg-darker);
+  background: var(--color-bg-elevated);
   border-radius: var(--radius-lg);
   line-height: 1.5;
-  border: 2px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--color-border-default);
+  box-shadow: var(--shadow-md);
 }
 
 .answerForm {
@@ -77,8 +77,8 @@
 .answerSubmitted {
   margin-top: var(--spacing-xl);
   padding: var(--spacing-lg);
-  background: rgba(76, 175, 80, 0.1);
-  border: 2px solid rgba(76, 175, 80, 0.3);
+  background: rgba(34, 197, 94, 0.1);
+  border: 2px solid rgba(34, 197, 94, 0.3);
   border-radius: var(--radius-md);
   text-align: center;
 }
@@ -91,7 +91,7 @@
 }
 
 .waitingText {
-  color: #888;
+  color: var(--color-text-muted);
   font-style: italic;
   margin: 0;
 }

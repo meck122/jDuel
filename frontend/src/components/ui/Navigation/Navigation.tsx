@@ -11,8 +11,10 @@ export function Navigation() {
     <AppBar
       position="fixed"
       sx={{
-        background: "linear-gradient(90deg, #0A2463 0%, #1E3A8A 100%)",
-        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)",
+        background:
+          "linear-gradient(90deg, rgb(28, 28, 28) 0%, rgb(38, 38, 38) 100%)",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
+        borderBottom: "1px solid rgba(235, 235, 235, 0.1)",
       }}
     >
       <Toolbar>
@@ -26,14 +28,19 @@ export function Navigation() {
             fontWeight: 700,
             letterSpacing: "0.1em",
             textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+            "&:hover": {
+              textShadow: "0 0 20px rgba(139, 92, 246, 0.5)",
+            },
           }}
         >
           <Box
             component="span"
             sx={{
-              color: "#FFBF00",
+              color: "rgb(139, 92, 246)",
+              transition: "color 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
               "&:hover": {
-                color: "#FFD700",
+                color: "rgb(167, 139, 250)",
               },
             }}
           >
@@ -42,9 +49,10 @@ export function Navigation() {
           <Box
             component="span"
             sx={{
-              color: "#DC143C",
+              color: "rgb(239, 68, 68)",
+              transition: "color 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
               "&:hover": {
-                color: "#FF1744",
+                color: "rgb(248, 113, 113)",
               },
             }}
           >
@@ -58,9 +66,10 @@ export function Navigation() {
               to="/"
               startIcon={<HomeIcon />}
               sx={{
-                color: "white",
+                color: "rgb(235, 235, 235)",
+                transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": {
-                  backgroundColor: "rgba(255, 191, 0, 0.1)",
+                  backgroundColor: "rgba(139, 92, 246, 0.1)",
                 },
               }}
             >
@@ -72,9 +81,10 @@ export function Navigation() {
               to="/about"
               startIcon={<InfoIcon />}
               sx={{
-                color: "white",
+                color: "rgb(235, 235, 235)",
+                transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": {
-                  backgroundColor: "rgba(255, 191, 0, 0.1)",
+                  backgroundColor: "rgba(139, 92, 246, 0.1)",
                 },
               }}
             >

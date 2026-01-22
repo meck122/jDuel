@@ -7,9 +7,10 @@
 .errorContainer {
   text-align: center;
   padding: var(--spacing-2xl);
-  background: var(--gradient-primary);
+  background: var(--color-bg-secondary);
   border-radius: var(--radius-lg);
-  border: 3px solid var(--color-accent-red);
+  border: 2px solid var(--color-accent-red);
+  box-shadow: var(--shadow-lg);
 }
 
 .errorTitle {
@@ -39,11 +40,11 @@
   padding: var(--spacing-md) var(--spacing-xl);
   font-size: var(--font-size-md);
   background: transparent;
-  border: 2px solid var(--color-accent);
-  color: var(--color-accent);
+  border: 2px solid var(--color-accent-purple);
+  color: var(--color-accent-purple);
 }
 
 .secondaryButton:hover {
-  background: var(--color-accent);
-  color: var(--color-text);
+  background: var(--color-accent-purple);
+  color: var(--color-text-primary);
 }

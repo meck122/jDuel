@@ -17,13 +17,13 @@ def init_database():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS questions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            show_number INTEGER,
-            air_date TEXT,
-            round TEXT,
             category TEXT,
-            value TEXT,
             question TEXT NOT NULL,
-            answer TEXT NOT NULL
+            answer TEXT NOT NULL,
+            difficulty INTEGER,
+            wrong_answer_1 TEXT,
+            wrong_answer_2 TEXT,
+            wrong_answer_3 TEXT
         )
     """)
 
@@ -46,11 +46,10 @@ def get_random_questions(count: int = 10) -> list[Question]:
     cursor.execute(
         """
         SELECT question, answer, category FROM questions
-        WHERE value = ?
         ORDER BY RANDOM()
         LIMIT ?
     """,
-        ("$200", count),
+        (count,),
     )
 
     questions = [

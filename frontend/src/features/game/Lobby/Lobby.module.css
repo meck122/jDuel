@@ -7,11 +7,11 @@
   text-align: center;
   margin-bottom: var(--spacing-xl);
   padding-bottom: var(--spacing-lg);
-  border-bottom: 2px solid var(--color-accent);
+  border-bottom: 2px solid var(--color-accent-purple);
 }
 
 .title {
-  color: var(--color-accent);
+  color: var(--color-accent-purple);
   font-size: var(--font-size-4xl);
   font-weight: 700;
   margin: 0 0 var(--spacing-sm) 0;
@@ -29,8 +29,8 @@
 }
 
 .playerCard {
-  background: rgba(30, 58, 138, 0.6);
-  border: 2px solid rgba(255, 191, 0, 0.5);
+  background: var(--color-bg-elevated);
+  border: 2px solid var(--color-border-default);
   border-radius: var(--radius-md);
   padding: var(--spacing-lg);
   transition: all var(--transition-base);
@@ -42,14 +42,14 @@
 
 .playerCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(255, 191, 0, 0.3);
-  border-color: var(--color-accent);
+  box-shadow: var(--shadow-glow-purple);
+  border-color: var(--color-accent-purple);
 }
 
 .currentPlayer {
-  background: rgba(255, 191, 0, 0.15);
-  border: 3px solid var(--color-accent);
-  box-shadow: 0 0 20px rgba(255, 191, 0, 0.4);
+  background: rgba(139, 92, 246, 0.1);
+  border: 3px solid var(--color-accent-purple);
+  box-shadow: var(--shadow-glow-purple);
 }
 
 .playerIcon {
@@ -68,14 +68,14 @@
 }
 
 .youBadge {
-  color: var(--color-accent);
+  color: var(--color-accent-teal);
   font-size: var(--font-size-sm);
   font-weight: 700;
 }
 
 .shareSection {
-  background: rgba(30, 58, 138, 0.4);
-  border: 2px solid rgba(255, 191, 0, 0.3);
+  background: var(--color-bg-elevated);
+  border: 2px solid var(--color-border-default);
   border-radius: var(--radius-md);
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-xl);
@@ -97,11 +97,11 @@
 }
 
 .shareUrl {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--color-bg-primary);
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
-  color: var(--color-accent);
+  color: var(--color-accent-purple);
   word-break: break-all;
 }
 
@@ -115,7 +115,7 @@
   text-align: center;
   margin-top: var(--spacing-2xl);
   padding-top: var(--spacing-xl);
-  border-top: 2px solid rgba(255, 191, 0, 0.3);
+  border-top: 2px solid var(--color-border-default);
 }
 
 .waitingText {

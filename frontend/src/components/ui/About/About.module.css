@@ -5,17 +5,16 @@
   align-items: center;
   justify-content: center;
   padding: var(--spacing-xl);
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f1419 100%);
 }
 
 .paper {
   max-width: 800px;
   width: 100%;
-  background: rgba(30, 58, 138, 0.15);
-  border: 3px solid var(--color-accent);
+  background: var(--color-bg-secondary);
+  border: 2px solid var(--color-border-default);
   border-radius: var(--radius-lg);
   padding: var(--spacing-3xl);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-xl);
 }
 
 .title {
@@ -28,7 +27,7 @@
 }
 
 .titleJ {
-  color: var(--color-accent);
+  color: var(--color-accent-purple);
 }
 
 .titleDuel {
@@ -42,7 +41,7 @@
 .sectionTitle {
   font-size: var(--font-size-2xl);
   font-weight: 600;
-  color: var(--color-accent);
+  color: var(--color-accent-teal);
   margin-bottom: var(--spacing-md);
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
@@ -56,13 +55,9 @@
 .highlight {
   background: linear-gradient(
     90deg,
-    red,
-    orange,
-    yellow,
-    green,
-    blue,
-    indigo,
-    violet
+    var(--color-accent-red),
+    var(--color-accent-purple),
+    var(--color-accent-teal)
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -77,8 +72,8 @@
 }
 
 .listItem {
-  background: rgba(30, 58, 138, 0.3);
-  border-left: 3px solid var(--color-accent);
+  background: var(--color-bg-elevated);
+  border-left: 3px solid var(--color-accent-purple);
   border-radius: var(--radius-sm);
   padding: var(--spacing-md);
   margin-bottom: var(--spacing-md);
@@ -88,12 +83,13 @@
 }
 
 .listItem:hover {
-  background: rgba(30, 58, 138, 0.5);
+  background: var(--color-bg-hover);
   transform: translateX(4px);
+  border-left-color: var(--color-accent-teal);
 }
 
 .speedText {
-  color: var(--color-accent-red);
+  color: var(--color-accent-teal);
   font-weight: 700;
   font-size: 1.15em;
   letter-spacing: 1px;
@@ -107,13 +103,14 @@
 }
 
 .techBadge {
-  background: var(--gradient-accent);
-  color: var(--color-primary);
+  background: var(--gradient-purple);
+  color: var(--color-text-primary);
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   font-weight: 600;
   letter-spacing: 0.5px;
+  box-shadow: var(--shadow-sm);
 }
 
 @media (max-width: 768px) {

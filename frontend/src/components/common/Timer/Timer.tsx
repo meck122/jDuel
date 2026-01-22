@@ -43,9 +43,9 @@ export function Timer({ timeRemainingMs, resetKey, className }: TimerProps) {
 
   // Determine color based on time remaining
   const getColor = () => {
-    if (seconds <= 3) return "var(--color-error)";
-    if (seconds <= 7) return "var(--color-warning)";
-    return "var(--color-success)";
+    if (seconds <= 3) return "var(--color-timer-critical)";
+    if (seconds <= 7) return "var(--color-timer-warning)";
+    return "var(--color-timer-safe)";
   };
 
   // Map className prop to appropriate wrapper style
