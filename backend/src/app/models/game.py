@@ -48,11 +48,3 @@ class Room:
         ] = {}  # Points gained by each player in current question
         self.results_start_time: datetime | None = None
         self.finish_time: datetime | None = None
-
-    def is_player_connected(self, player_id: str) -> bool:
-        """Check if a player has an active WebSocket connection."""
-        return player_id in self.connections
-
-    def get_connected_players(self) -> list[str]:
-        """Get list of players with active WebSocket connections."""
-        return list(self.connections.keys())

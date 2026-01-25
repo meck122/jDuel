@@ -14,13 +14,6 @@ export interface CreateRoomResponse {
   playerCount: number;
 }
 
-export interface RoomInfoResponse {
-  roomId: string;
-  status: string;
-  playerCount: number;
-  players: string[];
-}
-
 export interface JoinRoomResponse {
   roomId: string;
   playerId: string;

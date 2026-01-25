@@ -22,15 +22,6 @@ class CreateRoomResponse(BaseModel):
     playerCount: int
 
 
-class RoomInfoResponse(BaseModel):
-    """Response for room information."""
-
-    roomId: str
-    status: str
-    playerCount: int
-    players: list[str]
-
-
 class JoinRoomRequest(BaseModel):
     """Request to join a room."""
 
@@ -69,37 +60,6 @@ def create_room() -> CreateRoomResponse:
         status=room.status.value,
         playerCount=0,
     )
-
-
-@router.get("/rooms/{room_id}", response_model=RoomInfoResponse)
-def get_room(room_id: str) -> RoomInfoResponse:
-    """Get information about a room.
-
-    Args:
-        room_id: The room ID to look up
-
-    Returns:
-        RoomInfoResponse: Room information including players and status
-
-    Raises:
-        HTTPException: 404 if room not found
-    """
-    container = get_container()
-    room = container.room_manager.get_room(room_id.upper())
-
-    if not room:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": "Room not found", "code": "ROOM_NOT_FOUND"},
-        )
-
-    return RoomInfoResponse(
-        roomId=room.room_id,
-        status=room.status.value,
-        playerCount=len(room.players),
-        players=list(room.players),
-    )
-
 
 @router.post("/rooms/{room_id}/join", response_model=JoinRoomResponse)
 def join_room(room_id: str, request: JoinRoomRequest) -> JoinRoomResponse:
@@ -153,15 +113,16 @@ def join_room(room_id: str, request: JoinRoomRequest) -> JoinRoomResponse:
                     "code": "NAME_TAKEN",
                 },
             )
-        # Player exists but disconnected - allow reconnection
-        logger.info(
-            f"Player reconnecting (was disconnected): room_id={room_id_upper}, player_id={request.playerId}"
-        )
-        return JoinRoomResponse(
-            roomId=room_id_upper,
-            playerId=request.playerId,
-            status=room.status.value,
-        )
+        else:
+            # Player exists but disconnected - allow reconnection
+            logger.info(
+                f"Player reconnecting (was disconnected): room_id={room_id_upper}, player_id={request.playerId}"
+            )
+            return JoinRoomResponse(
+                roomId=room_id_upper,
+                playerId=request.playerId,
+                status=room.status.value,
+            )
 
     # Pre-register the player (without WebSocket connection)
     container.room_manager.register_player(room_id_upper, request.playerId)

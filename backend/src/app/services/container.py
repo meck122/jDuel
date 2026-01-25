@@ -47,15 +47,6 @@ def get_container() -> ServiceContainer:
     return _container
 
 
-def is_initialized() -> bool:
-    """Check if services are initialized.
-
-    Returns:
-        True if the container has been initialized
-    """
-    return _container is not None
-
-
 def init_services(answer_service: "AnswerService") -> ServiceContainer:
     """Initialize all services with dependencies.
 

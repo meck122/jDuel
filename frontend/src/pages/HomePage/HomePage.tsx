@@ -15,7 +15,7 @@ import { createRoom, joinRoom, ApiError } from "../../services/api";
 import { usePlayerName } from "../../hooks";
 import styles from "./HomePage.module.css";
 
-export const HomePage = () => {
+export function HomePage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { playerName, setPlayerName } = usePlayerName();
