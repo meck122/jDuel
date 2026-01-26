@@ -1,19 +1,18 @@
-"""Typed state models for WebSocket communication."""
+"""Typed state models for WebSocket communication using Pydantic."""
 
-from dataclasses import dataclass, field
 from typing import Literal
 
+from pydantic import BaseModel
 
-@dataclass
-class CurrentQuestion:
+
+class CurrentQuestion(BaseModel):
     """Current question state sent to clients."""
 
     text: str
     category: str
 
 
-@dataclass
-class ResultsData:
+class ResultsData(BaseModel):
     """Results state sent to clients."""
 
     correctAnswer: str
@@ -21,8 +20,7 @@ class ResultsData:
     playerResults: dict[str, int]  # Map of player ID to points gained (0 if incorrect)
 
 
-@dataclass
-class RoomStateData:
+class RoomStateData(BaseModel):
     """Room state data sent to clients."""
 
     roomId: str
@@ -35,37 +33,16 @@ class RoomStateData:
     results: ResultsData | None = None
 
 
-@dataclass
-class RoomStateMessage:
+class RoomStateMessage(BaseModel):
     """WebSocket message containing room state."""
 
-    type: Literal["ROOM_STATE"] = field(default="ROOM_STATE", init=False)
+    type: Literal["ROOM_STATE"] = "ROOM_STATE"
     roomState: RoomStateData | None = None
 
     def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization."""
-        result: dict = {"type": self.type}
-        if self.roomState:
-            state_dict: dict = {
-                "roomId": self.roomState.roomId,
-                "players": self.roomState.players,
-                "status": self.roomState.status,
-                "questionIndex": self.roomState.questionIndex,
-            }
-            if self.roomState.currentQuestion:
-                state_dict["currentQuestion"] = {
-                    "text": self.roomState.currentQuestion.text,
-                    "category": self.roomState.currentQuestion.category,
-                }
-            if self.roomState.timeRemainingMs is not None:
-                state_dict["timeRemainingMs"] = self.roomState.timeRemainingMs
-            if self.roomState.winner:
-                state_dict["winner"] = self.roomState.winner
-            if self.roomState.results:
-                state_dict["results"] = {
-                    "correctAnswer": self.roomState.results.correctAnswer,
-                    "playerAnswers": self.roomState.results.playerAnswers,
-                    "playerResults": self.roomState.results.playerResults,
-                }
-            result["roomState"] = state_dict
-        return result
+        """Convert to dictionary for JSON serialization.
+
+        Uses Pydantic's model_dump with exclude_none to match
+        the previous manual serialization behavior.
+        """
+        return self.model_dump(exclude_none=True)

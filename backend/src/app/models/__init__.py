@@ -2,6 +2,7 @@
 
 from app.models.game import GameStatus, Room
 from app.models.question import Question
+from app.models.round_state import RoundState
 from app.models.state import (
     CurrentQuestion,
     ResultsData,
@@ -17,4 +18,5 @@ __all__ = [
     "Room",
     "RoomStateData",
     "RoomStateMessage",
+    "RoundState",
 ]

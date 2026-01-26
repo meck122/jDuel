@@ -62,8 +62,8 @@ def init_services(answer_service: "AnswerService") -> ServiceContainer:
     global _container
 
     # Import here to avoid circular imports
-    from app.api.websocket_handler import WebSocketRoomCloser
     from app.services.core import GameService, RoomManager, TimerService
+    from app.services.core.room_closer import WebSocketRoomCloser
     from app.services.orchestration import GameOrchestrator, StateBuilder
 
     logger.info("Initializing service container...")

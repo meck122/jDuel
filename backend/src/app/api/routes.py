@@ -6,7 +6,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from app.services.container import get_container
+from app.api.dependencies import Services
 
 logger = logging.getLogger(__name__)
 
@@ -44,14 +44,16 @@ class ErrorResponse(BaseModel):
 
 
 @router.post("/rooms", response_model=CreateRoomResponse)
-def create_room() -> CreateRoomResponse:
+def create_room(services: Services) -> CreateRoomResponse:
     """Create a new game room.
+
+    Args:
+        services: Injected service container
 
     Returns:
         CreateRoomResponse: The created room's ID, status, and player count
     """
-    container = get_container()
-    room = container.room_manager.create_room()
+    room = services.room_manager.create_room()
 
     logger.info(f"Room created via HTTP: room_id={room.room_id}")
 
@@ -63,7 +65,9 @@ def create_room() -> CreateRoomResponse:
 
 
 @router.post("/rooms/{room_id}/join", response_model=JoinRoomResponse)
-def join_room(room_id: str, request: JoinRoomRequest) -> JoinRoomResponse:
+def join_room(
+    room_id: str, request: JoinRoomRequest, services: Services
+) -> JoinRoomResponse:
     """Pre-register a player to join a room.
 
     This validates and reserves the player name before WebSocket connection.
@@ -76,6 +80,7 @@ def join_room(room_id: str, request: JoinRoomRequest) -> JoinRoomResponse:
     Args:
         room_id: The room ID to join
         request: The join request containing playerId
+        services: Injected service container
 
     Returns:
         JoinRoomResponse: Confirmation of successful registration
@@ -83,9 +88,8 @@ def join_room(room_id: str, request: JoinRoomRequest) -> JoinRoomResponse:
     Raises:
         HTTPException: 404 if room not found, 409 if name taken or game started
     """
-    container = get_container()
     room_id_upper = room_id.upper()
-    room = container.room_manager.get_room(room_id_upper)
+    room = services.room_manager.get_room(room_id_upper)
 
     if not room:
         raise HTTPException(
@@ -131,7 +135,7 @@ def join_room(room_id: str, request: JoinRoomRequest) -> JoinRoomResponse:
             )
 
     # Pre-register the player (without WebSocket connection)
-    container.room_manager.register_player(room_id_upper, request.playerId)
+    services.room_manager.register_player(room_id_upper, request.playerId)
 
     logger.info(
         f"Player pre-registered via HTTP: room_id={room_id_upper}, player_id={request.playerId}"

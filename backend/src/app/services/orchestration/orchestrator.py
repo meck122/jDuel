@@ -1,24 +1,21 @@
 """Game orchestrator for coordinating game flow."""
 
+from __future__ import annotations
+
 import logging
-from typing import Protocol
+from typing import TYPE_CHECKING
 
 from fastapi import WebSocket
 
 from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, RESULTS_TIME_MS
 from app.models import RoomStateMessage
-from app.services.core import GameService, RoomManager, TimerService
+from app.services.orchestration.protocols import RoomCloser
 from app.services.orchestration.state_builder import StateBuilder
 
+if TYPE_CHECKING:
+    from app.services.core import GameService, RoomManager, TimerService
+
 logger = logging.getLogger(__name__)
-
-
-class RoomCloser(Protocol):
-    """Protocol for closing rooms and notifying clients."""
-
-    async def close_room(self, room_id: str) -> None:
-        """Close room and notify all connected clients."""
-        ...
 
 
 class GameOrchestrator:

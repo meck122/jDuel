@@ -1,36 +1,11 @@
 """WebSocket handler for game communication."""
 
-import contextlib
 import json
 import logging
 
 from fastapi import WebSocket, WebSocketDisconnect
 
-from app.services.core import RoomManager, TimerService
-from app.services.orchestration import RoomCloser
-
 logger = logging.getLogger(__name__)
-
-
-class WebSocketRoomCloser(RoomCloser):
-    """Handles room closing with WebSocket notifications."""
-
-    def __init__(self, room_manager: RoomManager, timer_service: TimerService):
-        self._room_manager = room_manager
-        self._timer_service = timer_service
-
-    async def close_room(self, room_id: str) -> None:
-        """Close room and notify all connected clients."""
-        room = self._room_manager.get_room(room_id)
-        if room:
-            # Notify all players that room is closing
-            for _player_id, ws in list(room.connections.items()):
-                with contextlib.suppress(Exception):
-                    await ws.send_json({"type": "ROOM_CLOSED"})
-
-            logger.info(f"Auto-closing room after game over timeout: room_id={room_id}")
-            self._timer_service.cancel_all_timers_for_room(room_id)
-            self._room_manager.delete_room(room_id)
 
 
 async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
