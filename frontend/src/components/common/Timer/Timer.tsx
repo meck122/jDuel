@@ -11,13 +11,19 @@
 import { useState, useEffect } from "react";
 import styles from "./Timer.module.css";
 
+type TimerVariant = "default" | "results" | "game-over";
+
 interface TimerProps {
   timeRemainingMs: number;
   resetKey: number | string;
-  className?: string;
+  variant?: TimerVariant;
 }
 
-export function Timer({ timeRemainingMs, resetKey, className }: TimerProps) {
+export function Timer({
+  timeRemainingMs,
+  resetKey,
+  variant = "default",
+}: TimerProps) {
   const [displayTime, setDisplayTime] = useState<number>(timeRemainingMs);
   const [initialTime, setInitialTime] = useState<number>(timeRemainingMs);
   const [startTime, setStartTime] = useState<number>(Date.now());
@@ -48,15 +54,14 @@ export function Timer({ timeRemainingMs, resetKey, className }: TimerProps) {
     return "var(--color-timer-safe)";
   };
 
-  // Map className prop to appropriate wrapper style
-  const getTimerClass = () => {
-    if (className === "results-timer") return styles.resultsTimerWrapper;
-    if (className === "game-over-timer") return styles.gameOverTimerWrapper;
-    return styles.timerWrapper;
+  const variantStyles: Record<TimerVariant, string> = {
+    default: styles.timerWrapper,
+    results: styles.resultsTimerWrapper,
+    "game-over": styles.gameOverTimerWrapper,
   };
 
   return (
-    <div className={getTimerClass()}>
+    <div className={variantStyles[variant]}>
       <svg className={styles.timerSvg} viewBox="0 0 100 100">
         <circle
           className={styles.timerCircleBackground}

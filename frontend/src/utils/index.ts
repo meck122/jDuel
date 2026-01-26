@@ -1,0 +1,1 @@
+export { sortPlayersByScore } from "./game";

@@ -108,12 +108,17 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
         if (wsRef.current !== ws) return;
         const data: WebSocketMessage = JSON.parse(event.data);
 
-        if (data.type === "ROOM_STATE" && data.roomState) {
-          setRoomState(data.roomState);
-        } else if (data.type === "ROOM_CLOSED") {
-          onRoomClosedRef.current?.();
-        } else if (data.type === "ERROR" && data.message) {
-          setConnectionError(data.message);
+        switch (data.type) {
+          case "ROOM_STATE":
+            setRoomState(data.roomState);
+            setConnectionError(null); // Clear any previous errors on successful state update
+            break;
+          case "ROOM_CLOSED":
+            onRoomClosedRef.current?.();
+            break;
+          case "ERROR":
+            setConnectionError(data.message);
+            break;
         }
       };
 

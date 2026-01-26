@@ -1,6 +1,6 @@
-import styles from "./About.module.css";
+import styles from "./AboutPage.module.css";
 
-export function About() {
+export function AboutPage() {
   return (
     <div className={styles.container}>
       <div className={styles.paper}>

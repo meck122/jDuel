@@ -4,25 +4,21 @@
  * Provides consistent player name persistence across the app.
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from "react";
 
-const PLAYER_NAME_KEY = 'jduel_player_name';
+const PLAYER_NAME_KEY = "jduel_player_name";
 
 interface UsePlayerNameReturn {
   playerName: string;
   setPlayerName: (name: string) => void;
 }
 
-export function usePlayerName(initialValue: string = ''): UsePlayerNameReturn {
-  const [playerName, setPlayerNameState] = useState<string>(initialValue);
-
-  // Load saved name on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(PLAYER_NAME_KEY);
-    if (saved && !initialValue) {
-      setPlayerNameState(saved);
-    }
-  }, [initialValue]);
+export function usePlayerName(initialValue: string = ""): UsePlayerNameReturn {
+  // Initialize synchronously from localStorage to avoid race conditions
+  const [playerName, setPlayerNameState] = useState<string>(() => {
+    if (initialValue) return initialValue;
+    return localStorage.getItem(PLAYER_NAME_KEY) || "";
+  });
 
   // Save to localStorage and update state
   const setPlayerName = (name: string) => {

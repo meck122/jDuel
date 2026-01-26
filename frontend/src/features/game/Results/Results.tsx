@@ -9,11 +9,12 @@
  */
 
 import { useGame } from "../../../contexts";
-import { Timer } from "../../../components";
+import { Timer, PlayerName } from "../../../components";
+import { sortPlayersByScore } from "../../../utils";
 import styles from "./Results.module.css";
 
 export function Results() {
-  const { playerId, roomState } = useGame();
+  const { roomState } = useGame();
 
   const players = roomState?.players ?? {};
   const results = roomState?.results;
@@ -36,7 +37,7 @@ export function Results() {
         <Timer
           timeRemainingMs={timeRemainingMs}
           resetKey={correctAnswer}
-          className="results-timer"
+          variant="results"
         />
       </div>
 
@@ -49,16 +50,15 @@ export function Results() {
         <div className={styles.resultsBox}>
           <h3>Scoreboard</h3>
           <div className={styles.resultsScores}>
-            {Object.entries(players)
-              .sort(([, a], [, b]) => b - a)
-              .map(([player, score]) => (
-                <div key={player} className={styles.resultsScoreItem}>
-                  <span className={styles.resultsPlayerName}>
-                    {player} {player === playerId && "(you)"}
-                  </span>
-                  <span className={styles.resultsPlayerScore}>{score}</span>
-                </div>
-              ))}
+            {sortPlayersByScore(players).map(([player, score]) => (
+              <div key={player} className={styles.resultsScoreItem}>
+                <PlayerName
+                  playerId={player}
+                  className={styles.resultsPlayerName}
+                />
+                <span className={styles.resultsPlayerScore}>{score}</span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -75,9 +75,10 @@ export function Results() {
                     isCorrect ? styles.correct : styles.incorrect
                   }`}
                 >
-                  <span className={styles.resultsAnswerPlayer}>
-                    {player} {player === playerId && "(you)"}
-                  </span>
+                  <PlayerName
+                    playerId={player}
+                    className={styles.resultsAnswerPlayer}
+                  />
                   <span className={styles.resultsAnswerText}>
                     {answer || "(no answer)"}
                   </span>

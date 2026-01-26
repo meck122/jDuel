@@ -49,10 +49,8 @@ export function HomePage() {
       // Step 2: Register the creator as a player
       await joinRoom(room.roomId, playerName.trim());
 
-      // Step 3: Navigate to the game page
-      navigate(
-        `/game/${room.roomId}?player=${encodeURIComponent(playerName.trim())}`,
-      );
+      // Step 3: Navigate to the game page (player name retrieved from localStorage)
+      navigate(`/game/${room.roomId}`);
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -74,10 +72,8 @@ export function HomePage() {
       // Register the player via HTTP
       await joinRoom(roomCode.toUpperCase(), playerName.trim());
 
-      // Navigate to the game page
-      navigate(
-        `/game/${roomCode.toUpperCase()}?player=${encodeURIComponent(playerName.trim())}`,
-      );
+      // Navigate to the game page (player name retrieved from localStorage)
+      navigate(`/game/${roomCode.toUpperCase()}`);
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.code === "ROOM_NOT_FOUND") {
@@ -175,4 +171,4 @@ export function HomePage() {
       </div>
     </div>
   );
-};
+}

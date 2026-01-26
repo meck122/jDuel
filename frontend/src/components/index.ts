@@ -11,6 +11,7 @@
 
 // Common components
 export { Timer } from "./common/Timer/Timer";
+export { PlayerName } from "./common/PlayerName/PlayerName";
 
 // Layout components
 export { PageContainer } from "./layout/PageContainer/PageContainer";

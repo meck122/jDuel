@@ -9,6 +9,7 @@
 
 import { useGame } from "../../../contexts";
 import { Timer } from "../../../components";
+import { sortPlayersByScore } from "../../../utils";
 import styles from "./GameOver.module.css";
 
 export function GameOver() {
@@ -18,7 +19,7 @@ export function GameOver() {
   const winner = roomState?.winner ?? "";
   const timeRemainingMs = roomState?.timeRemainingMs;
 
-  const sortedPlayers = Object.entries(players).sort(([, a], [, b]) => b - a);
+  const sortedPlayers = sortPlayersByScore(players);
   const firstPlace = sortedPlayers[0];
 
   return (
@@ -50,7 +51,7 @@ export function GameOver() {
           <Timer
             timeRemainingMs={timeRemainingMs}
             resetKey={winner}
-            className="game-over-timer"
+            variant="game-over"
           />
         </div>
       )}

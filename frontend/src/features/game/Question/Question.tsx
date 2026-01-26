@@ -55,11 +55,7 @@ export function Question() {
       <div className={styles.questionBox}>
         <p className={styles.question}>{currentQuestion.text}</p>
       </div>
-      <Timer
-        timeRemainingMs={timeRemainingMs}
-        resetKey={questionIndex}
-        className="timer"
-      />
+      <Timer timeRemainingMs={timeRemainingMs} resetKey={questionIndex} />
 
       {!hasSubmitted ? (
         <form onSubmit={handleSubmit} className={styles.answerForm}>

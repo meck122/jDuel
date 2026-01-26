@@ -61,6 +61,7 @@ def create_room() -> CreateRoomResponse:
         playerCount=0,
     )
 
+
 @router.post("/rooms/{room_id}/join", response_model=JoinRoomResponse)
 def join_room(room_id: str, request: JoinRoomRequest) -> JoinRoomResponse:
     """Pre-register a player to join a room.
@@ -106,6 +107,11 @@ def join_room(room_id: str, request: JoinRoomRequest) -> JoinRoomResponse:
         # Check if player is currently connected (has active WebSocket)
         if request.playerId in room.connections:
             # Player is actively connected - reject to prevent hijacking
+            logger.warning(
+                f"NAME_TAKEN: player_id={request.playerId}, "
+                f"all_connections={list(room.connections.keys())}, "
+                f"all_players={list(room.players)}"
+            )
             raise HTTPException(
                 status_code=409,
                 detail={

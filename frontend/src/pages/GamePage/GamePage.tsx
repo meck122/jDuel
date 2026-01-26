@@ -7,14 +7,16 @@
  * 3. Rendering the game UI via GameView
  *
  * Players arrive here after successfully joining via HomePage.
- * URL format: /game/:roomId?player=PlayerName
+ * URL format: /game/:roomId (player name retrieved from localStorage)
  */
 
 import { useEffect, useCallback, useState } from "react";
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { GameProvider, useGame } from "../../contexts";
 import { GameView } from "../../features/game";
 import { PageContainer } from "../../components";
+import { usePlayerName } from "../../hooks";
+import { joinRoom, ApiError } from "../../services/api";
 import styles from "./GamePage.module.css";
 
 /**
@@ -23,8 +25,8 @@ import styles from "./GamePage.module.css";
  */
 function GamePageContent() {
   const { roomId: urlRoomId } = useParams<{ roomId: string }>();
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { playerName } = usePlayerName();
 
   const [hasInitialized, setHasInitialized] = useState(false);
 
@@ -32,9 +34,9 @@ function GamePageContent() {
     useGame();
 
   const roomId = urlRoomId?.toUpperCase() || "";
-  const playerId = searchParams.get("player") || "";
+  const playerId = playerName.trim();
 
-  // Validate URL params and connect
+  // Register player via HTTP then connect via WebSocket
   useEffect(() => {
     if (hasInitialized) return;
 
@@ -48,8 +50,56 @@ function GamePageContent() {
       return;
     }
 
-    connect(roomId, playerId);
-    setHasInitialized(true);
+    let ignore = false;
+    let retryTimeout: number | null = null;
+
+    // Register/verify player before WebSocket connection (enables reconnection)
+    const registerAndConnect = async (retryCount = 0) => {
+      if (ignore) return;
+
+      try {
+        await joinRoom(roomId, playerId);
+        if (ignore) return; // Check after async operation (handles Strict Mode)
+
+        connect(roomId, playerId);
+        setHasInitialized(true);
+      } catch (error) {
+        if (ignore) return;
+
+        if (error instanceof ApiError) {
+          if (error.code === "ROOM_NOT_FOUND") {
+            navigate(`/?join=${roomId}`, { replace: true });
+          } else if (error.code === "GAME_STARTED") {
+            // Game already started but player not registered - can't join
+            navigate("/", { replace: true });
+          } else if (error.code === "NAME_TAKEN" && retryCount < 4) {
+            // Race condition: old WebSocket not fully disconnected yet
+            // Wait and retry (happens on page refresh)
+            console.log(
+              `Name taken, retrying in 500ms (attempt ${retryCount + 1}/4)...`,
+            );
+            retryTimeout = setTimeout(
+              () => registerAndConnect(retryCount + 1),
+              500,
+            );
+          } else if (error.code === "NAME_TAKEN") {
+            // Max retries exceeded - truly taken
+            navigate("/", { replace: true });
+          }
+          // For other errors, let WebSocket connection attempt handle it
+        }
+      }
+    };
+
+    registerAndConnect();
+
+    // Cleanup on unmount or re-run (handles Strict Mode)
+    return () => {
+      ignore = true;
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
+    };
   }, [roomId, playerId, navigate, connect, hasInitialized]);
 
   // Handle connection errors

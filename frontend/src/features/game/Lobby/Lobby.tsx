@@ -9,6 +9,7 @@
 
 import { useState } from "react";
 import { useGame } from "../../../contexts";
+import { PlayerName } from "../../../components";
 import styles from "./Lobby.module.css";
 
 export function Lobby() {
@@ -61,10 +62,7 @@ export function Lobby() {
           >
             <div className={styles.playerIcon}>👤</div>
             <div className={styles.playerName}>
-              {player}
-              {player === playerId && (
-                <span className={styles.youBadge}>(You)</span>
-              )}
+              <PlayerName playerId={player} />
             </div>
           </div>
         ))}

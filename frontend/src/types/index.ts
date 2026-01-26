@@ -16,9 +16,8 @@ export interface RoomState {
   };
 }
 
-export interface WebSocketMessage {
-  type: string;
-  roomState?: RoomState;
-  playerId?: string;
-  message?: string;
-}
+// Discriminated union for type-safe message handling
+export type WebSocketMessage =
+  | { type: "ROOM_STATE"; roomState: RoomState }
+  | { type: "ROOM_CLOSED" }
+  | { type: "ERROR"; message: string };

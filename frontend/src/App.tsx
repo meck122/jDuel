@@ -8,8 +8,8 @@ import {
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import { jeopardyTheme } from "./theme";
-import { Navigation, About } from "./components";
-import { HomePage, GamePage } from "./pages";
+import { Navigation } from "./components";
+import { HomePage, GamePage, AboutPage } from "./pages";
 
 /**
  * Redirect component for deep links.
@@ -32,7 +32,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/room/:roomId" element={<RoomRedirect />} />
               <Route path="/game/:roomId" element={<GamePage />} />
-              <Route path="/about" element={<About />} />
+              <Route path="/about" element={<AboutPage />} />
             </Routes>
           </main>
         </div>

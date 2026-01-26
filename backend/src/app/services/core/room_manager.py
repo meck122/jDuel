@@ -123,7 +123,8 @@ class RoomManager:
         if room and player_id in room.connections:
             del room.connections[player_id]
             self.logger.info(
-                f"WebSocket detached: room_id={room_id}, player_id={player_id}"
+                f"WebSocket detached: room_id={room_id}, player_id={player_id}, "
+                f"remaining_connections={list(room.connections.keys())}"
             )
 
     def _generate_unique_room_code(self) -> str:
