@@ -1,6 +1,14 @@
+.lobbyWrapper {
+  display: flex;
+  gap: var(--spacing-xl);
+  align-items: start;
+}
+
 .lobbyContainer {
   composes: card from global;
   padding: var(--spacing-2xl);
+  flex: 1;
+  min-width: 0;
 }
 
 .header {
@@ -29,18 +37,19 @@
 
 .playersGrid {
   composes: player-grid from global;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
 }
 
 .playerCard {
   background: var(--color-bg-elevated);
   border: 2px solid var(--color-border-default);
   border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
   transition: all var(--transition-base);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
 }
 
 .playerCard:hover {
@@ -56,9 +65,9 @@
 }
 
 .playerIcon {
-  font-size: 1.75rem;
-  width: 56px;
-  height: 56px;
+  font-size: 1.25rem;
+  width: 40px;
+  height: 40px;
   background: var(--color-bg-hover);
   border-radius: 50%;
   display: flex;
@@ -69,7 +78,7 @@
 
 .playerName {
   color: var(--color-text-primary);
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   font-weight: 600;
   text-align: center;
   display: flex;
@@ -81,6 +90,14 @@
   color: var(--color-accent-teal);
   font-size: var(--font-size-sm);
   font-weight: 700;
+}
+
+.hostBadge {
+  color: var(--color-accent-gold);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .shareSection {
@@ -135,76 +152,6 @@
   filter: none;
 }
 
-.configSection {
-  margin-top: var(--spacing-xl);
-  padding: var(--spacing-lg);
-  background: var(--color-bg-elevated);
-  border: 2px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-}
-
-.configToggle {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  cursor: pointer;
-  user-select: none;
-}
-
-.configToggleDisabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.configCheckbox {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.configSlider {
-  position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 26px;
-  background: var(--color-bg-hover);
-  border: 2px solid var(--color-border-default);
-  border-radius: 13px;
-  flex-shrink: 0;
-  transition: all var(--transition-base);
-}
-
-.configSlider::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  background: var(--color-text-muted);
-  border-radius: 50%;
-  transition: all var(--transition-base);
-}
-
-.configCheckbox:checked + .configSlider {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: var(--color-accent-purple);
-}
-
-.configCheckbox:checked + .configSlider::after {
-  left: 24px;
-  background: var(--color-accent-purple);
-  box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
-}
-
-.configLabel {
-  font-family: var(--font-display);
-  font-size: var(--font-size-base);
-  color: var(--color-text-primary);
-  letter-spacing: 0.5px;
-}
-
 .waitingSection {
   text-align: center;
   margin-top: var(--spacing-2xl);
@@ -234,18 +181,16 @@
 }
 
 @media (max-width: 768px) {
+  .lobbyWrapper {
+    flex-direction: column;
+  }
+
   .lobbyContainer {
     padding: var(--spacing-lg);
   }
 
   .title {
     font-size: var(--font-size-2xl);
-  }
-
-  .playerIcon {
-    font-size: 1.5rem;
-    width: 48px;
-    height: 48px;
   }
 
   .startButton {
@@ -272,12 +217,6 @@
     padding: var(--spacing-sm) var(--spacing-md);
   }
 
-  .playerIcon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.25rem;
-  }
-
   .playerName {
     font-size: var(--font-size-sm);
   }
@@ -301,21 +240,6 @@
     width: 100%;
     padding: 12px var(--spacing-md);
     justify-content: center;
-  }
-
-  .configSlider {
-    width: 56px;
-    height: 30px;
-    border-radius: 15px;
-  }
-
-  .configSlider::after {
-    width: 22px;
-    height: 22px;
-  }
-
-  .configCheckbox:checked + .configSlider::after {
-    left: 28px;
   }
 
   .waitingSection {

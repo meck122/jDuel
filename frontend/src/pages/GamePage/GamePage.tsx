@@ -133,7 +133,7 @@ function GamePageContent() {
 
   // Connected - render game view
   return (
-    <PageContainer centered maxWidth="md">
+    <PageContainer centered maxWidth="lg">
       <GameView />
     </PageContainer>
   );

@@ -96,10 +96,10 @@
 
 .resultsAnswerItem {
   display: grid;
-  grid-template-columns: 1fr 2fr auto;
-  gap: var(--spacing-sm);
+  grid-template-columns: minmax(80px, 1fr) minmax(120px, 2fr) auto;
+  gap: var(--spacing-md);
   align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-md);
   background: var(--color-bg-elevated);
   border-radius: var(--radius-sm);
   border-left: 3px solid transparent;
@@ -124,17 +124,24 @@
   font-weight: 600;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .resultsAnswerText {
   color: var(--color-text-primary);
   font-weight: 500;
+  font-size: var(--font-size-base);
+  word-break: break-word;
 }
 
 .resultsAnswerRight {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+  flex-shrink: 0;
+  justify-content: flex-end;
 }
 
 .resultsPointsGained {

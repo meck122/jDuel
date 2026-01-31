@@ -34,6 +34,16 @@ repos:
       - id: ruff-format
         files: ^backend/
 
+  # Python: Run tests
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Backend tests
+        entry: bash -c 'cd backend && uv run pytest tests/ -x -q'
+        language: system
+        files: ^backend/
+        pass_filenames: false
+
   # Python: Type checking with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.13.0

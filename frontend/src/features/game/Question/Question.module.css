@@ -47,15 +47,18 @@
 
 .categoryLabel {
   font-family: var(--font-display);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   color: var(--color-accent-teal);
   letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .categoryValue {
-  font-size: var(--font-size-md);
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
   color: var(--color-text-primary);
-  font-weight: 500;
+  font-weight: 400;
+  letter-spacing: 0.5px;
 }
 
 .questionBox {
