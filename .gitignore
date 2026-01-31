@@ -55,3 +55,8 @@ node_modules/
 
 # csv
 *.csv
+
+
+# Claude
+.playwright-mcp/
+.claude/
