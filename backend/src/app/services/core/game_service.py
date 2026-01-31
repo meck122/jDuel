@@ -46,6 +46,10 @@ class GameService:
         if player_id in room.answered_players:
             return False
 
+        # Bounds check on questions
+        if not room.questions or room.question_index >= len(room.questions):
+            return False
+
         room.answered_players.add(player_id)
         room.player_answers[player_id] = answer
 

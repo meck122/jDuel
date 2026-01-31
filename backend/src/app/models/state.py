@@ -9,6 +9,7 @@ class RoomConfigData(BaseModel):
     """Room configuration sent to clients."""
 
     multipleChoiceEnabled: bool = False
+    difficulty: str = "enjoyer"
 
 
 class CurrentQuestion(BaseModel):

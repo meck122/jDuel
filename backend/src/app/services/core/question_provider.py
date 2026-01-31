@@ -25,6 +25,21 @@ class QuestionProvider(Protocol):
         """
         ...
 
+    def get_questions_by_difficulty(
+        self, count: int, min_difficulty: int, max_difficulty: int
+    ) -> list[Question]:
+        """Get questions filtered by difficulty range.
+
+        Args:
+            count: Number of questions to retrieve
+            min_difficulty: Minimum difficulty (inclusive)
+            max_difficulty: Maximum difficulty (inclusive)
+
+        Returns:
+            List of Question objects
+        """
+        ...
+
 
 class DatabaseQuestionProvider:
     """Question provider that loads from the database."""
@@ -41,6 +56,23 @@ class DatabaseQuestionProvider:
         from app.db import get_random_questions
 
         return get_random_questions(count)
+
+    def get_questions_by_difficulty(
+        self, count: int, min_difficulty: int, max_difficulty: int
+    ) -> list[Question]:
+        """Get random questions filtered by difficulty range.
+
+        Args:
+            count: Number of questions to retrieve
+            min_difficulty: Minimum difficulty (inclusive)
+            max_difficulty: Maximum difficulty (inclusive)
+
+        Returns:
+            List of Question objects
+        """
+        from app.db import get_random_questions_by_difficulty
+
+        return get_random_questions_by_difficulty(count, min_difficulty, max_difficulty)
 
 
 class StaticQuestionProvider:
@@ -62,6 +94,21 @@ class StaticQuestionProvider:
 
         Args:
             count: Number of questions to retrieve
+
+        Returns:
+            List of Question objects (up to count or all available)
+        """
+        return self._questions[:count]
+
+    def get_questions_by_difficulty(
+        self, count: int, min_difficulty: int, max_difficulty: int
+    ) -> list[Question]:
+        """Get questions from the static list (ignores difficulty for testing).
+
+        Args:
+            count: Number of questions to retrieve
+            min_difficulty: Ignored for static provider
+            max_difficulty: Ignored for static provider
 
         Returns:
             List of Question objects (up to count or all available)

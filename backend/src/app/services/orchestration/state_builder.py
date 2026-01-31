@@ -34,6 +34,7 @@ class StateBuilder:
             hostId=room.host_id,
             config=RoomConfigData(
                 multipleChoiceEnabled=room.config.multiple_choice_enabled,
+                difficulty=room.config.difficulty,
             ),
         )
 

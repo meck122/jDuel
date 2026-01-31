@@ -67,3 +67,46 @@ def get_random_questions(count: int = 10) -> list[Question]:
 
     conn.close()
     return questions
+
+
+def get_random_questions_by_difficulty(
+    count: int = 10, min_difficulty: int = 1, max_difficulty: int = 5
+) -> list[Question]:
+    """Get random questions from the database within a difficulty range.
+
+    Args:
+        count: Number of questions to retrieve
+        min_difficulty: Minimum difficulty (inclusive)
+        max_difficulty: Maximum difficulty (inclusive)
+
+    Returns:
+        List of typed Question objects
+    """
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT question, answer, category, wrong_answer_1, wrong_answer_2, wrong_answer_3
+        FROM questions
+        WHERE difficulty BETWEEN ? AND ?
+        ORDER BY RANDOM()
+        LIMIT ?
+    """,
+        (min_difficulty, max_difficulty, count),
+    )
+
+    questions = [
+        Question(
+            text=row[0],
+            answer=row[1],
+            category=row[2],
+            wrong_answers=(row[3], row[4], row[5])
+            if row[3] and row[4] and row[5]
+            else None,
+        )
+        for row in cursor.fetchall()
+    ]
+
+    conn.close()
+    return questions

@@ -7,8 +7,13 @@ from typing import TYPE_CHECKING
 
 from fastapi import WebSocket
 
-from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, RESULTS_TIME_MS
-from app.models import RoomStateMessage
+from app.config import (
+    DIFFICULTY_RANGES,
+    GAME_OVER_TIME_MS,
+    QUESTION_TIME_MS,
+    RESULTS_TIME_MS,
+)
+from app.models import GameStatus, RoomStateMessage
 from app.services.orchestration.protocols import RoomCloser
 from app.services.orchestration.state_builder import StateBuilder
 
@@ -81,21 +86,44 @@ class GameOrchestrator:
             await self._broadcast_room_state(room_id)
         return success
 
-    async def handle_start_game(self, room_id: str) -> None:
+    async def handle_start_game(self, room_id: str, player_id: str) -> None:
         """Handle game start request.
+
+        Only the host can start the game. Questions are loaded at game start
+        based on the selected difficulty.
 
         Args:
             room_id: The room to start
+            player_id: The player requesting the start (must be host)
         """
         room = self._room_manager.get_room(room_id)
         if not room:
+            return
+
+        # Only the host can start the game
+        if player_id != room.host_id:
+            logger.warning(
+                f"Non-host game start rejected: room_id={room_id}, player_id={player_id}"
+            )
+            return
+
+        # Load questions based on selected difficulty
+        difficulty = room.config.difficulty
+        min_diff, max_diff = DIFFICULTY_RANGES.get(difficulty, (1, 2))
+        self._room_manager.load_questions_by_difficulty(room_id, min_diff, max_diff)
+
+        # Validate questions loaded successfully
+        if not room.questions:
+            logger.error(
+                f"Game start failed (no questions): room_id={room_id}, difficulty={difficulty}"
+            )
             return
 
         self._game_service.start_game(room)
         player_list = list(room.players)
         logger.info(
             f"Game started: room_id={room_id}, players={player_list}, "
-            f"total_questions={len(room.questions)}"
+            f"difficulty={difficulty}, total_questions={len(room.questions)}"
         )
 
         await self._broadcast_room_state(room_id)
@@ -111,6 +139,14 @@ class GameOrchestrator:
         """
         room = self._room_manager.get_room(room_id)
         if not room:
+            return
+
+        # Reject answers when not in playing phase
+        if room.status != GameStatus.PLAYING:
+            logger.warning(
+                f"Answer rejected (wrong phase): room_id={room_id}, "
+                f"player_id={player_id}, phase={room.status.value}"
+            )
             return
 
         self._game_service.process_answer(room, player_id, answer)
@@ -152,9 +188,19 @@ class GameOrchestrator:
                 config_data["multipleChoiceEnabled"]
             )
 
+        if "difficulty" in config_data:
+            difficulty = config_data["difficulty"]
+            if difficulty in DIFFICULTY_RANGES:
+                room.config.difficulty = difficulty
+            else:
+                logger.warning(
+                    f"Invalid difficulty rejected: room_id={room_id}, difficulty={difficulty}"
+                )
+
         logger.info(
             f"Config updated: room_id={room_id}, "
-            f"multiple_choice={room.config.multiple_choice_enabled}"
+            f"multiple_choice={room.config.multiple_choice_enabled}, "
+            f"difficulty={room.config.difficulty}"
         )
         await self._broadcast_room_state(room_id)
 

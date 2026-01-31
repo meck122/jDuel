@@ -14,7 +14,7 @@ This guide covers setting up jDuel for local development.
 
 ```bash
 cd backend
-uv sync
+uv sync --all-extras
 
 # Install spaCy language model (required for answer checking)
 uv run python -m ensurepip --upgrade

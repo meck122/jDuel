@@ -1,12 +1,14 @@
 """HTTP REST API routes for room management."""
 
 import logging
-from typing import Literal
+import re
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, HTTPException, Path
+from pydantic import BaseModel, Field, field_validator
 
-from app.api.dependencies import Services
+from app.api.dependencies import RateLimitRoomCreate, Services
+from app.config import ROOM_ID_PATTERN
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +24,43 @@ class CreateRoomResponse(BaseModel):
     playerCount: int
 
 
+# Characters that are not allowed in player names
+_ZERO_WIDTH_CHARS = frozenset(["\u200b", "\u200c", "\u200d", "\ufeff"])
+_HTML_PATTERNS = re.compile(r"<|>|script|javascript", re.IGNORECASE)
+
+
 class JoinRoomRequest(BaseModel):
     """Request to join a room."""
 
     playerId: str = Field(..., min_length=1, max_length=20)
+
+    @field_validator("playerId")
+    @classmethod
+    def validate_player_id(cls, v: str) -> str:
+        """Validate player name for security.
+
+        Rejects:
+        - Control characters (ord < 32)
+        - Zero-width characters (U+200B, U+200C, U+200D, U+FEFF)
+        - HTML-like patterns (<, >, script, javascript)
+        """
+        # Check for control characters
+        if any(ord(c) < 32 for c in v):
+            raise ValueError("Player name contains invalid control characters")
+
+        # Check for zero-width characters
+        if any(c in _ZERO_WIDTH_CHARS for c in v):
+            raise ValueError("Player name contains invisible characters")
+
+        # Check for HTML-like patterns
+        if _HTML_PATTERNS.search(v):
+            raise ValueError("Player name contains invalid characters")
+
+        # Ensure name is not just whitespace
+        if not v.strip():
+            raise ValueError("Player name cannot be empty or whitespace only")
+
+        return v.strip()
 
 
 class JoinRoomResponse(BaseModel):
@@ -43,8 +78,21 @@ class ErrorResponse(BaseModel):
     code: Literal["ROOM_NOT_FOUND", "NAME_TAKEN", "GAME_STARTED", "VALIDATION_ERROR"]
 
 
+# Room ID path parameter with validation
+RoomIdPath = Annotated[
+    str,
+    Path(
+        pattern=ROOM_ID_PATTERN,
+        description="4-6 character alphanumeric room code",
+        examples=["AB3D", "XYZ123"],
+    ),
+]
+
+
 @router.post("/rooms", response_model=CreateRoomResponse)
-def create_room(services: Services) -> CreateRoomResponse:
+def create_room(
+    services: Services, _rate_limit: RateLimitRoomCreate
+) -> CreateRoomResponse:
     """Create a new game room.
 
     Args:
@@ -66,7 +114,7 @@ def create_room(services: Services) -> CreateRoomResponse:
 
 @router.post("/rooms/{room_id}/join", response_model=JoinRoomResponse)
 def join_room(
-    room_id: str, request: JoinRoomRequest, services: Services
+    room_id: RoomIdPath, request: JoinRoomRequest, services: Services
 ) -> JoinRoomResponse:
     """Pre-register a player to join a room.
 

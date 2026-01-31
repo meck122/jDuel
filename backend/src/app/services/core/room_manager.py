@@ -73,15 +73,42 @@ class RoomManager:
     def create_room(self, questions: list["Question"] | None = None) -> Room:
         """Create a room with a unique room code.
 
+        Questions are no longer loaded at room creation - they're loaded
+        at game start based on the selected difficulty. Pass an empty list
+        or None to create a room without questions.
+
         Args:
-            questions: Optional list of questions. If not provided, uses question provider.
+            questions: Optional list of questions (empty list by default)
 
         Returns:
             The newly created Room
         """
         if questions is None:
-            questions = self._question_provider.get_questions(count=10)
+            questions = []
         return self._repository.create(questions)
+
+    def load_questions_by_difficulty(
+        self,
+        room_id: str,
+        min_difficulty: int,
+        max_difficulty: int,
+        count: int = 10,
+    ) -> None:
+        """Load questions for a room based on difficulty range.
+
+        Called at game start to fetch questions matching the selected difficulty.
+
+        Args:
+            room_id: The room ID
+            min_difficulty: Minimum difficulty (inclusive)
+            max_difficulty: Maximum difficulty (inclusive)
+            count: Number of questions to load
+        """
+        room = self._repository.get(room_id)
+        if room:
+            room.questions = self._question_provider.get_questions_by_difficulty(
+                count, min_difficulty, max_difficulty
+            )
 
     def get_room(self, room_id: str) -> Room | None:
         """Get a room by ID.

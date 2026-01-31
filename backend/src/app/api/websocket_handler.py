@@ -4,6 +4,13 @@ import json
 import logging
 
 from fastapi import WebSocket, WebSocketDisconnect
+from pydantic import ValidationError
+
+from app.models.websocket_messages import (
+    AnswerMessage,
+    StartGameMessage,
+    UpdateConfigMessage,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,18 +60,43 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
     try:
         while True:
             data = await ws.receive_text()
-            message = json.loads(data)
+            try:
+                message = json.loads(data)
+            except json.JSONDecodeError:
+                logger.warning(
+                    f"Invalid JSON received: room_id={room_id}, player_id={player_id}"
+                )
+                continue
+
             msg_type = message.get("type")
 
-            if msg_type == "START_GAME":
-                await orchestrator.handle_start_game(room_id)
+            try:
+                if msg_type == "START_GAME":
+                    StartGameMessage.model_validate(message)
+                    await orchestrator.handle_start_game(room_id, player_id)
 
-            elif msg_type == "ANSWER":
-                await orchestrator.handle_answer(room_id, player_id, message["answer"])
+                elif msg_type == "ANSWER":
+                    validated = AnswerMessage.model_validate(message)
+                    await orchestrator.handle_answer(
+                        room_id, player_id, validated.answer
+                    )
 
-            elif msg_type == "UPDATE_CONFIG":
-                await orchestrator.handle_config_update(
-                    room_id, player_id, message.get("config", {})
+                elif msg_type == "UPDATE_CONFIG":
+                    validated = UpdateConfigMessage.model_validate(message)
+                    await orchestrator.handle_config_update(
+                        room_id, player_id, validated.config
+                    )
+
+                else:
+                    logger.warning(
+                        f"Unknown message type: room_id={room_id}, "
+                        f"player_id={player_id}, type={msg_type}"
+                    )
+
+            except ValidationError as e:
+                logger.warning(
+                    f"Message validation failed: room_id={room_id}, "
+                    f"player_id={player_id}, error={e.errors()}"
                 )
 
     except WebSocketDisconnect:

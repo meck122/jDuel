@@ -14,3 +14,4 @@ class RoomConfig:
     """
 
     multiple_choice_enabled: bool = False
+    difficulty: str = "enjoyer"
