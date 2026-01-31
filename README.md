@@ -73,10 +73,10 @@ uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```bash
 cd frontend
 npm run dev
-# App runs at http://localhost:5173
+# App runs at http://localhost:3000
 ```
 
-Open `http://localhost:5173` in multiple browser windows to test multiplayer functionality.
+Open `http://localhost:3000` in multiple browser windows to test multiplayer functionality.
 
 ### Tech Stack
 
@@ -127,8 +127,10 @@ jDuel/
 │       │   ├── models/
 │       │   │   ├── game.py     # Room and GameStatus models
 │       │   │   ├── question.py # Question data structure
+│       │   │   ├── room_config.py  # Room configuration settings
 │       │   │   ├── round_state.py  # Per-question round state
-│       │   │   └── state.py    # WebSocket message models (RoomStateData, etc.)
+│       │   │   ├── state.py    # WebSocket message models (RoomStateData, etc.)
+│       │   │   └── websocket_messages.py  # Client-to-server message validation
 │       │   └── services/
 │       │       ├── container.py         # Service container for dependency injection
 │       │       ├── answer/              # AI answer verification package
@@ -212,6 +214,7 @@ Used for real-time game communication after player pre-registration.
 
 - `START_GAME` - Any player can start the game from lobby
 - `ANSWER` - Submit an answer with `answer` field
+- `UPDATE_CONFIG` - Host can update room configuration (difficulty, multiple choice) in lobby
 
 **Server → Client Messages:**
 

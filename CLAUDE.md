@@ -95,7 +95,6 @@ Frontend (React 19 + Vite)  <-->  Backend (FastAPI)
 - Improve existing skills to improve our workflows
 - Create new skills locally in .claude/skills when doing a skill that is something important and likely to be reused
 
-
 ### Formatting
 
 ```bash

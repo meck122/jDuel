@@ -184,7 +184,7 @@ This traces the HTTP calls, WebSocket connections, and React state changes for a
 
 #### Step 1: Alice Opens App
 
-**URL:** `http://localhost:5173/`
+**URL:** `http://localhost:3000/`
 
 **Component Tree:**
 
@@ -224,7 +224,7 @@ navigate('/game/AB3D');
 
 #### Step 3: GamePage Initialization
 
-**URL:** `http://localhost:5173/game/AB3D`
+**URL:** `http://localhost:3000/game/AB3D`
 
 **Component Tree:**
 
@@ -285,7 +285,7 @@ GamePageContent → GameView → Lobby
 **Lobby displays:**
 
 - Room code: "AB3D"
-- Shareable link: `http://localhost:5173/room/AB3D`
+- Shareable link: `http://localhost:3000/room/AB3D`
 - Player list: ["Alice"]
 - "Start Game" button (enabled since Alice is connected)
 
@@ -293,11 +293,11 @@ GamePageContent → GameView → Lobby
 
 ### Phase 2: Bob Joins via Deep Link
 
-Alice shares the link: `http://localhost:5173/room/AB3D`
+Alice shares the link: `http://localhost:3000/room/AB3D`
 
 #### Step 1: Bob Opens Deep Link
 
-**URL:** `http://localhost:5173/room/AB3D`
+**URL:** `http://localhost:3000/room/AB3D`
 
 **Router matching:**
 
@@ -314,7 +314,7 @@ function RoomRedirect() {
 }
 ```
 
-**Redirects to:** `http://localhost:5173/?join=AB3D`
+**Redirects to:** `http://localhost:3000/?join=AB3D`
 
 **Component Tree:**
 
@@ -647,7 +647,7 @@ if (message.type === 'ROOM_CLOSED') {
 <GameProvider onRoomClosed={() => navigate('/')}>
 ```
 
-**Both players automatically navigate to:** `http://localhost:5173/`
+**Both players automatically navigate to:** `http://localhost:3000/`
 
 **WebSocket connections close gracefully**
 

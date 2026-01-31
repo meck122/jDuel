@@ -18,6 +18,7 @@ export interface JoinRoomResponse {
   roomId: string;
   playerId: string;
   status: string;
+  sessionToken: string;
 }
 
 // Error types
@@ -26,7 +27,32 @@ export type ApiErrorCode =
   | "NAME_TAKEN"
   | "GAME_STARTED"
   | "VALIDATION_ERROR"
+  | "INVALID_SESSION"
   | "NETWORK_ERROR";
+
+// Session token storage helpers
+const SESSION_TOKEN_KEY = "jduel_session_tokens";
+
+function getStoredTokens(): Record<string, string> {
+  try {
+    const stored = localStorage.getItem(SESSION_TOKEN_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
+
+function storeToken(roomId: string, playerId: string, token: string): void {
+  const key = `${roomId}:${playerId}`;
+  const tokens = getStoredTokens();
+  tokens[key] = token;
+  localStorage.setItem(SESSION_TOKEN_KEY, JSON.stringify(tokens));
+}
+
+function getToken(roomId: string, playerId: string): string | undefined {
+  const key = `${roomId}:${playerId}`;
+  return getStoredTokens()[key];
+}
 
 export class ApiError extends Error {
   constructor(
@@ -69,16 +95,25 @@ export async function createRoom(): Promise<CreateRoomResponse> {
 /**
  * Pre-register a player to join a room.
  * Must be called before connecting via WebSocket.
+ * Automatically handles session tokens for reconnection security.
  * @param roomId The room ID to join
  * @param playerId The player's display name
- * @returns Join confirmation
+ * @returns Join confirmation including session token
  */
 export async function joinRoom(roomId: string, playerId: string): Promise<JoinRoomResponse> {
+  const upperRoomId = roomId.toUpperCase();
+
+  // Check for existing session token (for reconnection)
+  const existingToken = getToken(upperRoomId, playerId);
+
   try {
-    const response = await fetch(`${API_URL}/rooms/${roomId.toUpperCase()}/join`, {
+    const response = await fetch(`${API_URL}/rooms/${upperRoomId}/join`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ playerId }),
+      body: JSON.stringify({
+        playerId,
+        sessionToken: existingToken,
+      }),
     });
 
     if (!response.ok) {
@@ -90,7 +125,12 @@ export async function joinRoom(roomId: string, playerId: string): Promise<JoinRo
       );
     }
 
-    return response.json();
+    const result: JoinRoomResponse = await response.json();
+
+    // Store the session token for future reconnection
+    storeToken(upperRoomId, playerId, result.sessionToken);
+
+    return result;
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError("NETWORK_ERROR", "Network error: Unable to connect to server");

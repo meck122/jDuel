@@ -57,6 +57,8 @@ class Room:
     # Timestamps
     results_start_time: datetime | None = None
     finish_time: datetime | None = None
+    # Session tokens for secure reconnection (player_id -> token)
+    session_tokens: dict[str, str] = field(default_factory=dict)
 
     def __init__(self, room_id: str, questions: list[Question]):
         """Initialize a room.
@@ -77,6 +79,7 @@ class Room:
         self.current_round = RoundState()
         self.results_start_time = None
         self.finish_time = None
+        self.session_tokens = {}
 
     # Backward-compatible property accessors for round state
     @property

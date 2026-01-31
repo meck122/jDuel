@@ -6,6 +6,7 @@ import logging
 from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
+from app.middleware.rate_limiter import get_ws_message_limiter
 from app.models.websocket_messages import (
     AnswerMessage,
     StartGameMessage,
@@ -57,9 +58,21 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
         await ws.close(code=4000, reason="Failed to connect")
         return
 
+    # Set up rate limiting for this connection
+    rate_limiter = get_ws_message_limiter()
+    connection_key = f"{room_id}:{player_id}"
+
     try:
         while True:
             data = await ws.receive_text()
+
+            # Check rate limit before processing
+            if not rate_limiter.check(connection_key):
+                logger.warning(
+                    f"Rate limit exceeded: room_id={room_id}, player_id={player_id}"
+                )
+                continue
+
             try:
                 message = json.loads(data)
             except json.JSONDecodeError:
@@ -100,10 +113,12 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
                 )
 
     except WebSocketDisconnect:
+        rate_limiter.reset(connection_key)
         await orchestrator.handle_disconnect(room_id, player_id)
     except Exception as e:
         logger.error(
             f"WebSocket error: room_id={room_id}, player_id={player_id}, error={e!s}",
             exc_info=True,
         )
+        rate_limiter.reset(connection_key)
         await orchestrator.handle_disconnect(room_id, player_id)

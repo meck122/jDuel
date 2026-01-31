@@ -4,7 +4,7 @@ A React-based trivia game frontend built with TypeScript, Vite, and Material UI.
 
 ## Tech Stack
 
-- **React 18** - UI framework
+- **React 19** - UI framework
 - **TypeScript** - Type safety
 - **Vite** - Build tool and dev server
 - **Material UI** - Component library and theming

@@ -260,10 +260,11 @@ ws.onmessage = (event) => {
 
 #### Client → Server Messages
 
-| Message Type | Purpose                              | Required Fields | When to Send                     |
-| ------------ | ------------------------------------ | --------------- | -------------------------------- |
-| `START_GAME` | Start the game from lobby            | None            | Lobby phase, any player          |
-| `ANSWER`     | Submit an answer to current question | `answer`        | Playing phase, once per question |
+| Message Type    | Purpose                              | Required Fields | When to Send                     |
+| --------------- | ------------------------------------ | --------------- | -------------------------------- |
+| `START_GAME`    | Start the game from lobby            | None            | Lobby phase, any player          |
+| `ANSWER`        | Submit an answer to current question | `answer`        | Playing phase, once per question |
+| `UPDATE_CONFIG` | Update room configuration            | `config`        | Lobby phase, host only           |
 
 #### Server → Client Messages
 
@@ -364,6 +365,81 @@ ws.send(
 
 ---
 
+##### UPDATE_CONFIG
+
+Updates room configuration settings. Can only be sent by the host player while the room is in `"waiting"` status.
+
+**Message:**
+
+```json
+{
+  "type": "UPDATE_CONFIG",
+  "config": {
+    "multipleChoiceEnabled": true,
+    "difficulty": "master"
+  }
+}
+```
+
+**Fields:**
+
+- `type` (string): Always `"UPDATE_CONFIG"`
+- `config` (object, required): Configuration fields to update
+  - `multipleChoiceEnabled` (boolean, optional): Enable multiple choice questions
+  - `difficulty` (string, optional): Question difficulty level
+
+**Difficulty Levels:**
+
+- `"enjoyer"`: Easiest questions (difficulty 1-2)
+- `"master"`: Medium difficulty (difficulty 2-4)
+- `"beast"`: Hardest questions (difficulty 4-5)
+
+**Validation:**
+
+- Room must be in `"waiting"` status (before game starts)
+- Only the host can update configuration
+- Non-host requests are silently ignored
+- Invalid difficulty values are ignored with a warning
+
+**Server Response:**
+
+- Broadcasts `ROOM_STATE` with updated `config` field to all players
+
+**Example:**
+
+```javascript
+ws.send(
+  JSON.stringify({
+    type: 'UPDATE_CONFIG',
+    config: {
+      multipleChoiceEnabled: true,
+      difficulty: 'master',
+    },
+  }),
+);
+```
+
+**RoomConfigData Schema:**
+
+The `config` field in `ROOM_STATE` messages contains:
+
+```json
+"config": {
+  "multipleChoiceEnabled": false,
+  "difficulty": "enjoyer"
+}
+```
+
+- `multipleChoiceEnabled` (boolean): Whether questions have multiple choice options
+  - Default: `false`
+  - When `true`, questions include an `options` array in `currentQuestion`
+- `difficulty` (string): Selected difficulty tier
+  - Default: `"enjoyer"`
+  - Options: `"enjoyer"`, `"master"`, `"beast"`
+  - Determines question pool loaded at game start
+
+---
+
 #### Server → Client Messages
 
 ##### ROOM_STATE
@@ -409,6 +485,12 @@ The primary message type that broadcasts the complete current state of the room 
   - `"results"`: Showing answers and correct answer after question
   - `"finished"`: Game over, displaying final scores
 - `questionIndex` (number): Current question number (0-based)
+- `hostId` (string, optional): The player name of the room host
+  - Host can modify room configuration and start the game
+  - Set when room is created, does not change
+- `config` (object, optional): Room configuration settings (see RoomConfigData below)
+  - Present when room has non-default configuration
+  - Can only be modified by host during `"waiting"` status
 - `currentQuestion` (object, optional): Only present during `"playing"` status
   - `text` (string): The question text
   - `category` (string): The question category (e.g., "Geography", "History")
@@ -681,9 +763,9 @@ ws://localhost:8000/ws?roomId=AB3D&playerId=Alice
 
 ### Phase 2: Bob Joins via Deep Link
 
-Alice shares the link: `http://localhost:5173/room/AB3D`
+Alice shares the link: `http://localhost:3000/room/AB3D`
 
-Frontend redirects to: `http://localhost:5173/?join=AB3D` (room code prefilled)
+Frontend redirects to: `http://localhost:3000/?join=AB3D` (room code prefilled)
 
 ---
 

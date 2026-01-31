@@ -29,7 +29,7 @@ class TestJoinRoom:
         return client.post("/api/rooms").json()["roomId"]
 
     def test_join_success(self, client: TestClient):
-        """Joining a room succeeds and echoes playerId."""
+        """Joining a room succeeds and echoes playerId with session token."""
         room_id = self._create_room(client)
         resp = client.post(f"/api/rooms/{room_id}/join", json={"playerId": "Alice"})
         assert resp.status_code == 200
@@ -37,6 +37,8 @@ class TestJoinRoom:
         assert data["playerId"] == "Alice"
         assert data["status"] == "waiting"
         assert data["roomId"] == room_id
+        assert "sessionToken" in data
+        assert len(data["sessionToken"]) > 0
 
     def test_join_404_nonexistent_room(self, client: TestClient):
         """Joining a non-existent room returns 404."""
@@ -66,12 +68,33 @@ class TestJoinRoom:
     def test_join_allows_reconnect_when_disconnected(self, client: TestClient):
         """A registered but disconnected player can rejoin (reconnect path)."""
         room_id = self._create_room(client)
-        # Register Alice
-        client.post(f"/api/rooms/{room_id}/join", json={"playerId": "Alice"})
-        # Alice is NOT in connections (disconnected) — join again should succeed
-        resp = client.post(f"/api/rooms/{room_id}/join", json={"playerId": "Alice"})
+        # Register Alice and get session token
+        first_resp = client.post(
+            f"/api/rooms/{room_id}/join", json={"playerId": "Alice"}
+        )
+        session_token = first_resp.json()["sessionToken"]
+
+        # Alice is NOT in connections (disconnected) — join again with token
+        resp = client.post(
+            f"/api/rooms/{room_id}/join",
+            json={"playerId": "Alice", "sessionToken": session_token},
+        )
         assert resp.status_code == 200
         assert resp.json()["playerId"] == "Alice"
+
+    def test_join_rejects_reconnect_with_wrong_token(self, client: TestClient):
+        """Reconnecting with wrong session token returns 403."""
+        room_id = self._create_room(client)
+        # Register Alice
+        client.post(f"/api/rooms/{room_id}/join", json={"playerId": "Alice"})
+
+        # Try to reconnect with wrong token
+        resp = client.post(
+            f"/api/rooms/{room_id}/join",
+            json={"playerId": "Alice", "sessionToken": "wrong-token"},
+        )
+        assert resp.status_code == 403
+        assert resp.json()["detail"]["code"] == "INVALID_SESSION"
 
     def test_join_409_game_started_new_player(self, client: TestClient, test_container):
         """New player cannot join after game has started."""
@@ -93,7 +116,10 @@ class TestJoinRoom:
     ):
         """Existing player can rejoin after game started (reconnection)."""
         room_id = self._create_room(client)
-        client.post(f"/api/rooms/{room_id}/join", json={"playerId": "Alice"})
+        first_resp = client.post(
+            f"/api/rooms/{room_id}/join", json={"playerId": "Alice"}
+        )
+        session_token = first_resp.json()["sessionToken"]
 
         # Force game started
         room = test_container.room_manager.get_room(room_id)
@@ -101,8 +127,11 @@ class TestJoinRoom:
 
         room.status = GameStatus.PLAYING
 
-        # Alice rejoining should work (she's an existing player)
-        resp = client.post(f"/api/rooms/{room_id}/join", json={"playerId": "Alice"})
+        # Alice rejoining should work (she's an existing player with valid token)
+        resp = client.post(
+            f"/api/rooms/{room_id}/join",
+            json={"playerId": "Alice", "sessionToken": session_token},
+        )
         assert resp.status_code == 200
 
     def test_join_validates_empty_player_id(self, client: TestClient):

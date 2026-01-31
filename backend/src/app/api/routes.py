@@ -2,12 +2,13 @@
 
 import logging
 import re
+import secrets
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, HTTPException, Path
 from pydantic import BaseModel, Field, field_validator
 
-from app.api.dependencies import RateLimitRoomCreate, Services
+from app.api.dependencies import RateLimitRoomCreate, RateLimitRoomJoin, Services
 from app.config import ROOM_ID_PATTERN
 
 logger = logging.getLogger(__name__)
@@ -33,6 +34,9 @@ class JoinRoomRequest(BaseModel):
     """Request to join a room."""
 
     playerId: str = Field(..., min_length=1, max_length=20)
+    sessionToken: str | None = Field(
+        default=None, description="Session token for reconnection"
+    )
 
     @field_validator("playerId")
     @classmethod
@@ -69,13 +73,20 @@ class JoinRoomResponse(BaseModel):
     roomId: str
     playerId: str
     status: str
+    sessionToken: str = Field(..., description="Token required for reconnection")
 
 
 class ErrorResponse(BaseModel):
     """Error response."""
 
     error: str
-    code: Literal["ROOM_NOT_FOUND", "NAME_TAKEN", "GAME_STARTED", "VALIDATION_ERROR"]
+    code: Literal[
+        "ROOM_NOT_FOUND",
+        "NAME_TAKEN",
+        "GAME_STARTED",
+        "VALIDATION_ERROR",
+        "INVALID_SESSION",
+    ]
 
 
 # Room ID path parameter with validation
@@ -114,7 +125,10 @@ def create_room(
 
 @router.post("/rooms/{room_id}/join", response_model=JoinRoomResponse)
 def join_room(
-    room_id: RoomIdPath, request: JoinRoomRequest, services: Services
+    room_id: RoomIdPath,
+    request: JoinRoomRequest,
+    services: Services,
+    _rate_limit: RateLimitRoomJoin,
 ) -> JoinRoomResponse:
     """Pre-register a player to join a room.
 
@@ -171,19 +185,49 @@ def join_room(
                     "code": "NAME_TAKEN",
                 },
             )
-        else:
-            # Player exists but disconnected - allow reconnection
-            logger.info(
-                f"Player reconnecting (was disconnected): room_id={room_id_upper}, player_id={request.playerId}"
+
+        # Player exists but disconnected - verify session token for reconnection
+        stored_token = room.session_tokens.get(request.playerId)
+
+        # If a token exists, require it to match for security
+        if stored_token and request.sessionToken != stored_token:
+            logger.warning(
+                f"Session token mismatch for reconnection: "
+                f"room_id={room_id_upper}, player_id={request.playerId}"
             )
-            return JoinRoomResponse(
-                roomId=room_id_upper,
-                playerId=request.playerId,
-                status=room.status.value,
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "error": "Invalid session token for reconnection",
+                    "code": "INVALID_SESSION",
+                },
             )
+
+        # Generate token if not already stored (backward compatibility)
+        if not stored_token:
+            stored_token = secrets.token_urlsafe(32)
+            room.session_tokens[request.playerId] = stored_token
+
+        # Valid reconnection - return token
+        logger.info(
+            f"Player reconnecting (was disconnected): "
+            f"room_id={room_id_upper}, player_id={request.playerId}"
+        )
+        return JoinRoomResponse(
+            roomId=room_id_upper,
+            playerId=request.playerId,
+            status=room.status.value,
+            sessionToken=stored_token,
+        )
+
+    # Generate session token for new player
+    session_token = secrets.token_urlsafe(32)
 
     # Pre-register the player (without WebSocket connection)
     services.room_manager.register_player(room_id_upper, request.playerId)
+
+    # Store session token
+    room.session_tokens[request.playerId] = session_token
 
     logger.info(
         f"Player pre-registered via HTTP: room_id={room_id_upper}, player_id={request.playerId}"
@@ -193,4 +237,5 @@ def join_room(
         roomId=room_id_upper,
         playerId=request.playerId,
         status=room.status.value,
+        sessionToken=session_token,
     )
