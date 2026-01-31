@@ -11,7 +11,11 @@ def sample_questions() -> list[Question]:
     return [
         Question(text="What is 2+2?", answer="4", category="Math"),
         Question(text="Capital of France?", answer="Paris", category="Geography"),
-        Question(text="Who wrote Romeo and Juliet?", answer="Shakespeare", category="Literature"),
+        Question(
+            text="Who wrote Romeo and Juliet?",
+            answer="Shakespeare",
+            category="Literature",
+        ),
     ]
 
 

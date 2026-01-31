@@ -434,6 +434,6 @@ Commercial use is prohibited.
 
 ## Contributors
 
-Mark Liao  
-Joshua Strutt  
+Mark Liao
+Joshua Strutt
 Justin Cedillo

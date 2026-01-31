@@ -1,7 +1,5 @@
 """Tests for RoomManager."""
 
-import pytest
-
 
 class TestRoomManager:
     """Test suite for RoomManager."""

@@ -19,21 +19,24 @@ export function HomePage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { playerName, setPlayerName } = usePlayerName();
-  const [roomCode, setRoomCode] = useState<string>("");
-  const [activeCard, setActiveCard] = useState<"host" | "join" | null>(null);
+
+  // Handle deep link redirect: ?join=XXXX (compute initial state synchronously)
+  const joinRoomCode = searchParams.get("join");
+  const [roomCode, setRoomCode] = useState<string>(() =>
+    joinRoomCode ? joinRoomCode.toUpperCase() : ""
+  );
+  const [activeCard, setActiveCard] = useState<"host" | "join" | null>(() =>
+    joinRoomCode ? "join" : null
+  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  // Handle deep link redirect: ?join=XXXX
+  // Clear the query param from URL once (cleaner UX)
   useEffect(() => {
-    const joinRoomCode = searchParams.get("join");
     if (joinRoomCode) {
-      setRoomCode(joinRoomCode.toUpperCase());
-      setActiveCard("join");
-      // Clear the query param from URL (cleaner UX)
       setSearchParams({}, { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+  }, [joinRoomCode, setSearchParams]);
 
   const handleCreateRoom = async (e: FormEvent) => {
     e.preventDefault();
@@ -110,9 +113,7 @@ export function HomePage() {
           onClick={() => setActiveCard("host")}
         >
           <h2 className={styles.cardTitle}>🎮 Host a Game</h2>
-          <p className={styles.cardDescription}>
-            Create a new room and invite your friends
-          </p>
+          <p className={styles.cardDescription}>Create a new room and invite your friends</p>
 
           {activeCard === "host" && (
             <form onSubmit={handleCreateRoom} className={styles.form}>
@@ -137,9 +138,7 @@ export function HomePage() {
           onClick={() => setActiveCard("join")}
         >
           <h2 className={styles.cardTitle}>🚀 Join a Game</h2>
-          <p className={styles.cardDescription}>
-            Enter a room code to join an existing game
-          </p>
+          <p className={styles.cardDescription}>Enter a room code to join an existing game</p>
 
           {activeCard === "join" && (
             <form onSubmit={handleJoinRoom} className={styles.form}>
@@ -159,10 +158,7 @@ export function HomePage() {
                 className={styles.roomCodeInput}
                 autoFocus
               />
-              <button
-                type="submit"
-                disabled={!playerName.trim() || !roomCode.trim() || isLoading}
-              >
+              <button type="submit" disabled={!playerName.trim() || !roomCode.trim() || isLoading}>
                 {isLoading ? "Joining..." : "Join Room"}
               </button>
             </form>

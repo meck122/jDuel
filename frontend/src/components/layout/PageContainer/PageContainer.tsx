@@ -12,11 +12,7 @@ export const PageContainer = ({
   centered = true,
   maxWidth = "md",
 }: PageContainerProps) => {
-  const containerClasses = [
-    styles.container,
-    centered ? styles.centered : "",
-    styles[maxWidth],
-  ]
+  const containerClasses = [styles.container, centered ? styles.centered : "", styles[maxWidth]]
     .filter(Boolean)
     .join(" ");
 

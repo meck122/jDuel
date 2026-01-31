@@ -1,9 +1,5 @@
 .appBar {
-  background: linear-gradient(
-    90deg,
-    rgb(26, 24, 38) 0%,
-    rgb(34, 32, 48) 100%
-  );
+  background: linear-gradient(90deg, rgb(26, 24, 38) 0%, rgb(34, 32, 48) 100%);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   border-bottom: 1px solid rgba(139, 92, 246, 0.2);
 }

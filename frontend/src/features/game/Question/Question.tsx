@@ -8,7 +8,7 @@
  * - Answer input form
  */
 
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState, useRef } from "react";
 import { useGame } from "../../../contexts";
 import { Timer } from "../../../components";
 import styles from "./Question.module.css";
@@ -23,10 +23,12 @@ export function Question() {
   const timeRemainingMs = roomState?.timeRemainingMs ?? 0;
 
   // Reset submission state when question changes
-  useEffect(() => {
+  const prevQuestionIndexRef = useRef<number>(questionIndex);
+  if (prevQuestionIndexRef.current !== questionIndex) {
+    prevQuestionIndexRef.current = questionIndex;
     setHasSubmitted(false);
     setAnswer("");
-  }, [questionIndex]);
+  }
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -43,9 +45,7 @@ export function Question() {
   return (
     <div className={styles.gameSection}>
       <div className={styles.questionHeader}>
-        <span className={styles.questionNumber}>
-          Question {questionIndex + 1}
-        </span>
+        <span className={styles.questionNumber}>Question {questionIndex + 1}</span>
         <span className={styles.questionTotal}>of 10</span>
       </div>
       <div className={styles.questionCategory}>
@@ -69,9 +69,7 @@ export function Question() {
                   setHasSubmitted(true);
                 }}
               >
-                <span className={styles.optionLetter}>
-                  {String.fromCharCode(65 + index)}
-                </span>
+                <span className={styles.optionLetter}>{String.fromCharCode(65 + index)}</span>
                 <span className={styles.optionText}>{option}</span>
               </button>
             ))}

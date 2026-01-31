@@ -30,8 +30,7 @@ function GamePageContent() {
 
   const [hasInitialized, setHasInitialized] = useState(false);
 
-  const { connect, isConnected, isConnecting, connectionError, roomState } =
-    useGame();
+  const { connect, isConnected, isConnecting, connectionError, roomState } = useGame();
 
   const roomId = urlRoomId?.toUpperCase() || "";
   const playerId = playerName.trim();
@@ -75,13 +74,8 @@ function GamePageContent() {
           } else if (error.code === "NAME_TAKEN" && retryCount < 4) {
             // Race condition: old WebSocket not fully disconnected yet
             // Wait and retry (happens on page refresh)
-            console.log(
-              `Name taken, retrying in 500ms (attempt ${retryCount + 1}/4)...`,
-            );
-            retryTimeout = setTimeout(
-              () => registerAndConnect(retryCount + 1),
-              500,
-            );
+            console.log(`Name taken, retrying in 500ms (attempt ${retryCount + 1}/4)...`);
+            retryTimeout = setTimeout(() => registerAndConnect(retryCount + 1), 500);
           } else if (error.code === "NAME_TAKEN") {
             // Max retries exceeded - truly taken
             navigate("/", { replace: true });

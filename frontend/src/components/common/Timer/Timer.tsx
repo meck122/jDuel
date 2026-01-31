@@ -19,31 +19,37 @@ interface TimerProps {
   variant?: TimerVariant;
 }
 
-export function Timer({
-  timeRemainingMs,
-  resetKey,
-  variant = "default",
-}: TimerProps) {
-  const [displayTime, setDisplayTime] = useState<number>(timeRemainingMs);
-  const [initialTime, setInitialTime] = useState<number>(timeRemainingMs);
-  const [startTime, setStartTime] = useState<number>(Date.now());
+export function Timer({ timeRemainingMs, resetKey, variant = "default" }: TimerProps) {
+  const [timerState, setTimerState] = useState({
+    displayTime: timeRemainingMs,
+    initialTime: timeRemainingMs,
+    startTime: 0,
+  });
 
   useEffect(() => {
-    setDisplayTime(timeRemainingMs);
-    setInitialTime(timeRemainingMs);
-    setStartTime(Date.now());
+    const now = Date.now();
+    // Timer reset requires synchronous state update when dependencies change
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTimerState({
+      displayTime: timeRemainingMs,
+      initialTime: timeRemainingMs,
+      startTime: now,
+    });
 
     const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const newTime = Math.max(0, timeRemainingMs - elapsed);
-      setDisplayTime(newTime);
+      setTimerState((prev) => {
+        const elapsed = Date.now() - prev.startTime;
+        const newTime = Math.max(0, timeRemainingMs - elapsed);
+        return { ...prev, displayTime: newTime };
+      });
     }, 100);
 
     return () => clearInterval(interval);
-  }, [timeRemainingMs, resetKey]);
+  }, [resetKey, timeRemainingMs]);
 
+  const { displayTime, initialTime } = timerState;
   const seconds = Math.ceil(displayTime / 1000);
-  const progress = (displayTime / initialTime) * 100;
+  const progress = initialTime > 0 ? (displayTime / initialTime) * 100 : 0;
   const circumference = 2 * Math.PI * 45; // radius = 45
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
@@ -74,12 +80,7 @@ export function Timer({
   return (
     <div className={wrapperClass}>
       <svg className={styles.timerSvg} viewBox="0 0 100 100">
-        <circle
-          className={styles.timerCircleBackground}
-          cx="50"
-          cy="50"
-          r="45"
-        />
+        <circle className={styles.timerCircleBackground} cx="50" cy="50" r="45" />
         <circle
           className={styles.timerCircleProgress}
           cx="50"

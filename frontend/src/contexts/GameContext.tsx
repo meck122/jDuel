@@ -10,19 +10,11 @@
  * for game state across all components.
  */
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  ReactNode,
-} from "react";
+import { createContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { RoomConfig, RoomState, WebSocketMessage } from "../types";
 import { WS_URL } from "../config";
 
-interface GameContextValue {
+export interface GameContextValue {
   // Room identification
   roomId: string;
   playerId: string;
@@ -43,7 +35,9 @@ interface GameContextValue {
   updateConfig: (config: Partial<RoomConfig>) => void;
 }
 
-const GameContext = createContext<GameContextValue | null>(null);
+// Context must be exported for useGame hook in separate file
+// eslint-disable-next-line react-refresh/only-export-components
+export const GameContext = createContext<GameContextValue | null>(null);
 
 interface GameProviderProps {
   children: ReactNode;
@@ -97,9 +91,7 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
       ws.onopen = () => {
         // Only update state if this is still the active WebSocket
         if (wsRef.current !== ws) return;
-        console.log(
-          `WebSocket connected to room ${newRoomId} as ${newPlayerId}`,
-        );
+        console.log(`WebSocket connected to room ${newRoomId} as ${newPlayerId}`);
         setIsConnected(true);
         setIsConnecting(false);
       };
@@ -134,9 +126,7 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
       ws.onclose = (event) => {
         // Only handle close from the active WebSocket
         if (wsRef.current !== ws) return;
-        console.log(
-          `WebSocket closed: code=${event.code}, reason=${event.reason}`,
-        );
+        console.log(`WebSocket closed: code=${event.code}, reason=${event.reason}`);
         setIsConnected(false);
         setIsConnecting(false);
 
@@ -148,7 +138,7 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
         }
       };
     },
-    [disconnect],
+    [disconnect]
   );
 
   const sendMessage = useCallback((message: object) => {
@@ -167,14 +157,14 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
     (answer: string) => {
       sendMessage({ type: "ANSWER", answer });
     },
-    [sendMessage],
+    [sendMessage]
   );
 
   const updateConfig = useCallback(
     (config: Partial<RoomConfig>) => {
       sendMessage({ type: "UPDATE_CONFIG", config });
     },
-    [sendMessage],
+    [sendMessage]
   );
 
   // Cleanup on unmount
@@ -199,16 +189,4 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
-}
-
-/**
- * Hook to access game context.
- * Must be used within a GameProvider.
- */
-export function useGame(): GameContextValue {
-  const context = useContext(GameContext);
-  if (!context) {
-    throw new Error("useGame must be used within a GameProvider");
-  }
-  return context;
 }

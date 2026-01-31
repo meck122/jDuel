@@ -1,8 +1,6 @@
 """Tests for GameService."""
 
-import pytest
-
-from app.models import GameStatus, Question, Room
+from app.models import GameStatus, Room
 
 
 class TestGameService:

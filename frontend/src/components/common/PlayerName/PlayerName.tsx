@@ -17,20 +17,14 @@ interface PlayerNameProps {
   showYouBadge?: boolean;
 }
 
-export function PlayerName({
-  playerId,
-  className,
-  showYouBadge = true,
-}: PlayerNameProps) {
+export function PlayerName({ playerId, className, showYouBadge = true }: PlayerNameProps) {
   const { playerId: currentPlayerId } = useGame();
   const isCurrentPlayer = playerId === currentPlayerId;
 
   return (
     <span className={className}>
       {playerId}
-      {showYouBadge && isCurrentPlayer && (
-        <span className={styles.youBadge}> (You)</span>
-      )}
+      {showYouBadge && isCurrentPlayer && <span className={styles.youBadge}> (You)</span>}
     </span>
   );
 }

@@ -34,11 +34,7 @@ export function Results() {
 
       <div className={styles.timerSection}>
         <p className={styles.nextQuestionText}>Next question in</p>
-        <Timer
-          timeRemainingMs={timeRemainingMs}
-          resetKey={correctAnswer}
-          variant="results"
-        />
+        <Timer timeRemainingMs={timeRemainingMs} resetKey={correctAnswer} variant="results" />
       </div>
 
       <div className={styles.correctAnswerBanner}>
@@ -52,10 +48,7 @@ export function Results() {
           <div className={styles.resultsScores}>
             {sortPlayersByScore(players).map(([player, score]) => (
               <div key={player} className={styles.resultsScoreItem}>
-                <PlayerName
-                  playerId={player}
-                  className={styles.resultsPlayerName}
-                />
+                <PlayerName playerId={player} className={styles.resultsPlayerName} />
                 <span className={styles.resultsPlayerScore}>{score}</span>
               </div>
             ))}
@@ -75,22 +68,13 @@ export function Results() {
                     isCorrect ? styles.correct : styles.incorrect
                   }`}
                 >
-                  <PlayerName
-                    playerId={player}
-                    className={styles.resultsAnswerPlayer}
-                  />
-                  <span className={styles.resultsAnswerText}>
-                    {answer || "(no answer)"}
-                  </span>
+                  <PlayerName playerId={player} className={styles.resultsAnswerPlayer} />
+                  <span className={styles.resultsAnswerText}>{answer || "(no answer)"}</span>
                   <div className={styles.resultsAnswerRight}>
                     {pointsGained !== undefined && pointsGained > 0 && (
-                      <span className={styles.resultsPointsGained}>
-                        +{pointsGained}
-                      </span>
+                      <span className={styles.resultsPointsGained}>+{pointsGained}</span>
                     )}
-                    <span className={styles.resultsAnswerIndicator}>
-                      {isCorrect ? "✓" : "✗"}
-                    </span>
+                    <span className={styles.resultsAnswerIndicator}>{isCorrect ? "✓" : "✗"}</span>
                   </div>
                 </div>
               );

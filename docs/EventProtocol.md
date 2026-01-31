@@ -6,7 +6,7 @@ This document describes the complete HTTP API and WebSocket message protocol for
 
 jDuel uses a **hybrid two-phase HTTP/WebSocket architecture**:
 
-**Phase 1 - HTTP REST API**: Room creation, validation, and player pre-registration  
+**Phase 1 - HTTP REST API**: Room creation, validation, and player pre-registration
 **Phase 2 - WebSocket**: Real-time game communication after registration
 
 This separation enables:
@@ -1392,16 +1392,16 @@ const send = (msg) => {
 
 ### Common Issues
 
-**Issue**: WebSocket closes immediately with code 4003  
+**Issue**: WebSocket closes immediately with code 4003
 **Solution**: Call `POST /api/rooms/{roomId}/join` before connecting WebSocket
 
-**Issue**: HTTP join returns 409 NAME_TAKEN during page refresh  
+**Issue**: HTTP join returns 409 NAME_TAKEN during page refresh
 **Solution**: Retry with 500ms delay (up to 4 times) to allow old WebSocket cleanup
 
-**Issue**: Answers not registering  
+**Issue**: Answers not registering
 **Solution**: Check `status === "playing"` and player hasn't already answered
 
-**Issue**: Room not found after creation  
+**Issue**: Room not found after creation
 **Solution**: Ensure room ID is uppercase (case-insensitive but normalized)
 
 ### Server-Side Logging

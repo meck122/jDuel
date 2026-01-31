@@ -12,10 +12,9 @@ export function AboutPage() {
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>About the Game</h2>
           <p className={styles.sectionContent}>
-            jDuel (joshDuel) is a real-time multiplayer trivia game inspired by
-            my buddy <span className={styles.highlight}>Josh</span>. Test your
-            knowledge against friends in an exciting battle of wits where speed
-            and accuracy determine the champion.
+            jDuel (joshDuel) is a real-time multiplayer trivia game inspired by my buddy{" "}
+            <span className={styles.highlight}>Josh</span>. Test your knowledge against friends in
+            an exciting battle of wits where speed and accuracy determine the champion.
           </p>
         </section>
 
@@ -35,9 +34,8 @@ export function AboutPage() {
               Answer questions as quickly and accurately as possible
             </li>
             <li className={styles.listItem} data-step="5">
-              Points are awarded based on{" "}
-              <span className={styles.speedText}>SPEED</span> and correct
-              answers
+              Points are awarded based on <span className={styles.speedText}>SPEED</span> and
+              correct answers
             </li>
             <li className={styles.listItem} data-step="6">
               The player with the most points at the end wins!
@@ -48,17 +46,15 @@ export function AboutPage() {
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>About the Creator</h2>
           <p className={styles.sectionContent}>
-            Created by Mark Liao. This project was built to bring the excitement
-            of trivia games to the web, making it easy for friends and family to
-            compete no matter where they are.
+            Created by Mark Liao. This project was built to bring the excitement of trivia games to
+            the web, making it easy for friends and family to compete no matter where they are.
           </p>
         </section>
 
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Technology Stack</h2>
           <p className={styles.sectionContent}>
-            Built with modern web technologies for a seamless multiplayer
-            experience:
+            Built with modern web technologies for a seamless multiplayer experience:
           </p>
           <div className={styles.techStack}>
             <span className={styles.techBadge}>React</span>

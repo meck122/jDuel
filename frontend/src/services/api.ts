@@ -32,7 +32,7 @@ export class ApiError extends Error {
   constructor(
     public code: ApiErrorCode,
     message: string,
-    public statusCode?: number,
+    public statusCode?: number
   ) {
     super(message);
     this.name = "ApiError";
@@ -55,17 +55,14 @@ export async function createRoom(): Promise<CreateRoomResponse> {
       throw new ApiError(
         error.detail?.code || "NETWORK_ERROR",
         error.detail?.error || "Failed to create room",
-        response.status,
+        response.status
       );
     }
 
     return response.json();
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new ApiError(
-      "NETWORK_ERROR",
-      "Network error: Unable to connect to server",
-    );
+    throw new ApiError("NETWORK_ERROR", "Network error: Unable to connect to server");
   }
 }
 
@@ -76,35 +73,26 @@ export async function createRoom(): Promise<CreateRoomResponse> {
  * @param playerId The player's display name
  * @returns Join confirmation
  */
-export async function joinRoom(
-  roomId: string,
-  playerId: string,
-): Promise<JoinRoomResponse> {
+export async function joinRoom(roomId: string, playerId: string): Promise<JoinRoomResponse> {
   try {
-    const response = await fetch(
-      `${API_URL}/rooms/${roomId.toUpperCase()}/join`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId }),
-      },
-    );
+    const response = await fetch(`${API_URL}/rooms/${roomId.toUpperCase()}/join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId }),
+    });
 
     if (!response.ok) {
       const error = await response.json();
       throw new ApiError(
         error.detail?.code || "NETWORK_ERROR",
         error.detail?.error || "Failed to join room",
-        response.status,
+        response.status
       );
     }
 
     return response.json();
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new ApiError(
-      "NETWORK_ERROR",
-      "Network error: Unable to connect to server",
-    );
+    throw new ApiError("NETWORK_ERROR", "Network error: Unable to connect to server");
   }
 }

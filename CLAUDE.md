@@ -94,3 +94,11 @@ Frontend (React 19 + Vite)  <-->  Backend (FastAPI)
 - Use existing skills when relevant
 - Improve existing skills to improve our workflows
 - Create new skills locally in .claude/skills when doing a skill that is something important and likely to be reused
+
+
+### Formatting
+
+```bash
+# Run on all files at root
+uvx pre-commit run --all-files
+```

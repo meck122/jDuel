@@ -46,20 +46,14 @@ export function GameOver() {
         <div className={styles.winnerContent}>
           <div className={styles.winnerLabel}>Champion</div>
           <div className={styles.winnerName}>{winner}</div>
-          {firstPlace && (
-            <div className={styles.winnerScore}>{firstPlace[1]} points</div>
-          )}
+          {firstPlace && <div className={styles.winnerScore}>{firstPlace[1]} points</div>}
         </div>
       </div>
 
       {timeRemainingMs !== undefined && (
         <div className={styles.timerSection}>
           <p className={styles.closingText}>Room closing in</p>
-          <Timer
-            timeRemainingMs={timeRemainingMs}
-            resetKey={winner}
-            variant="game-over"
-          />
+          <Timer timeRemainingMs={timeRemainingMs} resetKey={winner} variant="game-over" />
         </div>
       )}
 
@@ -69,9 +63,7 @@ export function GameOver() {
           {sortedPlayers.map(([player, score], index) => (
             <div
               key={player}
-              className={`${styles.finalScoreItem} ${
-                index === 0 ? styles.firstPlace : ""
-              }`}
+              className={`${styles.finalScoreItem} ${index === 0 ? styles.firstPlace : ""}`}
             >
               <span className={styles.rank}>{index + 1}</span>
               <span className={styles.playerName}>{player}</span>

@@ -21,8 +21,7 @@
   height: 24px;
   top: -30px;
   opacity: 0;
-  animation: confettiFall 3.5s ease-in cubic-bezier(0.25, 0.46, 0.45, 0.94)
-    infinite;
+  animation: confettiFall 3.5s ease-in cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
 }
 
 .confettiPiece:nth-child(1) {
@@ -144,11 +143,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-xl);
-  background: linear-gradient(
-    135deg,
-    rgba(139, 92, 246, 0.15),
-    rgba(251, 191, 36, 0.08)
-  );
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(251, 191, 36, 0.08));
   border: 2px solid var(--color-accent-purple);
   border-radius: var(--radius-lg);
   padding: var(--spacing-2xl);
@@ -256,11 +251,7 @@
 }
 
 .finalScoreItem.firstPlace {
-  background: linear-gradient(
-    90deg,
-    rgba(139, 92, 246, 0.15),
-    rgba(251, 191, 36, 0.08)
-  );
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.15), rgba(251, 191, 36, 0.08));
   border-color: var(--color-accent-purple);
   box-shadow: var(--shadow-glow-purple);
 }

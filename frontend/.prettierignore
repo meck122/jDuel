@@ -1,0 +1,31 @@
+# .prettierignore
+# Dependencies
+node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist
+build
+.next
+out
+
+# Python
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+logs
+
+# Environment
+.env
+.env.local

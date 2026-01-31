@@ -83,11 +83,7 @@
   top: 24px;
   bottom: 24px;
   width: 2px;
-  background: linear-gradient(
-    180deg,
-    var(--color-accent-purple),
-    var(--color-accent-teal)
-  );
+  background: linear-gradient(180deg, var(--color-accent-purple), var(--color-accent-teal));
   opacity: 0.3;
 }
 

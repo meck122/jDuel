@@ -11,12 +11,7 @@ export function Navigation() {
   return (
     <AppBar position="fixed" className={styles.appBar}>
       <Toolbar>
-        <Typography
-          variant="h5"
-          component={Link}
-          to="/"
-          className={styles.logoLink}
-        >
+        <Typography variant="h5" component={Link} to="/" className={styles.logoLink}>
           <Box component="span" className={styles.logoJ}>
             j
           </Box>
@@ -26,12 +21,7 @@ export function Navigation() {
         </Typography>
         <Box>
           {isAboutPage ? (
-            <Button
-              component={Link}
-              to="/"
-              startIcon={<HomeIcon />}
-              className={styles.navButton}
-            >
+            <Button component={Link} to="/" startIcon={<HomeIcon />} className={styles.navButton}>
               Back to Game
             </Button>
           ) : (

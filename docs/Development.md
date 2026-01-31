@@ -67,6 +67,25 @@ Frontend runs on `http://localhost:3000`
 
 ## Code Formatting
 
+### pre-commit
+
+```bash
+# At monorepo root
+uvx pre-commit install
+
+# Run on all files
+uvx pre-commit run --all-files
+
+# Run only on staged files
+uvx pre-commit run
+
+# Run a specific hook
+uvx pre-commit run ruff --all-files
+
+# Run hooks on specific files
+uvx pre-commit run --files backend/app/main.py frontend/src/App.tsx
+```
+
 ### Backend
 
 ```bash

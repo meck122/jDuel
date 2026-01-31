@@ -45,11 +45,7 @@ export function Lobby() {
         <p className={styles.shareText}>Invite friends to join:</p>
         <div className={styles.shareRow}>
           <code className={styles.shareUrl}>{shareUrl}</code>
-          <button
-            onClick={handleCopyLink}
-            className={styles.copyButton}
-            title="Copy invite link"
-          >
+          <button onClick={handleCopyLink} className={styles.copyButton} title="Copy invite link">
             {copied ? "✓ Copied!" : "📋 Copy"}
           </button>
         </div>
@@ -79,9 +75,7 @@ export function Lobby() {
             className={styles.configCheckbox}
             checked={roomState?.config?.multipleChoiceEnabled ?? false}
             disabled={!isHost}
-            onChange={(e) =>
-              updateConfig({ multipleChoiceEnabled: e.target.checked })
-            }
+            onChange={(e) => updateConfig({ multipleChoiceEnabled: e.target.checked })}
           />
           <span className={styles.configSlider} />
           <span className={styles.configLabel}>Multiple Choice</span>
