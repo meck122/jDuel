@@ -78,6 +78,53 @@
     0 -3px 12px rgba(139, 92, 246, 0.15);
 }
 
+.optionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+  max-width: 600px;
+  margin: var(--spacing-lg) auto 0;
+}
+
+.optionButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--color-bg-elevated);
+  border: 2px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-base);
+  width: 100%;
+}
+
+.optionButton:hover {
+  border-color: var(--color-accent-purple);
+  background: rgba(139, 92, 246, 0.08);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow-purple);
+  filter: none;
+}
+
+.optionLetter {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  color: var(--color-accent-teal);
+  min-width: 28px;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+}
+
+.optionText {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .answerForm {
   display: flex;
   gap: var(--spacing-md);
@@ -120,6 +167,15 @@
   .question {
     font-size: var(--font-size-base);
     padding: var(--spacing-md);
+  }
+
+  .optionsGrid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .optionButton {
+    padding: var(--spacing-md) var(--spacing-lg);
   }
 
   .answerForm {

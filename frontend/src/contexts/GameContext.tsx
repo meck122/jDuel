@@ -19,7 +19,7 @@ import {
   useRef,
   ReactNode,
 } from "react";
-import { RoomState, WebSocketMessage } from "../types";
+import { RoomConfig, RoomState, WebSocketMessage } from "../types";
 import { WS_URL } from "../config";
 
 interface GameContextValue {
@@ -40,6 +40,7 @@ interface GameContextValue {
   disconnect: () => void;
   startGame: () => void;
   submitAnswer: (answer: string) => void;
+  updateConfig: (config: Partial<RoomConfig>) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -169,6 +170,13 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
     [sendMessage],
   );
 
+  const updateConfig = useCallback(
+    (config: Partial<RoomConfig>) => {
+      sendMessage({ type: "UPDATE_CONFIG", config });
+    },
+    [sendMessage],
+  );
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -187,6 +195,7 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
     disconnect,
     startGame,
     submitAnswer,
+    updateConfig,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

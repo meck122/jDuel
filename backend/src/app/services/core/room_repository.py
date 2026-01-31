@@ -89,6 +89,8 @@ class RoomRepository:
 
         room.players.add(player_id)
         room.scores[player_id] = 0
+        if room.host_id is None:
+            room.host_id = player_id
         logger.info(
             f"Player registered: room_id={room_id}, player_id={player_id}, "
             f"total_players={len(room.players)}"

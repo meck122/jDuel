@@ -62,6 +62,11 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
             elif msg_type == "ANSWER":
                 await orchestrator.handle_answer(room_id, player_id, message["answer"])
 
+            elif msg_type == "UPDATE_CONFIG":
+                await orchestrator.handle_config_update(
+                    room_id, player_id, message.get("config", {})
+                )
+
     except WebSocketDisconnect:
         await orchestrator.handle_disconnect(room_id, player_id)
     except Exception as e:

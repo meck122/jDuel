@@ -58,16 +58,36 @@ export function Question() {
       <Timer timeRemainingMs={timeRemainingMs} resetKey={questionIndex} />
 
       {!hasSubmitted ? (
-        <form onSubmit={handleSubmit} className={styles.answerForm}>
-          <input
-            type="text"
-            placeholder="Your answer"
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            autoFocus
-          />
-          <button type="submit">Submit</button>
-        </form>
+        currentQuestion.options ? (
+          <div className={styles.optionsGrid}>
+            {currentQuestion.options.map((option, index) => (
+              <button
+                key={option}
+                className={styles.optionButton}
+                onClick={() => {
+                  submitAnswer(option);
+                  setHasSubmitted(true);
+                }}
+              >
+                <span className={styles.optionLetter}>
+                  {String.fromCharCode(65 + index)}
+                </span>
+                <span className={styles.optionText}>{option}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className={styles.answerForm}>
+            <input
+              type="text"
+              placeholder="Your answer"
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              autoFocus
+            />
+            <button type="submit">Submit</button>
+          </form>
+        )
       ) : (
         <div className={styles.answerSubmitted}>
           <p>✓ Answer submitted!</p>

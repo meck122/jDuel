@@ -13,6 +13,7 @@ class Question:
     text: str
     answer: str
     category: str
+    wrong_answers: tuple[str, str, str] | None = None
 
     def __post_init__(self):
         """Validate question data."""

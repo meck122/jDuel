@@ -7,6 +7,7 @@ from enum import Enum
 from fastapi import WebSocket
 
 from app.models.question import Question
+from app.models.room_config import RoomConfig
 from app.models.round_state import RoundState
 
 
@@ -42,11 +43,15 @@ class Room:
     # Registered players and their scores (identity layer)
     players: set[str] = field(default_factory=set)
     scores: dict[str, int] = field(default_factory=dict)
+    # Host is the first player to join; controls room configuration
+    host_id: str | None = None
     # Active WebSocket connections (connection layer)
     connections: dict[str, WebSocket] = field(default_factory=dict)
     # Game state
     status: GameStatus = GameStatus.WAITING
     question_index: int = 0
+    # Host-controlled room configuration
+    config: RoomConfig = field(default_factory=RoomConfig)
     # Per-question round state
     current_round: RoundState = field(default_factory=RoundState)
     # Timestamps
@@ -64,9 +69,11 @@ class Room:
         self.questions = questions.copy()
         self.players = set()
         self.scores = {}
+        self.host_id = None
         self.connections = {}
         self.status = GameStatus.WAITING
         self.question_index = 0
+        self.config = RoomConfig()
         self.current_round = RoundState()
         self.results_start_time = None
         self.finish_time = None

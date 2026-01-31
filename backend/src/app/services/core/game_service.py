@@ -50,7 +50,11 @@ class GameService:
         room.player_answers[player_id] = answer
 
         current_question = room.questions[room.question_index]
-        correct = self.answer_service.is_correct(answer, current_question.answer)
+
+        if room.config.multiple_choice_enabled:
+            correct = answer == current_question.answer
+        else:
+            correct = self.answer_service.is_correct(answer, current_question.answer)
 
         if correct:
             room.correct_players.add(player_id)

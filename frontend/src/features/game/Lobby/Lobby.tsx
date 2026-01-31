@@ -13,11 +13,12 @@ import { PlayerName } from "../../../components";
 import styles from "./Lobby.module.css";
 
 export function Lobby() {
-  const { roomId, playerId, roomState, startGame } = useGame();
+  const { roomId, playerId, roomState, startGame, updateConfig } = useGame();
   const [copied, setCopied] = useState(false);
 
   const players = roomState?.players ?? {};
   const playerCount = Object.keys(players).length;
+  const isHost = roomState?.hostId === playerId;
   const shareUrl = `${window.location.origin}/room/${roomId}`;
 
   const handleCopyLink = async () => {
@@ -66,6 +67,25 @@ export function Lobby() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className={styles.configSection}>
+        <label
+          className={`${styles.configToggle} ${!isHost ? styles.configToggleDisabled : ""}`}
+          title={isHost ? undefined : "Only the host can change settings"}
+        >
+          <input
+            type="checkbox"
+            className={styles.configCheckbox}
+            checked={roomState?.config?.multipleChoiceEnabled ?? false}
+            disabled={!isHost}
+            onChange={(e) =>
+              updateConfig({ multipleChoiceEnabled: e.target.checked })
+            }
+          />
+          <span className={styles.configSlider} />
+          <span className={styles.configLabel}>Multiple Choice</span>
+        </label>
       </div>
 
       <div className={styles.waitingSection}>

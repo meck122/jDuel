@@ -119,6 +119,45 @@ class GameOrchestrator:
             self._timer_service.cancel_all_timers_for_room(room_id)
             await self._transition_to_results(room_id)
 
+    async def handle_config_update(
+        self, room_id: str, player_id: str, config_data: dict
+    ) -> None:
+        """Handle a host config update request.
+
+        Only the host can update config, and only while the room is waiting.
+
+        Args:
+            room_id: The room ID
+            player_id: The player requesting the update
+            config_data: Dict of config fields to update
+        """
+        room = self._room_manager.get_room(room_id)
+        if not room:
+            return
+
+        if player_id != room.host_id:
+            logger.warning(
+                f"Non-host config update rejected: room_id={room_id}, player_id={player_id}"
+            )
+            return
+
+        if room.status.value != "waiting":
+            logger.warning(
+                f"Config update rejected (game not waiting): room_id={room_id}"
+            )
+            return
+
+        if "multipleChoiceEnabled" in config_data:
+            room.config.multiple_choice_enabled = bool(
+                config_data["multipleChoiceEnabled"]
+            )
+
+        logger.info(
+            f"Config updated: room_id={room_id}, "
+            f"multiple_choice={room.config.multiple_choice_enabled}"
+        )
+        await self._broadcast_room_state(room_id)
+
     async def handle_disconnect(self, room_id: str, player_id: str) -> None:
         """Handle player disconnect.
 

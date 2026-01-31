@@ -5,11 +5,18 @@ from typing import Literal
 from pydantic import BaseModel
 
 
+class RoomConfigData(BaseModel):
+    """Room configuration sent to clients."""
+
+    multipleChoiceEnabled: bool = False
+
+
 class CurrentQuestion(BaseModel):
     """Current question state sent to clients."""
 
     text: str
     category: str
+    options: list[str] | None = None
 
 
 class ResultsData(BaseModel):
@@ -27,6 +34,8 @@ class RoomStateData(BaseModel):
     players: dict[str, int]
     status: Literal["waiting", "playing", "results", "finished"]
     questionIndex: int
+    hostId: str | None = None
+    config: RoomConfigData | None = None
     currentQuestion: CurrentQuestion | None = None
     timeRemainingMs: int | None = None
     winner: str | None = None

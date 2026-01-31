@@ -66,15 +66,18 @@ Frontend (React 19 + Vite)  <-->  Backend (FastAPI)
 ### Communication Protocol
 
 **HTTP:**
+
 - `POST /api/rooms` - Create room
 - `GET /api/rooms/{roomId}` - Get room info
 - `POST /api/rooms/{roomId}/join` - Pre-register player
 
 **WebSocket (client → server):**
+
 - `START_GAME` - Host starts game
 - `ANSWER` - Submit answer
 
 **WebSocket (server → client):**
+
 - `ROOM_STATE` - Full game state broadcast
 - `ERROR` - Error message
 - `ROOM_CLOSED` - Room closed
@@ -85,3 +88,9 @@ Frontend (React 19 + Vite)  <-->  Backend (FastAPI)
 - Room codes are 4-character alphanumeric
 - Production uses systemd + nginx (no Docker)
 - Backend linting configured with ruff in `pyproject.toml`
+
+## Skills
+
+- Use existing skills when relevant
+- Improve existing skills to improve our workflows
+- Create new skills locally in .claude/skills when doing a skill that is something important and likely to be reused

@@ -45,7 +45,8 @@ def get_random_questions(count: int = 10) -> list[Question]:
 
     cursor.execute(
         """
-        SELECT question, answer, category FROM questions
+        SELECT question, answer, category, wrong_answer_1, wrong_answer_2, wrong_answer_3
+        FROM questions
         ORDER BY RANDOM()
         LIMIT ?
     """,
@@ -53,7 +54,14 @@ def get_random_questions(count: int = 10) -> list[Question]:
     )
 
     questions = [
-        Question(text=row[0], answer=row[1], category=row[2])
+        Question(
+            text=row[0],
+            answer=row[1],
+            category=row[2],
+            wrong_answers=(row[3], row[4], row[5])
+            if row[3] and row[4] and row[5]
+            else None,
+        )
         for row in cursor.fetchall()
     ]
 

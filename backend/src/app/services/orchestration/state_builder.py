@@ -1,5 +1,6 @@
 """Builds room state for client communication."""
 
+import random
 from datetime import UTC, datetime
 
 from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, RESULTS_TIME_MS
@@ -7,6 +8,7 @@ from app.models import GameStatus, Room
 from app.models.state import (
     CurrentQuestion,
     ResultsData,
+    RoomConfigData,
     RoomStateData,
     RoomStateMessage,
 )
@@ -29,6 +31,10 @@ class StateBuilder:
             players=room.scores,
             status=room.status.value,
             questionIndex=room.question_index,
+            hostId=room.host_id,
+            config=RoomConfigData(
+                multipleChoiceEnabled=room.config.multiple_choice_enabled,
+            ),
         )
 
         if room.status == GameStatus.PLAYING:
@@ -49,9 +55,15 @@ class StateBuilder:
         """
         current_question = room.questions[room.question_index]
 
+        options = None
+        if room.config.multiple_choice_enabled and current_question.wrong_answers:
+            options = [current_question.answer, *current_question.wrong_answers]
+            random.shuffle(options)
+
         state.currentQuestion = CurrentQuestion(
             text=current_question.text,
             category=current_question.category,
+            options=options,
         )
 
         # Calculate live remaining time for reconnecting players

@@ -1,11 +1,18 @@
+export interface RoomConfig {
+  multipleChoiceEnabled: boolean;
+}
+
 export interface RoomState {
   roomId: string;
   players: Record<string, number>;
   status: "waiting" | "playing" | "results" | "finished";
   questionIndex: number;
+  hostId?: string;
+  config?: RoomConfig;
   currentQuestion?: {
     text: string;
     category: string;
+    options?: string[];
   };
   timeRemainingMs?: number;
   winner?: string;
