@@ -166,30 +166,36 @@
 
   .question {
     font-size: var(--font-size-base);
-    padding: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    line-height: 1.7;
   }
 
   .optionsGrid {
     grid-template-columns: 1fr;
     gap: var(--spacing-sm);
+    max-width: 100%;
   }
 
   .optionButton {
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: 18px var(--spacing-lg);
+    min-height: 56px;
   }
 
   .answerForm {
     flex-direction: column;
     gap: var(--spacing-sm);
+    max-width: 100%;
   }
 
   .answerForm input {
     font-size: 1rem;
-    padding: 14px var(--spacing-md);
+    padding: 16px var(--spacing-md);
+    width: 100%;
   }
 
   .answerForm button {
-    padding: 14px var(--spacing-xl);
+    padding: 16px var(--spacing-xl);
     font-size: var(--font-size-lg);
+    width: 100%;
   }
 }

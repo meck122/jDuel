@@ -61,6 +61,10 @@ body::after {
   min-height: 100vh;
 }
 
+.app-main {
+  padding-top: var(--navbar-height);
+}
+
 h1,
 h2,
 h3,

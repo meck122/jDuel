@@ -329,6 +329,10 @@
     letter-spacing: 2px;
   }
 
+  .finalScores {
+    max-width: 100%;
+  }
+
   .finalScoreItem {
     grid-template-columns: 32px 1fr auto;
     gap: var(--spacing-sm);

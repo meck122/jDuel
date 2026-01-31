@@ -283,11 +283,39 @@
   }
 
   .shareSection {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-md);
+  }
+
+  .shareRow {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .shareUrl {
     font-size: var(--font-size-xs);
+    text-align: center;
+    padding: var(--spacing-sm);
+  }
+
+  .copyButton {
+    width: 100%;
+    padding: 12px var(--spacing-md);
+    justify-content: center;
+  }
+
+  .configSlider {
+    width: 56px;
+    height: 30px;
+    border-radius: 15px;
+  }
+
+  .configSlider::after {
+    width: 22px;
+    height: 22px;
+  }
+
+  .configCheckbox:checked + .configSlider::after {
+    left: 28px;
   }
 
   .waitingSection {
@@ -301,6 +329,6 @@
 
   .startButton {
     width: 100%;
-    padding: 14px var(--spacing-xl);
+    padding: 16px var(--spacing-xl);
   }
 }

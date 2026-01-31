@@ -12,10 +12,12 @@
   flex-grow: 1;
   text-decoration: none;
   font-family: "Bebas Neue", sans-serif;
+  font-size: 1.75rem;
   font-weight: 400;
   letter-spacing: 0.15em;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  padding-left: var(--spacing-sm);
 }
 
 .logoLink:hover {

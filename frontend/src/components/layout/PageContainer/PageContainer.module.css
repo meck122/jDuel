@@ -28,3 +28,9 @@
 .full {
   max-width: 100%;
 }
+
+@media (max-width: 600px) {
+  .container {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+}

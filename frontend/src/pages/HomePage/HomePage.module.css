@@ -164,6 +164,10 @@
 }
 
 @media (max-width: 600px) {
+  .container {
+    padding: var(--spacing-2xl) var(--spacing-md);
+  }
+
   .logo {
     font-size: 5rem;
     letter-spacing: 4px;
@@ -172,6 +176,10 @@
   .tagline {
     font-size: var(--font-size-lg);
     margin-bottom: var(--spacing-2xl);
+  }
+
+  .cards {
+    max-width: 100%;
   }
 
   .card {
@@ -184,11 +192,13 @@
 
   .form input[type="text"] {
     font-size: 1rem;
-    padding: 14px var(--spacing-md);
+    padding: 16px var(--spacing-md);
+    width: 100%;
   }
 
   .form button[type="submit"] {
-    padding: 14px var(--spacing-xl);
+    padding: 16px var(--spacing-xl);
     font-size: var(--font-size-lg);
+    width: 100%;
   }
 }
