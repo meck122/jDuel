@@ -33,7 +33,27 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: var(--gradient-bg);
+  background: radial-gradient(
+    ellipse at center,
+    rgb(22, 18, 36) 0%,
+    rgb(16, 14, 26) 50%,
+    rgb(10, 9, 16) 100%
+  );
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.04) 2px,
+    rgba(0, 0, 0, 0.04) 4px
+  );
 }
 
 #root {
@@ -75,7 +95,7 @@ input[type="password"]:focus,
 textarea:focus {
   outline: none;
   border-color: var(--color-accent-purple);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
   background: var(--color-bg-elevated);
 }
 
@@ -91,7 +111,7 @@ button {
   padding: var(--spacing-md) var(--spacing-xl);
   font-size: var(--font-size-base);
   font-weight: 600;
-  font-family: inherit;
+  font-family: var(--font-display);
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -99,7 +119,7 @@ button {
   background: var(--gradient-purple);
   color: var(--color-text-primary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.5px;
 }
 
 button:hover {
@@ -168,7 +188,9 @@ button:disabled {
   margin-top: 0;
   margin-bottom: var(--spacing-md);
   color: var(--color-accent-purple);
+  font-family: var(--font-display);
   font-size: var(--font-size-xl);
+  letter-spacing: 1px;
 }
 
 .score-item {
@@ -188,6 +210,7 @@ button:disabled {
 }
 
 .score-value {
+  font-family: var(--font-mono);
   font-size: var(--font-size-xl);
   font-weight: bold;
   color: var(--color-accent-teal);

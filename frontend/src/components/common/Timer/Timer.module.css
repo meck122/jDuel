@@ -45,6 +45,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
   font-size: 2rem;
   font-weight: 700;
 }
@@ -55,4 +56,36 @@
 
 .gameOverTimerWrapper .timerText {
   font-size: 1.5rem;
+}
+
+.warning {
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.3));
+}
+
+.critical {
+  animation: timerPulse 0.8s ease-in-out infinite;
+}
+
+.critical .timerText {
+  animation: timerFlash 0.8s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.9));
+  }
+}
+
+@keyframes timerFlash {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }

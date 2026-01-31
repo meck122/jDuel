@@ -30,6 +30,13 @@ export function GameOver() {
         <div className={styles.confettiPiece} />
         <div className={styles.confettiPiece} />
         <div className={styles.confettiPiece} />
+        <div className={styles.confettiPiece} />
+        <div className={styles.confettiPiece} />
+        <div className={styles.confettiPiece} />
+        <div className={styles.confettiPiece} />
+        <div className={styles.confettiPiece} />
+        <div className={styles.confettiPiece} />
+        <div className={styles.confettiPiece} />
       </div>
 
       <h2 className={styles.gameOverHeader}>Game Over!</h2>

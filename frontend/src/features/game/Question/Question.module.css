@@ -11,10 +11,12 @@
 }
 
 .questionNumber {
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: var(--font-size-4xl);
+  font-weight: 400;
   color: var(--color-accent-purple);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  letter-spacing: 2px;
+  text-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
 .questionTotal {
@@ -29,15 +31,25 @@
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-lg);
   background: var(--color-bg-elevated);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   margin-bottom: var(--spacing-sm);
   border: 1px solid var(--color-border-default);
 }
 
+.questionCategory::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent-teal);
+  flex-shrink: 0;
+}
+
 .categoryLabel {
+  font-family: var(--font-display);
   font-size: var(--font-size-md);
   color: var(--color-accent-teal);
-  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .categoryValue {
@@ -58,9 +70,12 @@
   padding: var(--spacing-xl);
   background: var(--color-bg-elevated);
   border-radius: var(--radius-lg);
-  line-height: 1.5;
+  line-height: 1.6;
   border: 2px solid var(--color-border-default);
-  box-shadow: var(--shadow-md);
+  border-top: 3px solid var(--color-accent-purple);
+  box-shadow:
+    var(--shadow-md),
+    0 -3px 12px rgba(139, 92, 246, 0.15);
 }
 
 .answerForm {
@@ -84,14 +99,41 @@
 }
 
 .answerSubmitted p:first-child {
+  font-family: var(--font-display);
   font-size: var(--font-size-xl);
-  font-weight: bold;
   color: var(--color-success);
   margin: 0 0 var(--spacing-sm) 0;
+  letter-spacing: 1px;
 }
 
 .waitingText {
   color: var(--color-text-muted);
   font-style: italic;
   margin: 0;
+}
+
+@media (max-width: 600px) {
+  .questionNumber {
+    font-size: var(--font-size-3xl);
+  }
+
+  .question {
+    font-size: var(--font-size-base);
+    padding: var(--spacing-md);
+  }
+
+  .answerForm {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .answerForm input {
+    font-size: 1rem;
+    padding: 14px var(--spacing-md);
+  }
+
+  .answerForm button {
+    padding: 14px var(--spacing-xl);
+    font-size: var(--font-size-lg);
+  }
 }

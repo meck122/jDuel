@@ -1,14 +1,19 @@
 .appBar {
-  background: linear-gradient(90deg, rgb(28, 28, 28) 0%, rgb(38, 38, 38) 100%);
+  background: linear-gradient(
+    90deg,
+    rgb(26, 24, 38) 0%,
+    rgb(34, 32, 48) 100%
+  );
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  border-bottom: 1px solid rgba(235, 235, 235, 0.1);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
 }
 
 .logoLink {
   flex-grow: 1;
   text-decoration: none;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.15em;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -27,16 +32,19 @@
 }
 
 .logoDuel {
-  color: rgb(239, 68, 68);
+  color: rgb(251, 191, 36);
   transition: color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logoDuel:hover {
-  color: rgb(248, 113, 113);
+  color: rgb(253, 216, 99);
 }
 
 .navButton {
   color: rgb(235, 235, 235);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

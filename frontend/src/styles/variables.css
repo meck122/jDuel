@@ -1,9 +1,9 @@
 :root {
-  /* Base Colors - Modern Dark Theme */
-  --color-bg-primary: rgb(18, 18, 18);
-  --color-bg-secondary: rgb(28, 28, 28);
-  --color-bg-elevated: rgb(38, 38, 38);
-  --color-bg-hover: rgb(48, 48, 48);
+  /* Base Colors - Dark with subtle purple warmth */
+  --color-bg-primary: rgb(18, 16, 28);
+  --color-bg-secondary: rgb(26, 24, 38);
+  --color-bg-elevated: rgb(34, 32, 48);
+  --color-bg-hover: rgb(42, 40, 58);
 
   /* Text Colors */
   --color-text-primary: rgb(235, 235, 235);
@@ -19,8 +19,8 @@
   --color-accent-teal: rgb(45, 212, 191);
   --color-accent-teal-light: rgb(94, 234, 212);
   --color-accent-teal-dark: rgb(20, 184, 166);
-  --color-accent-red: rgb(239, 68, 68);
-  --color-accent-red-light: rgb(248, 113, 113);
+  --color-accent-red: rgb(251, 191, 36);
+  --color-accent-red-light: rgb(253, 216, 99);
 
   /* Legacy aliases for compatibility */
   --color-accent: var(--color-accent-purple);
@@ -31,8 +31,8 @@
   --color-bg-darker: var(--color-bg-hover);
 
   /* Semantic Colors */
-  --color-success: rgb(10, 124, 52);
-  --color-success-light: rgb(3, 61, 24);
+  --color-success: rgb(22, 163, 74);
+  --color-success-light: rgb(34, 197, 94);
   --color-error: rgb(239, 68, 68);
   --color-error-light: rgb(248, 113, 113);
   --color-warning: rgb(251, 146, 60);
@@ -55,7 +55,8 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
   --shadow-glow-purple: 0 0 20px rgba(139, 92, 246, 0.3);
   --shadow-glow-teal: 0 0 20px rgba(45, 212, 191, 0.3);
-  --shadow-glow-red: 0 0 20px rgba(239, 68, 68, 0.3);
+  --shadow-glow-red: 0 0 20px rgba(251, 191, 36, 0.4);
+  --shadow-glow-gold: 0 0 20px rgba(251, 191, 36, 0.4);
   --shadow-accent: var(--shadow-glow-purple);
   --shadow-accent-lg: 0 8px 24px rgba(139, 92, 246, 0.4);
 
@@ -81,6 +82,11 @@
     var(--color-bg-secondary) 100%
   );
   --gradient-accent: var(--gradient-purple);
+  --gradient-gold: linear-gradient(
+    135deg,
+    var(--color-accent-red) 0%,
+    var(--color-accent-red-light) 100%
+  );
   --gradient-success: linear-gradient(
     135deg,
     var(--color-success) 0%,
@@ -108,6 +114,10 @@
   --font-size-4xl: 3rem;
   --font-size-5xl: 4rem;
   --font-size-6xl: 5rem;
+
+  /* Font Families */
+  --font-display: "Bebas Neue", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
   /* Border Radius */
   --radius-sm: 0.25rem;

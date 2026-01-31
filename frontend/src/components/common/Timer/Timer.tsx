@@ -54,14 +54,25 @@ export function Timer({
     return "var(--color-timer-safe)";
   };
 
+  const isCritical = seconds <= 3;
+  const isWarning = seconds <= 7 && !isCritical;
+
   const variantStyles: Record<TimerVariant, string> = {
     default: styles.timerWrapper,
     results: styles.resultsTimerWrapper,
     "game-over": styles.gameOverTimerWrapper,
   };
 
+  const wrapperClass = [
+    variantStyles[variant],
+    isCritical ? styles.critical : "",
+    isWarning ? styles.warning : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={variantStyles[variant]}>
+    <div className={wrapperClass}>
       <svg className={styles.timerSvg} viewBox="0 0 100 100">
         <circle
           className={styles.timerCircleBackground}

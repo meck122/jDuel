@@ -22,24 +22,24 @@ export function AboutPage() {
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>How to Play</h2>
           <ul className={styles.list}>
-            <li className={styles.listItem}>
+            <li className={styles.listItem} data-step="1">
               Create or join a room using a unique room code
             </li>
-            <li className={styles.listItem}>
+            <li className={styles.listItem} data-step="2">
               Wait for other players to join the lobby
             </li>
-            <li className={styles.listItem}>
+            <li className={styles.listItem} data-step="3">
               Any player can start the game when ready
             </li>
-            <li className={styles.listItem}>
+            <li className={styles.listItem} data-step="4">
               Answer questions as quickly and accurately as possible
             </li>
-            <li className={styles.listItem}>
+            <li className={styles.listItem} data-step="5">
               Points are awarded based on{" "}
               <span className={styles.speedText}>SPEED</span> and correct
               answers
             </li>
-            <li className={styles.listItem}>
+            <li className={styles.listItem} data-step="6">
               The player with the most points at the end wins!
             </li>
           </ul>
