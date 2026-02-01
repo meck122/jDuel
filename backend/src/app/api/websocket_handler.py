@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from app.middleware.rate_limiter import get_ws_message_limiter
 from app.models.websocket_messages import (
     AnswerMessage,
+    ReactionMessage,
     StartGameMessage,
     UpdateConfigMessage,
 )
@@ -98,6 +99,12 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
                     validated = UpdateConfigMessage.model_validate(message)
                     await orchestrator.handle_config_update(
                         room_id, player_id, validated.config
+                    )
+
+                elif msg_type == "REACTION":
+                    validated = ReactionMessage.model_validate(message)
+                    await orchestrator.handle_reaction(
+                        room_id, player_id, validated.reactionId
                     )
 
                 else:

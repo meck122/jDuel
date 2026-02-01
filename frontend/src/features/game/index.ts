@@ -14,3 +14,4 @@ export { Lobby } from "./Lobby/Lobby";
 export { Question } from "./Question/Question";
 export { Results } from "./Results/Results";
 export { GameOver } from "./GameOver/GameOver";
+export { Reactions } from "./Reactions/Reactions";

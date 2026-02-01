@@ -11,6 +11,8 @@ from app.config.game import (
     RATE_LIMIT_ROOM_CREATE,
     RATE_LIMIT_ROOM_JOIN,
     RATE_LIMIT_WS_MESSAGES,
+    REACTION_COOLDOWN_MS,
+    REACTIONS,
     RESULTS_TIME_MS,
     ROOM_ID_PATTERN,
 )
@@ -27,6 +29,8 @@ __all__ = [
     "RATE_LIMIT_ROOM_CREATE",
     "RATE_LIMIT_ROOM_JOIN",
     "RATE_LIMIT_WS_MESSAGES",
+    "REACTIONS",
+    "REACTION_COOLDOWN_MS",
     "RESULTS_TIME_MS",
     "ROOM_ID_PATTERN",
     "setup_logging",

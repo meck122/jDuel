@@ -13,6 +13,7 @@
 import { createContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { RoomConfig, RoomState, WebSocketMessage } from "../types";
 import { WS_URL } from "../config";
+import { emitReaction } from "../services/reactionEmitter";
 
 export interface GameContextValue {
   // Room identification
@@ -26,6 +27,9 @@ export interface GameContextValue {
 
   // Game state from server
   roomState: RoomState | null;
+
+  // Reactions
+  sendReaction: (reactionId: number) => void;
 
   // Actions
   connect: (roomId: string, playerId: string) => void;
@@ -106,6 +110,17 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
             setRoomState(data.roomState);
             setConnectionError(null); // Clear any previous errors on successful state update
             break;
+          case "REACTION":
+            // Bypass context entirely — emit directly to the Reactions
+            // component's local subscription. Context state updates from
+            // native WebSocket events are deferred by React 19's automatic
+            // batching, causing reactions to appear one click behind.
+            emitReaction({
+              playerId: data.playerId,
+              reactionId: data.reactionId,
+              receivedAt: Date.now(),
+            });
+            break;
           case "ROOM_CLOSED":
             onRoomClosedRef.current?.();
             break;
@@ -167,6 +182,13 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
     [sendMessage]
   );
 
+  const sendReaction = useCallback(
+    (reactionId: number) => {
+      sendMessage({ type: "REACTION", reactionId });
+    },
+    [sendMessage]
+  );
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -181,6 +203,7 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
     isConnecting,
     connectionError,
     roomState,
+    sendReaction,
     connect,
     disconnect,
     startGame,

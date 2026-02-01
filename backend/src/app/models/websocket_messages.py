@@ -27,10 +27,17 @@ class UpdateConfigMessage(BaseModel):
     config: dict = Field(default_factory=dict)
 
 
+class ReactionMessage(BaseModel):
+    """Message to send a reaction (playing/results phase only)."""
+
+    type: Literal["REACTION"]
+    reactionId: int
+
+
 class WebSocketClientMessage(BaseModel):
     """Union type for all client-to-server WebSocket messages.
 
     Use this for initial type detection, then validate with specific model.
     """
 
-    type: Literal["START_GAME", "ANSWER", "UPDATE_CONFIG"]
+    type: Literal["START_GAME", "ANSWER", "UPDATE_CONFIG", "REACTION"]

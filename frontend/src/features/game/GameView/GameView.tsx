@@ -18,6 +18,7 @@ import { Lobby } from "../Lobby/Lobby";
 import { Question } from "../Question/Question";
 import { Results } from "../Results/Results";
 import { GameOver } from "../GameOver/GameOver";
+import { Reactions } from "../Reactions/Reactions";
 import styles from "./GameView.module.css";
 
 export function GameView() {
@@ -40,6 +41,8 @@ export function GameView() {
         roomState.timeRemainingMs !== undefined && <Results />}
 
       {roomState.status === "finished" && roomState.winner && <GameOver />}
+
+      {(roomState.status === "results" || roomState.status === "finished") && <Reactions />}
     </div>
   );
 }

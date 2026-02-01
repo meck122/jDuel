@@ -59,6 +59,8 @@ class Room:
     finish_time: datetime | None = None
     # Session tokens for secure reconnection (player_id -> token)
     session_tokens: dict[str, str] = field(default_factory=dict)
+    # Per-player cooldown for reactions (player_id -> last reaction timestamp)
+    last_reaction_times: dict[str, datetime] = field(default_factory=dict)
 
     def __init__(self, room_id: str, questions: list[Question]):
         """Initialize a room.
@@ -80,6 +82,7 @@ class Room:
         self.results_start_time = None
         self.finish_time = None
         self.session_tokens = {}
+        self.last_reaction_times = {}
 
     # Backward-compatible property accessors for round state
     @property

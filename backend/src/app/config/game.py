@@ -24,3 +24,11 @@ RATE_LIMIT_WS_MESSAGES = (30, 60)  # 30 messages per minute per connection
 MAX_ANSWER_LENGTH = 500
 MAX_PLAYER_NAME_LENGTH = 20
 ROOM_ID_PATTERN = r"^[A-Z0-9]{4,6}$"
+
+# Reactions
+REACTION_COOLDOWN_MS = 3000  # 3 seconds between reactions per player
+REACTIONS = [
+    {"id": 0, "label": "nice try! >:)"},
+    {"id": 1, "label": "ah man! :("},
+    {"id": 2, "label": "better luck next time :p"},
+]

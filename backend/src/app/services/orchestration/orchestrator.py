@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from fastapi import WebSocket
@@ -11,6 +12,8 @@ from app.config import (
     DIFFICULTY_RANGES,
     GAME_OVER_TIME_MS,
     QUESTION_TIME_MS,
+    REACTION_COOLDOWN_MS,
+    REACTIONS,
     RESULTS_TIME_MS,
 )
 from app.models import GameStatus, RoomStateMessage
@@ -204,6 +207,50 @@ class GameOrchestrator:
         )
         await self._broadcast_room_state(room_id)
 
+    async def handle_reaction(
+        self, room_id: str, player_id: str, reaction_id: int
+    ) -> None:
+        """Handle a player reaction during playing or results phase.
+
+        Validates phase, reaction_id, and per-player cooldown. On success,
+        broadcasts a lightweight REACTION message directly to all connections.
+
+        Args:
+            room_id: The room ID
+            player_id: The reacting player's ID
+            reaction_id: Index into the REACTIONS list
+        """
+        room = self._room_manager.get_room(room_id)
+        if not room:
+            return
+
+        if room.status not in (GameStatus.RESULTS, GameStatus.FINISHED):
+            return
+
+        if reaction_id < 0 or reaction_id >= len(REACTIONS):
+            logger.warning(
+                f"Invalid reaction_id: room_id={room_id}, "
+                f"player_id={player_id}, reaction_id={reaction_id}"
+            )
+            return
+
+        # Enforce per-player cooldown
+        now = datetime.now(UTC)
+        last_time = room.last_reaction_times.get(player_id)
+        if last_time is not None:
+            elapsed_ms = int((now - last_time).total_seconds() * 1000)
+            if elapsed_ms < REACTION_COOLDOWN_MS:
+                return  # Silent drop
+
+        room.last_reaction_times[player_id] = now
+
+        reaction_broadcast = {
+            "type": "REACTION",
+            "playerId": player_id,
+            "reactionId": reaction_id,
+        }
+        await self._room_manager.broadcast_state(room_id, reaction_broadcast)
+
     async def handle_disconnect(self, room_id: str, player_id: str) -> None:
         """Handle player disconnect.
 
@@ -288,6 +335,7 @@ class GameOrchestrator:
             return
 
         has_next = self._game_service.advance_question(room)
+        room.last_reaction_times.clear()
 
         if has_next:
             logger.info(
