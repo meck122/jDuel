@@ -163,25 +163,46 @@
 }
 
 @media (max-width: 600px) {
+  .gameSection {
+    margin: var(--spacing-sm) 0;
+  }
+
+  .questionHeader {
+    margin-bottom: var(--spacing-md);
+  }
+
   .questionNumber {
-    font-size: var(--font-size-3xl);
+    font-size: var(--font-size-2xl);
+  }
+
+  .questionTotal {
+    font-size: var(--font-size-base);
+  }
+
+  .questionCategory {
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .questionBox {
+    margin: var(--spacing-md) 0;
   }
 
   .question {
     font-size: var(--font-size-base);
     padding: var(--spacing-md) var(--spacing-lg);
-    line-height: 1.7;
+    line-height: 1.5;
   }
 
   .optionsGrid {
     grid-template-columns: 1fr;
     gap: var(--spacing-sm);
     max-width: 100%;
+    margin-top: var(--spacing-md);
   }
 
   .optionButton {
-    padding: 18px var(--spacing-lg);
-    min-height: 56px;
+    padding: 14px var(--spacing-md);
+    min-height: 52px;
   }
 
   .answerForm {
