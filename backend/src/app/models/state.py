@@ -35,6 +35,7 @@ class RoomStateData(BaseModel):
     players: dict[str, int]
     status: Literal["waiting", "playing", "results", "finished"]
     questionIndex: int
+    totalQuestions: int = 0
     hostId: str | None = None
     config: RoomConfigData | None = None
     currentQuestion: CurrentQuestion | None = None

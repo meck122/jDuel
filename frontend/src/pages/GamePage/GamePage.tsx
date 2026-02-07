@@ -80,7 +80,9 @@ function GamePageContent() {
             // Max retries exceeded - truly taken
             navigate("/", { replace: true });
           }
-          // For other errors, let WebSocket connection attempt handle it
+        } else {
+          console.error("Unexpected error during registration:", error);
+          navigate(`/?join=${roomId}&error=unexpected`, { replace: true });
         }
       }
     };

@@ -34,6 +34,7 @@ class StateBuilder:
             players=room.scores,
             status=room.status.value,
             questionIndex=room.question_index,
+            totalQuestions=len(room.questions),
             hostId=room.host_id,
             config=RoomConfigData(
                 multipleChoiceEnabled=room.config.multiple_choice_enabled,

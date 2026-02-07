@@ -54,6 +54,17 @@ function getToken(roomId: string, playerId: string): string | undefined {
   return getStoredTokens()[key];
 }
 
+export function clearToken(roomId: string, playerId: string): void {
+  const key = `${roomId}:${playerId}`;
+  const tokens = getStoredTokens();
+  delete tokens[key];
+  if (Object.keys(tokens).length === 0) {
+    localStorage.removeItem(SESSION_TOKEN_KEY);
+  } else {
+    localStorage.setItem(SESSION_TOKEN_KEY, JSON.stringify(tokens));
+  }
+}
+
 export class ApiError extends Error {
   constructor(
     public code: ApiErrorCode,
