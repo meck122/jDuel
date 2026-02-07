@@ -1,5 +1,6 @@
 """Builds room state for client communication."""
 
+import logging
 import random
 from datetime import UTC, datetime
 
@@ -12,6 +13,8 @@ from app.models.state import (
     RoomStateData,
     RoomStateMessage,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class StateBuilder:
@@ -54,6 +57,13 @@ class StateBuilder:
             state: The state data to modify
             room: The game room
         """
+        if room.question_index >= len(room.questions):
+            logger.error(
+                f"question_index {room.question_index} out of bounds "
+                f"for {len(room.questions)} questions in room {room.room_id}"
+            )
+            return
+
         current_question = room.questions[room.question_index]
 
         options = None
@@ -83,6 +93,13 @@ class StateBuilder:
             state: The state data to modify
             room: The game room
         """
+        if room.question_index >= len(room.questions):
+            logger.error(
+                f"question_index {room.question_index} out of bounds "
+                f"for {len(room.questions)} questions in room {room.room_id}"
+            )
+            return
+
         current_question = room.questions[room.question_index]
 
         state.results = ResultsData(
