@@ -5,10 +5,9 @@ Welcome to jDuel! This guide will help you get up and running.
 ## Quick Links
 
 - **[Development](Development.md)** - Set up your local development environment
-- **[Deployment](Deployment.md)** - Deploy to production on AWS EC2
-- **[Nginx Configuration](Nginx.md)** - Configure the reverse proxy
-- **[SystemD Service](SystemD.md)** - Manage the backend service
-- **[HTTPS Setup](HTTPS.md)** - Enable SSL/TLS with Let's Encrypt
+- **[Deployment Guide](DeploymentGuide.md)** - Deploy to production (EC2, Nginx, SystemD, HTTPS)
+- **[Event Protocol](EventProtocol.md)** - Complete HTTP + WebSocket API reference
+- **[Frontend Architecture](FrontendFlow.md)** - React component architecture
 
 ## Prerequisites
 
@@ -46,4 +45,4 @@ jDuel/
 ## Next Steps
 
 - **New to the project?** Start with [Development](Development.md)
-- **Ready to deploy?** See [Deployment](Deployment.md)
+- **Ready to deploy?** See [Deployment Guide](DeploymentGuide.md)
