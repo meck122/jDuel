@@ -21,11 +21,3 @@ class RoundState:
     player_answers: dict[str, str] = field(default_factory=dict)
     correct_players: set[str] = field(default_factory=set)
     question_points: dict[str, int] = field(default_factory=dict)
-
-    def reset(self) -> None:
-        """Reset round state for the next question."""
-        self.question_start_time = None
-        self.answered_players = set()
-        self.player_answers = {}
-        self.correct_players = set()
-        self.question_points = {}

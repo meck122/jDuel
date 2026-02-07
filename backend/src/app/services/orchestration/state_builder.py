@@ -4,10 +4,11 @@ import logging
 import random
 from datetime import UTC, datetime
 
-from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, RESULTS_TIME_MS
+from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, REACTIONS, RESULTS_TIME_MS
 from app.models import GameStatus, Room
 from app.models.state import (
     CurrentQuestion,
+    ReactionData,
     ResultsData,
     RoomConfigData,
     RoomStateData,
@@ -40,6 +41,7 @@ class StateBuilder:
                 multipleChoiceEnabled=room.config.multiple_choice_enabled,
                 difficulty=room.config.difficulty,
             ),
+            reactions=[ReactionData(id=r["id"], label=r["label"]) for r in REACTIONS],
         )
 
         if room.status == GameStatus.PLAYING:

@@ -23,6 +23,7 @@ export interface RoomState {
     playerAnswers: Record<string, string>;
     playerResults: Record<string, number>;
   };
+  reactions?: { id: number; label: string }[];
 }
 
 export interface Reaction {
