@@ -56,7 +56,8 @@ node_modules/
 # csv
 *.csv
 
+# random
+
 
 # Claude
 .playwright-mcp/
-.claude/
