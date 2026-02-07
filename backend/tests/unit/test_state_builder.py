@@ -131,3 +131,92 @@ class TestStateBuilder:
 
         msg = state_builder.build_room_state(room)
         assert msg.roomState.winner is None
+
+    def test_multiple_choice_options_stable_across_builds(
+        self, state_builder: StateBuilder, sample_questions
+    ):
+        """Calling build_room_state multiple times returns the same option order."""
+        room = Room("TEST1", sample_questions)
+        room.players = {"Alice"}
+        room.scores = {"Alice": 0}
+        room.host_id = "Alice"
+        room.status = GameStatus.PLAYING
+        room.question_index = 2  # Has wrong_answers
+        room.question_start_time = datetime.now(UTC)
+        room.config.multiple_choice_enabled = True
+
+        msg1 = state_builder.build_room_state(room)
+        msg2 = state_builder.build_room_state(room)
+        msg3 = state_builder.build_room_state(room)
+
+        assert (
+            msg1.roomState.currentQuestion.options
+            == msg2.roomState.currentQuestion.options
+        )
+        assert (
+            msg2.roomState.currentQuestion.options
+            == msg3.roomState.currentQuestion.options
+        )
+
+    def test_shuffled_options_cached_on_round_state(
+        self, state_builder: StateBuilder, sample_questions
+    ):
+        """Building room state populates shuffled_options on the room's RoundState."""
+        room = Room("TEST1", sample_questions)
+        room.players = {"Alice"}
+        room.scores = {"Alice": 0}
+        room.host_id = "Alice"
+        room.status = GameStatus.PLAYING
+        room.question_index = 2
+        room.question_start_time = datetime.now(UTC)
+        room.config.multiple_choice_enabled = True
+
+        assert room.current_round.shuffled_options is None
+
+        state_builder.build_room_state(room)
+
+        assert room.current_round.shuffled_options is not None
+        assert len(room.current_round.shuffled_options) == 4
+
+    def test_shuffled_options_reset_produces_new_options(
+        self, state_builder: StateBuilder, sample_questions
+    ):
+        """After clearing shuffled_options, new options are generated with all answers."""
+        room = Room("TEST1", sample_questions)
+        room.players = {"Alice"}
+        room.scores = {"Alice": 0}
+        room.host_id = "Alice"
+        room.status = GameStatus.PLAYING
+        room.question_index = 2
+        room.question_start_time = datetime.now(UTC)
+        room.config.multiple_choice_enabled = True
+
+        state_builder.build_room_state(room)
+        room.current_round.shuffled_options = None
+        room.question_start_time = datetime.now(UTC)
+
+        msg = state_builder.build_room_state(room)
+        options = msg.roomState.currentQuestion.options
+
+        assert options is not None
+        assert len(options) == 4
+        assert sample_questions[2].answer in options
+        for wrong in sample_questions[2].wrong_answers:
+            assert wrong in options
+
+    def test_no_options_cached_when_mc_disabled(
+        self, state_builder: StateBuilder, sample_questions
+    ):
+        """When multiple choice is disabled, no shuffled_options are cached."""
+        room = Room("TEST1", sample_questions)
+        room.players = {"Alice"}
+        room.scores = {"Alice": 0}
+        room.host_id = "Alice"
+        room.status = GameStatus.PLAYING
+        room.question_index = 2
+        room.question_start_time = datetime.now(UTC)
+        room.config.multiple_choice_enabled = False
+
+        state_builder.build_room_state(room)
+
+        assert room.current_round.shuffled_options is None

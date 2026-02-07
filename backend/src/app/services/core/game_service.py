@@ -106,6 +106,7 @@ class GameService:
         room.player_answers = {}
         room.correct_players = set()
         room.question_points = {}
+        room.current_round.shuffled_options = None
 
         if room.question_index >= len(room.questions):
             room.status = GameStatus.FINISHED
@@ -127,6 +128,7 @@ class GameService:
         room.question_start_time = datetime.now(UTC)
         room.answered_players = set()
         room.player_answers = {}
+        room.current_round.shuffled_options = None
 
         # Reset all scores
         for player_id in room.scores:

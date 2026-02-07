@@ -71,8 +71,12 @@ class StateBuilder:
 
         options = None
         if room.config.multiple_choice_enabled and current_question.wrong_answers:
-            options = [current_question.answer, *current_question.wrong_answers]
-            random.shuffle(options)
+            if room.current_round.shuffled_options is None:
+                options = [current_question.answer, *current_question.wrong_answers]
+                random.shuffle(options)
+                room.current_round.shuffled_options = options
+            else:
+                options = room.current_round.shuffled_options
 
         state.currentQuestion = CurrentQuestion(
             text=current_question.text,
