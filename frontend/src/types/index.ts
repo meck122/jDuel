@@ -8,6 +8,7 @@ export interface RoomState {
   players: Record<string, number>;
   status: "waiting" | "playing" | "results" | "finished";
   questionIndex: number;
+  totalQuestions: number;
   hostId?: string;
   config?: RoomConfig;
   currentQuestion?: {
@@ -22,6 +23,7 @@ export interface RoomState {
     playerAnswers: Record<string, string>;
     playerResults: Record<string, number>;
   };
+  reactions?: { id: number; label: string }[];
 }
 
 export interface Reaction {

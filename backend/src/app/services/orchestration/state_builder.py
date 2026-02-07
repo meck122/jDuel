@@ -1,17 +1,21 @@
 """Builds room state for client communication."""
 
+import logging
 import random
 from datetime import UTC, datetime
 
-from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, RESULTS_TIME_MS
+from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, REACTIONS, RESULTS_TIME_MS
 from app.models import GameStatus, Room
 from app.models.state import (
     CurrentQuestion,
+    ReactionData,
     ResultsData,
     RoomConfigData,
     RoomStateData,
     RoomStateMessage,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class StateBuilder:
@@ -31,11 +35,13 @@ class StateBuilder:
             players=room.scores,
             status=room.status.value,
             questionIndex=room.question_index,
+            totalQuestions=len(room.questions),
             hostId=room.host_id,
             config=RoomConfigData(
                 multipleChoiceEnabled=room.config.multiple_choice_enabled,
                 difficulty=room.config.difficulty,
             ),
+            reactions=[ReactionData(id=r["id"], label=r["label"]) for r in REACTIONS],
         )
 
         if room.status == GameStatus.PLAYING:
@@ -54,12 +60,23 @@ class StateBuilder:
             state: The state data to modify
             room: The game room
         """
+        if room.question_index >= len(room.questions):
+            logger.error(
+                f"question_index {room.question_index} out of bounds "
+                f"for {len(room.questions)} questions in room {room.room_id}"
+            )
+            return
+
         current_question = room.questions[room.question_index]
 
         options = None
         if room.config.multiple_choice_enabled and current_question.wrong_answers:
-            options = [current_question.answer, *current_question.wrong_answers]
-            random.shuffle(options)
+            if room.current_round.shuffled_options is None:
+                options = [current_question.answer, *current_question.wrong_answers]
+                random.shuffle(options)
+                room.current_round.shuffled_options = options
+            else:
+                options = room.current_round.shuffled_options
 
         state.currentQuestion = CurrentQuestion(
             text=current_question.text,
@@ -83,6 +100,13 @@ class StateBuilder:
             state: The state data to modify
             room: The game room
         """
+        if room.question_index >= len(room.questions):
+            logger.error(
+                f"question_index {room.question_index} out of bounds "
+                f"for {len(room.questions)} questions in room {room.room_id}"
+            )
+            return
+
         current_question = room.questions[room.question_index]
 
         state.results = ResultsData(

@@ -161,3 +161,30 @@ class TestGameService:
 
         # Second correct answer should get 500 points
         assert room.question_points["player2"] == 500
+
+    def test_advance_question_clears_shuffled_options(
+        self, game_service, sample_questions
+    ):
+        """Advancing to the next question resets shuffled_options."""
+        room = Room("TEST1", sample_questions)
+        room.players = {"player1"}
+        room.scores = {"player1": 0}
+        game_service.start_game(room)
+
+        room.current_round.shuffled_options = ["A", "B", "C", "D"]
+
+        game_service.advance_question(room)
+
+        assert room.current_round.shuffled_options is None
+
+    def test_start_game_clears_shuffled_options(self, game_service, sample_questions):
+        """Starting a game resets shuffled_options."""
+        room = Room("TEST1", sample_questions)
+        room.players = {"player1"}
+        room.scores = {"player1": 0}
+
+        room.current_round.shuffled_options = ["A", "B", "C", "D"]
+
+        game_service.start_game(room)
+
+        assert room.current_round.shuffled_options is None

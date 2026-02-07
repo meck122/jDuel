@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this repository.
 
 ## Project Overview
 
@@ -25,6 +25,27 @@ uv sync                                      # Install dependencies
 uv run uvicorn app.main:app --reload         # Dev server on http://localhost:8000 (run from backend/src/)
 uv run ruff check .                          # Lint
 uv run ruff format .                         # Format
+```
+
+### Testing
+
+```bash
+# Backend tests (run from backend/src/)
+uv run pytest ../tests/                      # Full test suite
+uv run pytest ../tests/unit/                 # Unit tests only
+uv run pytest ../tests/integration/          # Integration tests only
+uv run pytest -x -q                          # Stop on first failure, quiet
+
+# Frontend
+npm run build                                # Type-checks via tsc + builds
+```
+
+Tests use `create_app(lifespan_override=...)` to skip 3GB+ NLP model loading. See `testing-patterns` skill for fixtures and mock patterns.
+
+### Formatting & Pre-commit
+
+```bash
+uvx pre-commit run --all-files               # Run all hooks (lint, format, tests)
 ```
 
 ### Deployment
@@ -65,22 +86,13 @@ Frontend (React 19 + Vite)  <-->  Backend (FastAPI)
 
 ### Communication Protocol
 
-**HTTP:**
+See [docs/EventProtocol.md](docs/EventProtocol.md) for the complete HTTP + WebSocket API reference.
 
-- `POST /api/rooms` - Create room
-- `GET /api/rooms/{roomId}` - Get room info
-- `POST /api/rooms/{roomId}/join` - Pre-register player
+**HTTP:** `POST /api/rooms` (create), `GET /api/rooms/{roomId}` (info), `POST /api/rooms/{roomId}/join` (register)
 
-**WebSocket (client → server):**
+**WebSocket client→server:** `START_GAME`, `ANSWER`, `UPDATE_CONFIG`, `REACTION`
 
-- `START_GAME` - Host starts game
-- `ANSWER` - Submit answer
-
-**WebSocket (server → client):**
-
-- `ROOM_STATE` - Full game state broadcast
-- `ERROR` - Error message
-- `ROOM_CLOSED` - Room closed
+**WebSocket server→client:** `ROOM_STATE`, `REACTION`, `ERROR`, `ROOM_CLOSED`
 
 ## Key Technical Details
 
@@ -88,16 +100,35 @@ Frontend (React 19 + Vite)  <-->  Backend (FastAPI)
 - Room codes are 4-character alphanumeric
 - Production uses systemd + nginx (no Docker)
 - Backend linting configured with ruff in `pyproject.toml`
+- Reactions, question count, and config are server-driven (sent in RoomStateData)
 
-## Skills
+## Skills Reference
 
-- Use existing skills when relevant
-- Improve existing skills to improve our workflows
-- Create new skills locally in .claude/skills when doing a skill that is something important and likely to be reused
+| Skill | Use When... |
+|-------|-------------|
+| `ws-message-checklist` | Adding a new WebSocket message type end-to-end |
+| `host-config-pattern` | Adding a host-only game setting to the lobby |
+| `testing-patterns` | Writing tests, understanding fixtures and mocks |
+| `type-system-alignment` | Syncing Python Pydantic models with TypeScript types |
+| `game-flow` | Testing UI changes across phases, Playwright automation |
+| `reactions` | Modifying the player reactions feature |
+| `answer-verification` | Working on NLP answer checking pipeline |
+| `websocket-protocol` | Debugging WebSocket connections and message flow |
+| `backend-architecture` | Understanding service container, orchestration |
+| `frontend-design` | UI patterns, CSS variables, responsive breakpoints |
+| `room-lifecycle` | Room creation, cleanup, reconnection flow |
+| `debugging-backend` | Tracing state bugs, orchestrator issues |
+| `deployment` | Deploying, rollback, health checks |
 
-### Formatting
+## Skills Policy
 
-```bash
-# Run on all files at root
-uvx pre-commit run --all-files
-```
+- Use existing skills when relevant to the task
+- Update skills when you notice inaccuracies
+- Create new skills in `.claude/skills/` for important, reusable patterns
+
+## Documentation
+
+- [Getting Started](docs/GettingStarted.md) - Setup and onboarding
+- [Event Protocol](docs/EventProtocol.md) - Complete HTTP + WebSocket API reference
+- [Deployment Guide](docs/DeploymentGuide.md) - Production deployment (EC2, Nginx, SystemD, HTTPS)
+- [Development](docs/Development.md) - Local dev environment and workflows

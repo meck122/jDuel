@@ -204,9 +204,10 @@ def join_room(
             )
 
         # Generate token if not already stored (backward compatibility)
+        # Use setdefault for atomic check-and-set to avoid TOCTOU race
         if not stored_token:
-            stored_token = secrets.token_urlsafe(32)
-            room.session_tokens[request.playerId] = stored_token
+            new_token = secrets.token_urlsafe(32)
+            stored_token = room.session_tokens.setdefault(request.playerId, new_token)
 
         # Valid reconnection - return token
         logger.info(

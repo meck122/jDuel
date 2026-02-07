@@ -14,6 +14,7 @@ class RoundState:
     - player_answers: The actual answers submitted by each player
     - correct_players: Players who answered correctly
     - question_points: Points earned by each player this round
+    - shuffled_options: Cached multiple-choice option ordering for this question
     """
 
     question_start_time: datetime | None = None
@@ -21,11 +22,4 @@ class RoundState:
     player_answers: dict[str, str] = field(default_factory=dict)
     correct_players: set[str] = field(default_factory=set)
     question_points: dict[str, int] = field(default_factory=dict)
-
-    def reset(self) -> None:
-        """Reset round state for the next question."""
-        self.question_start_time = None
-        self.answered_players = set()
-        self.player_answers = {}
-        self.correct_players = set()
-        self.question_points = {}
+    shuffled_options: list[str] | None = None

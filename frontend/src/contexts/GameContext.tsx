@@ -13,6 +13,7 @@
 import { createContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { RoomConfig, RoomState, WebSocketMessage } from "../types";
 import { WS_URL } from "../config";
+import { clearToken } from "../services/api";
 import { emitReaction } from "../services/reactionEmitter";
 
 export interface GameContextValue {
@@ -122,6 +123,7 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
             });
             break;
           case "ROOM_CLOSED":
+            clearToken(newRoomId, newPlayerId);
             onRoomClosedRef.current?.();
             break;
           case "ERROR":

@@ -5,6 +5,13 @@ from typing import Literal
 from pydantic import BaseModel
 
 
+class ReactionData(BaseModel):
+    """A single reaction option sent to clients."""
+
+    id: int
+    label: str
+
+
 class RoomConfigData(BaseModel):
     """Room configuration sent to clients."""
 
@@ -35,12 +42,14 @@ class RoomStateData(BaseModel):
     players: dict[str, int]
     status: Literal["waiting", "playing", "results", "finished"]
     questionIndex: int
+    totalQuestions: int = 0
     hostId: str | None = None
     config: RoomConfigData | None = None
     currentQuestion: CurrentQuestion | None = None
     timeRemainingMs: int | None = None
     winner: str | None = None
     results: ResultsData | None = None
+    reactions: list[ReactionData] | None = None
 
 
 class RoomStateMessage(BaseModel):

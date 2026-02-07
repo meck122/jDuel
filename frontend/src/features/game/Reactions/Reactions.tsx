@@ -25,16 +25,11 @@ import { subscribeToReactions } from "../../../services/reactionEmitter";
 import { Reaction } from "../../../types";
 import styles from "./Reactions.module.css";
 
-const REACTIONS = [
-  { id: 0, label: "nice try! >:)" },
-  { id: 1, label: "ah man! :(" },
-  { id: 2, label: "better luck next time :p" },
-] as const;
-
 const COOLDOWN_MS = 3000;
 
 export function Reactions() {
-  const { sendReaction } = useGame();
+  const { sendReaction, roomState } = useGame();
+  const availableReactions = roomState?.reactions ?? [];
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const lastSentAt = useRef<number>(0);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
@@ -76,7 +71,7 @@ export function Reactions() {
       {/* Reaction feed — floating overlay, newest at top */}
       <div className={styles.feed}>
         {[...reactions].reverse().map((r) => {
-          const reaction = REACTIONS[r.reactionId];
+          const reaction = availableReactions.find((ar) => ar.id === r.reactionId);
           if (!reaction) return null;
           return (
             <div key={`${r.playerId}-${r.receivedAt}`} className={styles.feedItem}>
@@ -89,7 +84,7 @@ export function Reactions() {
 
       {/* Reaction button bar — fixed bottom */}
       <div className={styles.buttonBar}>
-        {REACTIONS.map((reaction) => (
+        {availableReactions.map((reaction) => (
           <button
             key={reaction.id}
             className={styles.reactionButton}

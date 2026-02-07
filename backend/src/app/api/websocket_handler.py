@@ -80,6 +80,9 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
                 logger.warning(
                     f"Invalid JSON received: room_id={room_id}, player_id={player_id}"
                 )
+                await ws.send_json(
+                    {"type": "ERROR", "message": "Invalid message format"}
+                )
                 continue
 
             msg_type = message.get("type")
@@ -112,11 +115,20 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
                         f"Unknown message type: room_id={room_id}, "
                         f"player_id={player_id}, type={msg_type}"
                     )
+                    await ws.send_json(
+                        {
+                            "type": "ERROR",
+                            "message": f"Unknown message type: {msg_type}",
+                        }
+                    )
 
             except ValidationError as e:
                 logger.warning(
                     f"Message validation failed: room_id={room_id}, "
                     f"player_id={player_id}, error={e.errors()}"
+                )
+                await ws.send_json(
+                    {"type": "ERROR", "message": "Message validation failed"}
                 )
 
     except WebSocketDisconnect:

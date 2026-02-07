@@ -46,7 +46,7 @@ export function Question() {
     <div className={styles.gameSection}>
       <div className={styles.questionHeader}>
         <span className={styles.questionNumber}>Question {questionIndex + 1}</span>
-        <span className={styles.questionTotal}>of 10</span>
+        <span className={styles.questionTotal}>of {roomState?.totalQuestions ?? 10}</span>
       </div>
       <div className={styles.questionCategory}>
         <span className={styles.categoryLabel}>Category:</span>
