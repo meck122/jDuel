@@ -21,10 +21,10 @@ npm run format       # Prettier
 ### Backend (Python 3.13+, uv package manager)
 
 ```bash
-uv sync                                      # Install dependencies
-uv run uvicorn app.main:app --reload         # Dev server on http://localhost:8000 (run from backend/src/)
-uv run ruff check .                          # Lint
-uv run ruff format .                         # Format
+uv sync                                                    # Install dependencies
+CUDA_VISIBLE_DEVICES="" uv run uvicorn app.main:app --reload  # Dev server on http://localhost:8000 (run from backend/src/)
+uv run ruff check .                                        # Lint
+uv run ruff format .                                       # Format
 ```
 
 ### Testing

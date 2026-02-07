@@ -63,9 +63,10 @@ npm install
 
 ```bash
 cd backend
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+CUDA_VISIBLE_DEVICES="" uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 # Server runs at http://localhost:8000
 # API docs at http://localhost:8000/docs
+# Note: CUDA_VISIBLE_DEVICES="" disables GPU, runs NLP models on CPU (~850MB RAM)
 ```
 
 **Frontend:**
