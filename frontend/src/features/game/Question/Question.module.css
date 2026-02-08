@@ -165,42 +165,59 @@
 
 @media (max-width: 600px) {
   .gameSection {
+    position: fixed;
+    inset: 0;
     margin: 0;
-    padding: var(--spacing-sm);
-    height: 100vh;
+    padding: var(--spacing-md);
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    z-index: 1;
+    background: var(--color-bg-primary);
   }
 
   .questionBox {
-    margin: var(--spacing-xs) 0;
+    margin: var(--spacing-sm) 0 var(--spacing-md) 0;
     flex-shrink: 0;
+    max-width: 340px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .question {
-    font-size: var(--font-size-lg);
-    padding: var(--spacing-sm) var(--spacing-md);
-    line-height: 1.2;
+    font-size: var(--font-size-base);
+    padding: var(--spacing-md);
+    line-height: 1.4;
+    text-align: left;
+    border-width: 1px;
+    border-top-width: 2px;
+    box-shadow: none;
   }
 
   .optionsGrid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-xs);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
     max-width: 100%;
-    margin-top: var(--spacing-xs);
     flex: 1;
-    align-content: start;
+    justify-content: center;
+    align-items: stretch;
   }
 
   .optionButton {
-    padding: var(--spacing-sm) var(--spacing-md);
-    min-height: 52px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    min-height: 56px;
+  }
+
+  .optionLetter {
+    font-size: var(--font-size-xl);
+    min-width: 28px;
   }
 
   .optionText {
-    font-size: var(--font-size-sm);
-    line-height: 1.3;
+    font-size: var(--font-size-base);
+    line-height: 1.4;
   }
 
   .answerForm {

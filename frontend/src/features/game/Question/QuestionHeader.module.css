@@ -24,5 +24,7 @@
 @media (max-width: 600px) {
   .header {
     font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-sm);
+    flex-shrink: 0;
   }
 }

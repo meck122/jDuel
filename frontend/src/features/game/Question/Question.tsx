@@ -8,7 +8,7 @@
  * - Answer input form
  */
 
-import { FormEvent, useState, useRef } from "react";
+import { FormEvent, useState, useRef, useEffect } from "react";
 import { useGame } from "../../../contexts";
 import { Timer } from "../../../components";
 import { QuestionHeader } from "./QuestionHeader";
@@ -38,6 +38,16 @@ export function Question() {
       setHasSubmitted(true);
     }
   };
+
+  // Lock scroll on mobile while question is visible
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
 
   if (!currentQuestion) {
     return null;

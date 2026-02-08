@@ -89,3 +89,17 @@
     opacity: 0.4;
   }
 }
+
+/* Mobile: shrink default timer to save vertical space */
+@media (max-width: 600px) {
+  .timerWrapper {
+    width: 48px;
+    height: 48px;
+    margin: var(--spacing-sm) auto;
+    flex-shrink: 0;
+  }
+
+  .timerWrapper .timerText {
+    font-size: 1.1rem;
+  }
+}

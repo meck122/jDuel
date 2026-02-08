@@ -4,6 +4,12 @@
   text-align: center;
 }
 
+@media (max-width: 600px) {
+  .container {
+    padding: 0;
+  }
+}
+
 .title {
   font-size: var(--font-size-4xl);
   font-weight: 700;
