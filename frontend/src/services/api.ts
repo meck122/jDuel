@@ -69,7 +69,8 @@ export class ApiError extends Error {
   constructor(
     public code: ApiErrorCode,
     message: string,
-    public statusCode?: number
+    public statusCode?: number,
+    public retryAfter?: number
   ) {
     super(message);
     this.name = "ApiError";

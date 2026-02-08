@@ -7,6 +7,10 @@ import styles from "./Navigation.module.css";
 export function Navigation() {
   const location = useLocation();
   const isAboutPage = location.pathname === "/about";
+  const isGamePage = location.pathname.startsWith("/game/");
+
+  // Hide navbar on game pages to reclaim 64px vertical space
+  if (isGamePage) return null;
 
   return (
     <AppBar position="fixed" className={styles.appBar}>
