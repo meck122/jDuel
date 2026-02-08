@@ -727,12 +727,12 @@ Margin:          243-263px ✓ (plenty of room)
 - [ ] Test timer countdown accuracy and reset behavior
 
 ### Phase 3: Question View Redesign
-- [ ] Create QuestionHeader component (inline layout)
-- [ ] Update Question.tsx to use QuestionHeader
-- [ ] Add LinearTimer below header (16px height)
-- [ ] Reduce question text font size and line-height
-- [ ] Reduce spacing between elements
-- [ ] Verify answer buttons ≥ 56px height
+- [x] Create QuestionHeader component (inline layout)
+- [x] Update Question.tsx to use QuestionHeader
+- [x] Add LinearTimer below header (16px height)
+- [x] Reduce question text font size and line-height
+- [x] Reduce spacing between elements
+- [x] Verify answer buttons ≥ 56px height
 - [ ] Test on 375x667px viewport (no scrolling)
 - [ ] Test on real devices (iOS + Android)
 

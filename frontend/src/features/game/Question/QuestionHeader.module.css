@@ -1,0 +1,28 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.questionNumber {
+  font-family: var(--font-family-mono);
+  color: var(--color-accent-teal);
+  font-weight: 600;
+}
+
+.separator {
+  color: var(--color-text-tertiary);
+}
+
+.category {
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 600px) {
+  .header {
+    font-size: var(--font-size-xs);
+  }
+}

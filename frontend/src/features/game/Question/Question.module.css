@@ -62,18 +62,18 @@
 }
 
 .questionBox {
-  margin: var(--spacing-lg) 0;
+  margin: var(--spacing-sm) 0 var(--spacing-md);
 }
 
 .question {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-2xl);
   font-weight: 500;
   color: var(--color-text-primary);
   margin: 0;
-  padding: var(--spacing-xl);
+  padding: var(--spacing-lg);
   background: var(--color-bg-elevated);
   border-radius: var(--radius-lg);
-  line-height: 1.6;
+  line-height: 1.3;
   border: 2px solid var(--color-border-default);
   border-top: 3px solid var(--color-accent-purple);
   box-shadow:
@@ -94,6 +94,7 @@
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
+  min-height: 56px;
   background: var(--color-bg-elevated);
   border: 2px solid var(--color-border-default);
   border-radius: var(--radius-md);
@@ -164,33 +165,18 @@
 
 @media (max-width: 600px) {
   .gameSection {
-    margin: var(--spacing-sm) 0;
-  }
-
-  .questionHeader {
-    margin-bottom: var(--spacing-md);
-  }
-
-  .questionNumber {
-    font-size: var(--font-size-2xl);
-  }
-
-  .questionTotal {
-    font-size: var(--font-size-base);
-  }
-
-  .questionCategory {
-    margin-bottom: var(--spacing-xs);
+    margin: 0;
+    padding: var(--spacing-sm);
   }
 
   .questionBox {
-    margin: var(--spacing-md) 0;
+    margin: var(--spacing-sm) 0;
   }
 
   .question {
-    font-size: var(--font-size-base);
-    padding: var(--spacing-md) var(--spacing-lg);
-    line-height: 1.5;
+    font-size: var(--font-size-xl);
+    padding: var(--spacing-md);
+    line-height: 1.3;
   }
 
   .optionsGrid {
@@ -201,8 +187,8 @@
   }
 
   .optionButton {
-    padding: 14px var(--spacing-md);
-    min-height: 52px;
+    padding: var(--spacing-md);
+    min-height: 56px;
   }
 
   .answerForm {
