@@ -8,7 +8,7 @@
  */
 
 import { useGame } from "../../../contexts";
-import { Timer } from "../../../components";
+import { LinearTimer } from "../../../components";
 import { sortPlayersByScore } from "../../../utils";
 import styles from "./GameOver.module.css";
 
@@ -52,8 +52,12 @@ export function GameOver() {
 
       {timeRemainingMs !== undefined && (
         <div className={styles.timerSection}>
-          <p className={styles.closingText}>Room closing in</p>
-          <Timer timeRemainingMs={timeRemainingMs} resetKey={winner} variant="game-over" />
+          <LinearTimer
+            timeRemainingMs={timeRemainingMs}
+            resetKey={winner}
+            variant="subtle"
+            label="Room closing in"
+          />
         </div>
       )}
 

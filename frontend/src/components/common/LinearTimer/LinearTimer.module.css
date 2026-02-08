@@ -1,0 +1,77 @@
+/* Results Timer - Horizontal progress bar variant */
+.resultsTimer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-mono);
+  white-space: nowrap;
+}
+
+.progressBarContainer {
+  flex: 1;
+  height: 16px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--border-radius-full);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.progressBar {
+  height: 100%;
+  background: var(--gradient-teal);
+  transition: width 0.1s linear;
+  border-radius: var(--border-radius-full);
+}
+
+.timeText {
+  font-size: var(--font-size-md);
+  font-family: var(--font-family-mono);
+  color: var(--color-accent-teal);
+  font-weight: 600;
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+/* Subtle Timer - Text-only variant for low urgency */
+.subtleTimer {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  padding: var(--spacing-sm) 0;
+}
+
+.subtleTimer .label {
+  font-size: var(--font-size-sm);
+}
+
+.subtleTimer .seconds {
+  font-family: var(--font-family-mono);
+  color: var(--color-accent-teal);
+  font-weight: 600;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .resultsTimer {
+    gap: var(--spacing-sm);
+  }
+
+  .label {
+    font-size: var(--font-size-xs);
+  }
+
+  .progressBarContainer {
+    height: 12px;
+  }
+
+  .timeText {
+    font-size: var(--font-size-sm);
+    min-width: 2rem;
+  }
+}

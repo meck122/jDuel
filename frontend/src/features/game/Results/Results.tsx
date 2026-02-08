@@ -9,7 +9,7 @@
  */
 
 import { useGame } from "../../../contexts";
-import { Timer, PlayerName } from "../../../components";
+import { LinearTimer, PlayerName } from "../../../components";
 import { sortPlayersByScore } from "../../../utils";
 import styles from "./Results.module.css";
 
@@ -33,8 +33,12 @@ export function Results() {
       </div>
 
       <div className={styles.timerSection}>
-        <p className={styles.nextQuestionText}>Next question in</p>
-        <Timer timeRemainingMs={timeRemainingMs} resetKey={correctAnswer} variant="results" />
+        <LinearTimer
+          timeRemainingMs={timeRemainingMs}
+          resetKey={correctAnswer}
+          variant="results"
+          label="Next question in"
+        />
       </div>
 
       <div className={styles.correctAnswerBanner}>

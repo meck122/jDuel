@@ -721,9 +721,9 @@ Margin:          243-263px ✓ (plenty of room)
 - [ ] Test navbar visibility on all routes
 
 ### Phase 2: Timer Variants
-- [ ] Create LinearTimer component (LinearTimer.tsx + .module.css)
-- [ ] Update Results.tsx to use LinearTimer variant="results"
-- [ ] Update GameOver.tsx to use LinearTimer variant="subtle"
+- [x] Create LinearTimer component (LinearTimer.tsx + .module.css)
+- [x] Update Results.tsx to use LinearTimer variant="results"
+- [x] Update GameOver.tsx to use LinearTimer variant="subtle"
 - [ ] Test timer countdown accuracy and reset behavior
 
 ### Phase 3: Question View Redesign
