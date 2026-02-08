@@ -753,9 +753,9 @@ Margin:          243-263px ✓ (plenty of room)
 - [ ] Test cooldown enforcement (3s)
 
 ### Phase 6: Multiple Choice Default
-- [ ] Update GameContext default config (multipleChoiceEnabled: true)
-- [ ] Update backend default config (multiple_choice_enabled: True)
-- [ ] Verify GameSettings toggle reflects new default
+- [x] Update GameContext default config (multipleChoiceEnabled: true)
+- [x] Update backend default config (multiple_choice_enabled: True)
+- [x] Verify GameSettings toggle reflects new default
 
 ### Final Testing
 - [ ] Run full game flow (HomePage → Lobby → Question → Results → GameOver)
