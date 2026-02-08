@@ -32,33 +32,14 @@ export function Results() {
         <span className={styles.resultsTitle}>Round Results</span>
       </div>
 
-      <div className={styles.timerSection}>
-        <LinearTimer
-          timeRemainingMs={timeRemainingMs}
-          resetKey={correctAnswer}
-          variant="results"
-          label="Next question in"
-        />
-      </div>
-
+      {/* 1. Correct Answer (most important - immediate feedback) */}
       <div className={styles.correctAnswerBanner}>
         <span className={styles.correctLabel}>Correct Answer:</span>
         <span className={styles.correctValue}>{correctAnswer}</span>
       </div>
 
       <div className={styles.resultsContainer}>
-        <div className={styles.resultsBox}>
-          <h3>Scoreboard</h3>
-          <div className={styles.resultsScores}>
-            {sortPlayersByScore(players).map(([player, score]) => (
-              <div key={player} className={styles.resultsScoreItem}>
-                <PlayerName playerId={player} className={styles.resultsPlayerName} />
-                <span className={styles.resultsPlayerScore}>{score}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
+        {/* 2. Player Answers (engaging moment - who got it right?) */}
         <div className={styles.resultsBox}>
           <h3>Player Answers</h3>
           <div className={styles.resultsAnswers}>
@@ -85,6 +66,29 @@ export function Results() {
             })}
           </div>
         </div>
+
+        {/* 3. Scoreboard (secondary - competitive standings) */}
+        <div className={styles.resultsBox}>
+          <h3>Scoreboard</h3>
+          <div className={styles.resultsScores}>
+            {sortPlayersByScore(players).map(([player, score]) => (
+              <div key={player} className={styles.resultsScoreItem}>
+                <PlayerName playerId={player} className={styles.resultsPlayerName} />
+                <span className={styles.resultsPlayerScore}>{score}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Timer (least important - just waiting) */}
+      <div className={styles.timerSection}>
+        <LinearTimer
+          timeRemainingMs={timeRemainingMs}
+          resetKey={correctAnswer}
+          variant="results"
+          label="Next question in"
+        />
       </div>
     </div>
   );

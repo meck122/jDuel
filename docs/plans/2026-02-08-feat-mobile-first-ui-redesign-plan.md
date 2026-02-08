@@ -737,9 +737,9 @@ Margin:          243-263px ✓ (plenty of room)
 - [ ] Test on real devices (iOS + Android)
 
 ### Phase 4: Results View Reordering
-- [ ] Reorder Results sections (answer → players → scoreboard → timer)
-- [ ] Verify mobile vertical stack (≤600px)
-- [ ] Test desktop two-column layout
+- [x] Reorder Results sections (answer → players → scoreboard → timer)
+- [x] Verify mobile vertical stack (≤600px)
+- [x] Test desktop two-column layout
 
 ### Phase 5: Reactions Redesign
 - [ ] Create Toast component (wrapper for react-hot-toast)
