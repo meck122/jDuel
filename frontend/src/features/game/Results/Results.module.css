@@ -25,6 +25,7 @@
 
 .timerSection {
   margin: var(--spacing-lg) 0;
+  flex-shrink: 0; /* Prevents timer from collapsing */
 }
 
 .nextQuestionText {
@@ -73,6 +74,18 @@
   composes: content-box from global;
 }
 
+/* Shared base class for all player rows (scoreboard and answers) */
+.playerRowBase {
+  display: grid;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  min-height: 52px;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base); /* Unified font size */
+  transition: all var(--transition-base);
+}
+
 .resultsScores,
 .resultsAnswers {
   display: flex;
@@ -81,6 +94,7 @@
 }
 
 .resultsScoreItem {
+  composes: playerRowBase;
   composes: score-item from global;
 }
 
@@ -95,15 +109,10 @@
 }
 
 .resultsAnswerItem {
-  display: grid;
+  composes: playerRowBase;
   grid-template-columns: minmax(80px, 1fr) minmax(120px, 2fr) auto;
   gap: var(--spacing-md);
-  align-items: center;
-  padding: var(--spacing-md);
-  background: var(--color-bg-elevated);
-  border-radius: var(--radius-sm);
   border-left: 3px solid transparent;
-  transition: all var(--transition-base);
 }
 
 .resultsAnswerItem:hover {
@@ -177,13 +186,18 @@
     font-size: var(--font-size-3xl);
   }
 
+  .timerSection {
+    margin: var(--spacing-sm) 0; /* Reduce from lg to reclaim space */
+  }
+
   .resultsContainer {
     grid-template-columns: 1fr;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm); /* Reduce from md to reclaim space */
+    margin: var(--spacing-md) 0; /* Reduce from xl */
   }
 
   .correctAnswerBanner {
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md); /* Reduce padding */
     flex-direction: column;
     align-items: center;
     text-align: center;
@@ -197,11 +211,17 @@
     padding: var(--spacing-md);
   }
 
+  /* Both row types maintain unified base styles */
+  .resultsScoreItem,
+  .resultsAnswerItem {
+    padding: var(--spacing-sm) var(--spacing-md); /* Explicit unified padding */
+    min-height: 52px; /* Explicit unified height */
+  }
+
   .resultsAnswerItem {
     grid-template-columns: 1fr auto;
     grid-template-rows: auto auto;
     gap: var(--spacing-xs) var(--spacing-sm);
-    padding: var(--spacing-sm);
   }
 
   .resultsAnswerPlayer {

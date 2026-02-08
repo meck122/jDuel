@@ -201,8 +201,10 @@
     gap: var(--spacing-md);
     max-width: 100%;
     flex: 1;
-    justify-content: center;
+    min-height: 0; /* Allows flex item to shrink below content size */
+    justify-content: flex-start; /* Prioritize showing top answers */
     align-items: stretch;
+    overflow-y: auto; /* Fallback if extreme edge case */
   }
 
   .optionButton {
@@ -236,5 +238,16 @@
     padding: 16px var(--spacing-xl);
     font-size: var(--font-size-lg);
     width: 100%;
+  }
+}
+
+/* Extra-small viewports (iPhone SE, Galaxy S20) */
+@media (max-width: 380px) {
+  .optionsGrid {
+    gap: var(--spacing-sm); /* Reduce from md to reclaim vertical space */
+  }
+
+  .questionBox {
+    margin: var(--spacing-xs) 0 var(--spacing-sm) 0; /* Tighter spacing */
   }
 }

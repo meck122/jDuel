@@ -289,6 +289,10 @@
    MOBILE
    ============================================ */
 @media (max-width: 600px) {
+  .gameSection {
+    padding: var(--spacing-md); /* Add container padding */
+  }
+
   .gameOverHeader {
     font-size: var(--font-size-4xl);
     letter-spacing: 2px;
@@ -313,6 +317,12 @@
 
   .winnerName {
     font-size: var(--font-size-2xl);
+  }
+
+  .finalScoresSection {
+    margin-top: var(--spacing-lg); /* Reduce from 3xl */
+    max-height: calc(100vh - 420px); /* Constrain height */
+    overflow-y: auto; /* Scrollable if needed */
   }
 
   .finalScoresHeader {
