@@ -763,7 +763,7 @@ Margin:          243-263px ✓ (plenty of room)
 - [ ] Run Lighthouse accessibility audit (target ≥ 95)
 - [ ] Verify no horizontal scrolling on any view
 - [ ] Verify all CSS uses variables (no hardcoded values)
-- [ ] Run `npm run build` (type-check passes)
+- [x] Run `npm run build` (type-check passes)
 - [ ] Deploy to production (see rollout plan)
 
 ---
