@@ -28,7 +28,7 @@ export function AboutPage() {
               Wait for other players to join the lobby
             </li>
             <li className={styles.listItem} data-step="3">
-              Any player can start the game when ready
+              The host can configure the game and start the game when ready
             </li>
             <li className={styles.listItem} data-step="4">
               Answer questions as quickly and accurately as possible

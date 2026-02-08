@@ -2,15 +2,18 @@ import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
 import InfoIcon from "@mui/icons-material/Info";
 import HomeIcon from "@mui/icons-material/Home";
+import { useGame } from "../../../contexts";
 import styles from "./Navigation.module.css";
 
 export function Navigation() {
   const location = useLocation();
   const isAboutPage = location.pathname === "/about";
   const isGamePage = location.pathname.startsWith("/game/");
+  const { roomState } = useGame();
 
-  // Hide navbar on game pages to reclaim 64px vertical space
-  if (isGamePage) return null;
+  // Hide navbar on game pages EXCEPT when game is finished (GameOver screen)
+  const isGameFinished = roomState?.status === "finished";
+  if (isGamePage && !isGameFinished) return null;
 
   return (
     <AppBar position="fixed" className={styles.appBar}>
