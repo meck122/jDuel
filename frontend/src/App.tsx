@@ -4,6 +4,7 @@ import { CssBaseline } from "@mui/material";
 import { jeopardyTheme } from "./theme";
 import { Navigation } from "./components";
 import { HomePage, GamePage, AboutPage } from "./pages";
+import { GameProvider } from "./contexts";
 
 /**
  * Redirect component for deep links.
@@ -18,19 +19,21 @@ function App() {
   return (
     <ThemeProvider theme={jeopardyTheme}>
       <CssBaseline />
-      <Router>
-        <div className="app-layout">
-          <Navigation />
-          <main className="app-main">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/room/:roomId" element={<RoomRedirect />} />
-              <Route path="/game/:roomId" element={<GamePage />} />
-              <Route path="/about" element={<AboutPage />} />
-            </Routes>
-          </main>
-        </div>
-      </Router>
+      <GameProvider>
+        <Router>
+          <div className="app-layout">
+            <Navigation />
+            <main className="app-main">
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/room/:roomId" element={<RoomRedirect />} />
+                <Route path="/game/:roomId" element={<GamePage />} />
+                <Route path="/about" element={<AboutPage />} />
+              </Routes>
+            </main>
+          </div>
+        </Router>
+      </GameProvider>
     </ThemeProvider>
   );
 }

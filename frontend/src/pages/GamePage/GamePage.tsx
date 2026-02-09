@@ -10,9 +10,9 @@
  * URL format: /game/:roomId (player name retrieved from localStorage)
  */
 
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { GameProvider, useGame } from "../../contexts";
+import { useGame } from "../../contexts";
 import { GameView } from "../../features/game";
 import { PageContainer } from "../../components";
 import { usePlayerName } from "../../hooks";
@@ -142,18 +142,9 @@ function GamePageContent() {
 }
 
 /**
- * GamePage wrapper that provides GameContext.
+ * GamePage - renders the game content.
+ * GameProvider is now provided at App level.
  */
 export function GamePage() {
-  const navigate = useNavigate();
-
-  const handleRoomClosed = useCallback(() => {
-    navigate("/", { replace: true });
-  }, [navigate]);
-
-  return (
-    <GameProvider onRoomClosed={handleRoomClosed}>
-      <GamePageContent />
-    </GameProvider>
-  );
+  return <GamePageContent />;
 }
