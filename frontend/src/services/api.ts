@@ -28,6 +28,7 @@ export type ApiErrorCode =
   | "GAME_STARTED"
   | "VALIDATION_ERROR"
   | "INVALID_SESSION"
+  | "RATE_LIMITED"
   | "NETWORK_ERROR";
 
 // Session token storage helpers
@@ -69,7 +70,8 @@ export class ApiError extends Error {
   constructor(
     public code: ApiErrorCode,
     message: string,
-    public statusCode?: number
+    public statusCode?: number,
+    public retryAfter?: number
   ) {
     super(message);
     this.name = "ApiError";
@@ -89,10 +91,15 @@ export async function createRoom(): Promise<CreateRoomResponse> {
 
     if (!response.ok) {
       const error = await response.json();
+      const retryAfter =
+        response.status === 429
+          ? parseInt(response.headers.get("Retry-After") || "") || error.detail?.retry_after
+          : undefined;
       throw new ApiError(
         error.detail?.code || "NETWORK_ERROR",
         error.detail?.error || "Failed to create room",
-        response.status
+        response.status,
+        retryAfter
       );
     }
 
@@ -129,10 +136,15 @@ export async function joinRoom(roomId: string, playerId: string): Promise<JoinRo
 
     if (!response.ok) {
       const error = await response.json();
+      const retryAfter =
+        response.status === 429
+          ? parseInt(response.headers.get("Retry-After") || "") || error.detail?.retry_after
+          : undefined;
       throw new ApiError(
         error.detail?.code || "NETWORK_ERROR",
         error.detail?.error || "Failed to join room",
-        response.status
+        response.status,
+        retryAfter
       );
     }
 
