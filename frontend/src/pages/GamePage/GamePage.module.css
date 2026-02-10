@@ -48,3 +48,24 @@
   background: var(--color-accent-purple);
   color: var(--color-text-primary);
 }
+
+/* Retry countdown state (429 rate limiting) */
+.retryContainer {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-warning);
+  box-shadow: var(--shadow-lg);
+}
+
+.retryTitle {
+  font-size: var(--font-size-xl);
+  color: var(--color-warning);
+  margin-bottom: var(--spacing-md);
+}
+
+.retryMessage {
+  color: var(--color-text-dim);
+  margin-bottom: var(--spacing-xl);
+}

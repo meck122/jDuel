@@ -56,7 +56,11 @@ def rate_limit_room_create(request: Request) -> None:
     except RateLimitExceeded as e:
         raise HTTPException(
             status_code=429,
-            detail={"error": "Too many rooms created", "retry_after": e.retry_after},
+            detail={
+                "code": "RATE_LIMITED",
+                "error": "Too many rooms created",
+                "retry_after": e.retry_after,
+            },
             headers={"Retry-After": str(e.retry_after)},
         ) from e
 
@@ -74,7 +78,11 @@ def rate_limit_room_join(request: Request) -> None:
     except RateLimitExceeded as e:
         raise HTTPException(
             status_code=429,
-            detail={"error": "Too many join attempts", "retry_after": e.retry_after},
+            detail={
+                "code": "RATE_LIMITED",
+                "error": "Too many join attempts",
+                "retry_after": e.retry_after,
+            },
             headers={"Retry-After": str(e.retry_after)},
         ) from e
 
