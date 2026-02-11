@@ -182,6 +182,10 @@
    MOBILE
    ============================================ */
 @media (max-width: 600px) {
+  .gameSection {
+    padding-bottom: var(--reactions-bar-height);
+  }
+
   .resultsTitle {
     font-size: var(--font-size-3xl);
   }
