@@ -60,6 +60,16 @@ Two breakpoints used consistently across the app:
 
 Design mobile-first: start at 390px viewport width and expand outward.
 
+## Mobile Testing Viewports
+
+Test UI changes against these three device dimensions to cover the vast majority of mobile users:
+
+| Device | Width × Height | Why |
+|--------|---------------|-----|
+| iPhone SE / older iPhones | 375 × 667px | Most common baseline. If it works here, it works on most devices. |
+| iPhone 14/15 Pro, Pixel 7 | 393 × 852px | Modern mid-to-large phones with notches/dynamic islands. The "standard" modern phone. |
+| Samsung Galaxy S20/S21 | 360 × 800px | Most common Android width. Slightly narrower than iPhones — catches width-related issues. |
+
 ## Component Conventions
 
 - **Tap targets:** Minimum 56px height on interactive elements (buttons, option cards) on mobile
