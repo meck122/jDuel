@@ -159,3 +159,90 @@ class TestWebSocketGameFlow:
             # Verify via container that config is unchanged
             room = test_container.room_manager.get_room(room_id)
             assert room.config.difficulty == "enjoyer"
+
+
+class TestPlayAgain:
+    """Tests for the Play Again feature."""
+
+    def _play_to_finished(self, ws, test_container, room_id: str):
+        """Helper: play a single-player game to FINISHED state via WS."""
+        ws.send_json({"type": "START_GAME"})
+        ws.receive_json()  # playing state
+
+        room = test_container.room_manager.get_room(room_id)
+        questions = room.questions
+
+        for i in range(len(questions)):
+            ws.send_json({"type": "ANSWER", "answer": questions[i].answer})
+            ws.receive_json()  # results state
+            # Trigger results timeout to advance
+            import asyncio
+
+            asyncio.get_event_loop().run_until_complete(
+                test_container.orchestrator._on_results_timeout(room_id)
+            )
+            ws.receive_json()  # next playing or finished state
+
+        assert room.status.value == "finished"
+
+    def test_play_again_resets_to_lobby(self, client: TestClient, test_container):
+        """Host sending PLAY_AGAIN after game ends returns to waiting state."""
+        room_id = _setup_room(client, ["Alice"])
+
+        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws:
+            ws.receive_json()  # initial waiting state
+            self._play_to_finished(ws, test_container, room_id)
+
+            # Now send PLAY_AGAIN
+            ws.send_json({"type": "PLAY_AGAIN"})
+            msg = ws.receive_json()
+
+            assert msg["type"] == "ROOM_STATE"
+            assert msg["roomState"]["status"] == "waiting"
+            assert msg["roomState"]["players"]["Alice"] == 0  # Score reset
+
+    def test_play_again_then_new_game(self, client: TestClient, test_container):
+        """After play again, host can start a new game successfully."""
+        room_id = _setup_room(client, ["Alice"])
+
+        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws:
+            ws.receive_json()  # waiting
+            self._play_to_finished(ws, test_container, room_id)
+
+            # Play again
+            ws.send_json({"type": "PLAY_AGAIN"})
+            msg = ws.receive_json()
+            assert msg["roomState"]["status"] == "waiting"
+
+            # Start a new game
+            ws.send_json({"type": "START_GAME"})
+            msg = ws.receive_json()
+            assert msg["roomState"]["status"] == "playing"
+            assert "currentQuestion" in msg["roomState"]
+
+    def test_new_player_joins_after_play_again(
+        self, client: TestClient, test_container
+    ):
+        """New player can join the room after play again resets to lobby."""
+        room_id = _setup_room(client, ["Alice"])
+
+        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws:
+            ws.receive_json()  # waiting
+            self._play_to_finished(ws, test_container, room_id)
+
+            # Play again
+            ws.send_json({"type": "PLAY_AGAIN"})
+            ws.receive_json()  # waiting
+
+            # New player joins via HTTP
+            resp = client.post(f"/api/rooms/{room_id}/join", json={"playerId": "Bob"})
+            assert resp.status_code == 200
+
+            # Bob can connect via WebSocket
+            with client.websocket_connect(
+                f"/ws?roomId={room_id}&playerId=Bob"
+            ) as ws_bob:
+                msg = ws_bob.receive_json()
+                assert msg["type"] == "ROOM_STATE"
+                assert msg["roomState"]["status"] == "waiting"
+                assert "Bob" in msg["roomState"]["players"]

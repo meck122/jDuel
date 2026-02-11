@@ -122,3 +122,143 @@ class TestOrchestrator:
         await orchestrator.handle_disconnect(room_id, "Alice")
 
         assert room_manager.get_room(room_id) is None
+
+    # --- Play Again tests ---
+
+    async def _setup_finished_game(self, orchestrator, room_manager):
+        """Helper: create room, register host, connect, play to FINISHED."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        mock_ws = MagicMock()
+        mock_ws.send_json = MagicMock(return_value=None)
+        await orchestrator.handle_connect(room.room_id, "Alice", mock_ws)
+
+        # Start and complete the game
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+        for i in range(len(room.questions)):
+            await orchestrator.handle_answer(
+                room.room_id, "Alice", room.questions[i].answer
+            )
+            # Results timer callback — advance to next question or finish
+            await orchestrator._on_results_timeout(room.room_id)
+
+        assert room.status == GameStatus.FINISHED
+        return room
+
+    async def test_handle_play_again_resets_to_waiting(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Host play again resets room to WAITING with scores at zero."""
+        room = await self._setup_finished_game(orchestrator, room_manager)
+        assert room.scores["Alice"] > 0  # Had points from the game
+
+        await orchestrator.handle_play_again(room.room_id, "Alice")
+
+        assert room.status == GameStatus.WAITING
+        assert room.scores["Alice"] == 0
+        assert room.question_index == 0
+        assert room.questions == []
+
+    async def test_handle_play_again_non_host_rejected(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Non-host cannot trigger play again; status stays FINISHED."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")  # host
+        room_manager.register_player(room.room_id, "Bob")
+        mock_ws_alice = MagicMock()
+        mock_ws_alice.send_json = MagicMock(return_value=None)
+        mock_ws_bob = MagicMock()
+        mock_ws_bob.send_json = MagicMock(return_value=None)
+        await orchestrator.handle_connect(room.room_id, "Alice", mock_ws_alice)
+        await orchestrator.handle_connect(room.room_id, "Bob", mock_ws_bob)
+
+        # Play to finished
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+        for i in range(len(room.questions)):
+            await orchestrator.handle_answer(
+                room.room_id, "Alice", room.questions[i].answer
+            )
+            await orchestrator.handle_answer(room.room_id, "Bob", "wrong")
+            await orchestrator._on_results_timeout(room.room_id)
+
+        assert room.status == GameStatus.FINISHED
+
+        await orchestrator.handle_play_again(room.room_id, "Bob")
+
+        assert room.status == GameStatus.FINISHED  # Unchanged
+
+    async def test_handle_play_again_wrong_state_rejected(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Play again rejected when room is not in FINISHED state."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        mock_ws = MagicMock()
+        mock_ws.send_json = MagicMock(return_value=None)
+        await orchestrator.handle_connect(room.room_id, "Alice", mock_ws)
+
+        # Room is in WAITING state
+        await orchestrator.handle_play_again(room.room_id, "Alice")
+        assert room.status == GameStatus.WAITING  # Unchanged, not reset
+
+    async def test_handle_play_again_nonexistent_room(
+        self, orchestrator: GameOrchestrator
+    ):
+        """Play again on nonexistent room does nothing (no crash)."""
+        await orchestrator.handle_play_again("ZZZZ", "Alice")  # Should not raise
+
+    async def test_handle_play_again_prunes_disconnected_players(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Disconnected players are removed from room during play again."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")  # host
+        room_manager.register_player(room.room_id, "Bob")
+        mock_ws_alice = MagicMock()
+        mock_ws_alice.send_json = MagicMock(return_value=None)
+        mock_ws_bob = MagicMock()
+        mock_ws_bob.send_json = MagicMock(return_value=None)
+        await orchestrator.handle_connect(room.room_id, "Alice", mock_ws_alice)
+        await orchestrator.handle_connect(room.room_id, "Bob", mock_ws_bob)
+
+        # Play to finished
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+        for i in range(len(room.questions)):
+            await orchestrator.handle_answer(
+                room.room_id, "Alice", room.questions[i].answer
+            )
+            await orchestrator.handle_answer(room.room_id, "Bob", "wrong")
+            await orchestrator._on_results_timeout(room.room_id)
+
+        assert room.status == GameStatus.FINISHED
+
+        # Bob disconnects
+        await orchestrator.handle_disconnect(room.room_id, "Bob")
+        assert "Bob" not in room.connections
+        assert "Bob" in room.players  # Still registered
+
+        # Host triggers play again
+        await orchestrator.handle_play_again(room.room_id, "Alice")
+
+        assert room.status == GameStatus.WAITING
+        assert "Bob" not in room.players  # Pruned
+        assert "Bob" not in room.scores  # Pruned
+        assert "Alice" in room.players  # Still here
+        assert room.scores["Alice"] == 0  # Score reset
+
+    async def test_handle_play_again_then_start_game_cycle(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Full cycle: finish game → play again → start new game successfully."""
+        room = await self._setup_finished_game(orchestrator, room_manager)
+
+        # Play again
+        await orchestrator.handle_play_again(room.room_id, "Alice")
+        assert room.status == GameStatus.WAITING
+
+        # Start a new game — should work (questions loaded fresh)
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+        assert room.status == GameStatus.PLAYING
+        assert len(room.questions) > 0
+        assert room.question_index == 0
