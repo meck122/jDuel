@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from app.middleware.rate_limiter import get_ws_message_limiter
 from app.models.websocket_messages import (
     AnswerMessage,
+    PlayAgainMessage,
     ReactionMessage,
     StartGameMessage,
     UpdateConfigMessage,
@@ -109,6 +110,10 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
                     await orchestrator.handle_reaction(
                         room_id, player_id, validated.reactionId
                     )
+
+                elif msg_type == "PLAY_AGAIN":
+                    PlayAgainMessage.model_validate(message)
+                    await orchestrator.handle_play_again(room_id, player_id)
 
                 else:
                     logger.warning(

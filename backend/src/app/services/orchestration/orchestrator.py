@@ -132,6 +132,55 @@ class GameOrchestrator:
         await self._broadcast_room_state(room_id)
         self._start_question_timer(room_id)
 
+    async def handle_play_again(self, room_id: str, player_id: str) -> None:
+        """Handle play again request — reset room to lobby.
+
+        Only the host can trigger this, and only when the game is finished.
+        Cancels the game-over timer, prunes disconnected players, resets
+        game state, and broadcasts the fresh lobby state.
+
+        Args:
+            room_id: The room to reset
+            player_id: The player requesting play again (must be host)
+        """
+        room = self._room_manager.get_room(room_id)
+        if not room:
+            return
+
+        if player_id != room.host_id:
+            logger.warning(
+                f"Non-host play again rejected: room_id={room_id}, player_id={player_id}"
+            )
+            return
+
+        if room.status != GameStatus.FINISHED:
+            logger.warning(
+                f"Play again in wrong state: room_id={room_id}, status={room.status.value}"
+            )
+            return
+
+        # Cancel game-over timer FIRST (prevents room deletion race)
+        self._timer_service.cancel_all_timers_for_room(room_id)
+
+        # Prune disconnected players (connection-layer concern)
+        connected_ids = set(room.connections.keys())
+        room.players = {pid for pid in room.players if pid in connected_ids}
+        room.scores = {
+            pid: score for pid, score in room.scores.items() if pid in connected_ids
+        }
+        room.session_tokens = {
+            pid: token
+            for pid, token in room.session_tokens.items()
+            if pid in connected_ids
+        }
+
+        # Reset game state (pure game-rules concern)
+        self._game_service.reset_game_state(room)
+
+        logger.info(f"Play again: room_id={room_id}, resetting to lobby")
+
+        await self._broadcast_room_state(room_id)
+
     async def handle_answer(self, room_id: str, player_id: str, answer: str) -> None:
         """Handle player answer submission.
 

@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 
 from app.config import MAX_SCORE_PER_QUESTION, QUESTION_TIME_MS
 from app.models import GameStatus, Room
+from app.models.round_state import RoundState
 from app.services.answer import AnswerService
 
 
@@ -142,6 +143,25 @@ class GameService:
         """
         room.status = GameStatus.RESULTS
         room.results_start_time = datetime.now(UTC)
+
+    def reset_game_state(self, room: Room) -> None:
+        """Reset game-related fields to return room to lobby state.
+
+        Resets scores, questions, round state, and timestamps.
+        Does NOT touch connection-layer fields (players, connections, session_tokens)
+        — player pruning is handled by the orchestrator.
+
+        Args:
+            room: The game room to reset
+        """
+        room.status = GameStatus.WAITING
+        room.question_index = 0
+        room.questions = []
+        room.scores = {pid: 0 for pid in room.scores}
+        room.current_round = RoundState()
+        room.finish_time = None
+        room.results_start_time = None
+        room.last_reaction_times = {}
 
     def get_winner(self, room: Room) -> str | None:
         """Get the winner of the game.

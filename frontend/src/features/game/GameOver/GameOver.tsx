@@ -13,7 +13,9 @@ import { sortPlayersByScore } from "../../../utils";
 import styles from "./GameOver.module.css";
 
 export function GameOver() {
-  const { roomState } = useGame();
+  const { roomState, playerId, playAgain } = useGame();
+
+  const isHost = roomState?.hostId === playerId;
 
   const players = roomState?.players ?? {};
   const winner = roomState?.winner ?? "";
@@ -60,6 +62,16 @@ export function GameOver() {
           />
         </div>
       )}
+
+      <div className={styles.playAgainSection}>
+        {isHost ? (
+          <button onClick={playAgain} className={styles.playAgainButton}>
+            Play Again
+          </button>
+        ) : (
+          <p className={styles.waitingText}>Waiting for host to start a new game...</p>
+        )}
+      </div>
 
       <div className={styles.finalScoresSection}>
         <h3 className={styles.finalScoresHeader}>Final Standings</h3>

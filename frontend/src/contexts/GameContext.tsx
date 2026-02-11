@@ -38,6 +38,7 @@ export interface GameContextValue {
   startGame: () => void;
   submitAnswer: (answer: string) => void;
   updateConfig: (config: Partial<RoomConfig>) => void;
+  playAgain: () => void;
 }
 
 // Context must be exported for useGame hook in separate file
@@ -184,6 +185,10 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
     [sendMessage]
   );
 
+  const playAgain = useCallback(() => {
+    sendMessage({ type: "PLAY_AGAIN" });
+  }, [sendMessage]);
+
   const sendReaction = useCallback(
     (reactionId: number) => {
       sendMessage({ type: "REACTION", reactionId });
@@ -211,6 +216,7 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
     startGame,
     submitAnswer,
     updateConfig,
+    playAgain,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

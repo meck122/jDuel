@@ -262,9 +262,10 @@ ws.onmessage = (event) => {
 
 | Message Type    | Purpose                              | Required Fields | When to Send                     |
 | --------------- | ------------------------------------ | --------------- | -------------------------------- |
-| `START_GAME`    | Start the game from lobby            | None            | Lobby phase, any player          |
+| `START_GAME`    | Start the game from lobby            | None            | Lobby phase, host only           |
 | `ANSWER`        | Submit an answer to current question | `answer`        | Playing phase, once per question |
 | `UPDATE_CONFIG` | Update room configuration            | `config`        | Lobby phase, host only           |
+| `PLAY_AGAIN`    | Reset room to lobby after game ends  | None            | Finished phase, host only        |
 
 #### Server → Client Messages
 
@@ -437,6 +438,41 @@ The `config` field in `ROOM_STATE` messages contains:
   - Default: `"enjoyer"`
   - Options: `"enjoyer"`, `"master"`, `"beast"`
   - Determines question pool loaded at game start
+
+---
+
+##### PLAY_AGAIN
+
+Resets the room back to lobby (`waiting`) state after the game finishes. Only the host can send this. Cancels the 60-second auto-close timer, prunes disconnected players, resets all scores to zero, and clears game state.
+
+**Message:**
+
+```json
+{
+  "type": "PLAY_AGAIN"
+}
+```
+
+**Validation:**
+
+- Room must be in `"finished"` status
+- Only the host can trigger this (non-host requests silently ignored)
+- If the game-over timer has already fired and closed the room, the message is silently ignored
+
+**Server Response:**
+
+- Cancels the 60-second game-over timer
+- Removes disconnected players from the room
+- Resets all scores to 0, clears questions and round state
+- Sets room status back to `"waiting"`
+- Broadcasts `ROOM_STATE` with `status: "waiting"` — all clients automatically return to the Lobby
+- New players can join via the room link after reset
+
+**Example:**
+
+```javascript
+ws.send(JSON.stringify({ type: 'PLAY_AGAIN' }));
+```
 
 ---
 
@@ -1268,48 +1304,47 @@ ws://localhost:8000/ws?roomId=AB3D&playerId=Alice
 ## State Transition Diagram
 
 ```
-┌──────────┐
-│          │
-│  WAITING │ ◄─── Players join via HTTP + WebSocket
-│          │      (ROOM_STATE broadcasts after each join)
-└────┬─────┘
-     │
-     │ START_GAME message from any player
-     │
-     ▼
-┌──────────┐
-│          │
-│ PLAYING  │ ◄─── Display question + 15s timer
-│          │      Players send ANSWER messages
-│          │      (ROOM_STATE updates as answers arrive)
-└────┬─────┘
-     │
-     │ All answered OR timer expires
-     │
-     ▼
-┌──────────┐
-│          │
-│ RESULTS  │ ◄─── Show correct answer + scores (10s timer)
-│          │      (ROOM_STATE with results data)
-└────┬─────┘
-     │
-     │ Timer expires
-     │
-     ├─── More questions? ───YES──► Back to PLAYING (next question)
-     │
-     └─── NO (game complete)
-          │
-          ▼
-     ┌──────────┐
-     │          │
-     │ FINISHED │ ◄─── Display winner + final scores (60s timer)
-     │          │
-     └────┬─────┘
-          │
-          │ Timer expires
-          │
-          ▼
-     ROOM_CLOSED message → All players disconnected → Redirect to home
+             ┌──────────┐
+             │          │
+     ┌──────►│  WAITING │ ◄─── Players join via HTTP + WebSocket
+     │       │          │      (ROOM_STATE broadcasts after each join)
+     │       └────┬─────┘
+     │            │
+     │            │ START_GAME message (host only)
+     │            │
+     │            ▼
+     │       ┌──────────┐
+     │       │          │
+     │       │ PLAYING  │ ◄─── Display question + 15s timer
+     │       │          │      Players send ANSWER messages
+     │       │          │      (ROOM_STATE updates as answers arrive)
+     │       └────┬─────┘
+     │            │
+     │            │ All answered OR timer expires
+     │            │
+     │            ▼
+     │       ┌──────────┐
+     │       │          │
+     │       │ RESULTS  │ ◄─── Show correct answer + scores (10s timer)
+     │       │          │      (ROOM_STATE with results data)
+     │       └────┬─────┘
+     │            │
+     │            │ Timer expires
+     │            │
+     │            ├── More questions? ──YES──► Back to PLAYING (next question)
+     │            │
+     │            └── NO (game complete)
+     │                 │
+     │                 ▼
+     │            ┌──────────┐
+     │            │          │
+     │ PLAY_AGAIN │ FINISHED │ ◄─── Display winner + final scores (60s timer)
+     │  (host)    │          │
+     │            └────┬─────┘
+     └────────────────┤
+                      │ Timer expires (60s)
+                      ▼
+                 ROOM_CLOSED → All players disconnected → Redirect to home
 ```
 
 ---
