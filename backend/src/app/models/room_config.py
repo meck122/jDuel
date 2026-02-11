@@ -13,5 +13,5 @@ class RoomConfig:
     orchestrator validation handle the rest.
     """
 
-    multiple_choice_enabled: bool = False
+    multiple_choice_enabled: bool = True
     difficulty: str = "enjoyer"

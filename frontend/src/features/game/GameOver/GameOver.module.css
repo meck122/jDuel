@@ -21,7 +21,7 @@
   height: 24px;
   top: -30px;
   opacity: 0;
-  animation: confettiFall 3.5s ease-in cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  animation: confettiFall 3.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
 }
 
 .confettiPiece:nth-child(1) {
@@ -289,6 +289,11 @@
    MOBILE
    ============================================ */
 @media (max-width: 600px) {
+  .gameSection {
+    padding: var(--spacing-md); /* Add container padding */
+    padding-bottom: var(--reactions-bar-height);
+  }
+
   .gameOverHeader {
     font-size: var(--font-size-4xl);
     letter-spacing: 2px;
@@ -313,6 +318,13 @@
 
   .winnerName {
     font-size: var(--font-size-2xl);
+  }
+
+  .finalScoresSection {
+    margin-top: var(--spacing-lg); /* Reduce from 3xl */
+    max-height: 40vh;
+    max-height: 40dvh;
+    overflow-y: auto;
   }
 
   .finalScoresHeader {
@@ -340,9 +352,5 @@
 
   .score {
     font-size: var(--font-size-lg);
-  }
-
-  .finalScoresSection {
-    margin-top: var(--spacing-2xl);
   }
 }

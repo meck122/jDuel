@@ -8,9 +8,10 @@
  * - Answer input form
  */
 
-import { FormEvent, useState, useRef } from "react";
+import { FormEvent, useState, useRef, useEffect } from "react";
 import { useGame } from "../../../contexts";
 import { Timer } from "../../../components";
+import { QuestionHeader } from "./QuestionHeader";
 import styles from "./Question.module.css";
 
 export function Question() {
@@ -38,24 +39,31 @@ export function Question() {
     }
   };
 
+  // Lock scroll on mobile while question is visible
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
+
   if (!currentQuestion) {
     return null;
   }
 
   return (
     <div className={styles.gameSection}>
-      <div className={styles.questionHeader}>
-        <span className={styles.questionNumber}>Question {questionIndex + 1}</span>
-        <span className={styles.questionTotal}>of {roomState?.totalQuestions ?? 10}</span>
-      </div>
-      <div className={styles.questionCategory}>
-        <span className={styles.categoryLabel}>Category:</span>
-        <span className={styles.categoryValue}>{currentQuestion.category}</span>
-      </div>
+      <QuestionHeader
+        questionIndex={questionIndex}
+        totalQuestions={roomState?.totalQuestions ?? 10}
+        category={currentQuestion.category}
+      />
+      <Timer timeRemainingMs={timeRemainingMs} resetKey={questionIndex} />
       <div className={styles.questionBox}>
         <p className={styles.question}>{currentQuestion.text}</p>
       </div>
-      <Timer timeRemainingMs={timeRemainingMs} resetKey={questionIndex} />
 
       {!hasSubmitted ? (
         currentQuestion.options ? (
