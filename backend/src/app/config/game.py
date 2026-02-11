@@ -17,7 +17,7 @@ DIFFICULTY_RANGES: dict[str, tuple[int, int]] = {
 
 # Rate limiting (max requests, window in seconds)
 RATE_LIMIT_ROOM_CREATE = (5, 60)  # 5 rooms per minute per IP
-RATE_LIMIT_ROOM_JOIN = (10, 60)  # 10 joins per minute per IP
+RATE_LIMIT_ROOM_JOIN = (20, 60)  # 20 joins per minute per IP
 RATE_LIMIT_WS_MESSAGES = (30, 60)  # 30 messages per minute per connection
 
 # Input validation

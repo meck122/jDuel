@@ -2,9 +2,9 @@
  * useRetry - Generic retry hook with exponential backoff and rate limit handling
  *
  * Provides automatic retry logic with:
- * - Exponential backoff (500ms → 1s → 2s → 4s → 8s max)
+ * - Exponential backoff (500ms -> 1s -> 2s -> 4s -> 8s max)
  * - Jitter (±20%) to prevent thundering herd
- * - Rate limit override (respects retryAfter from ApiError)
+ * - Rate limit override (respects retryAfter from ApiError, used as floor)
  * - Real-time countdown timer for UI
  * - Manual retry/cancel controls
  */
@@ -136,20 +136,19 @@ export function useRetry(
         if (attemptNumber < opts.maxRetries) {
           setIsRetrying(true);
 
-          // Calculate delay (override with rate limit if present)
+          // Calculate delay: use max(serverRetryAfter, backoff) to prevent thundering herd
+          const backoffDelay = calculateDelay(
+            attemptNumber,
+            opts.initialDelay,
+            opts.maxDelay,
+            opts.exponential,
+            opts.jitter
+          );
           let delay: number;
           if (error instanceof ApiError && error.retryAfter) {
-            // Rate limit override - use retry_after from server
-            delay = error.retryAfter * 1000;
+            delay = Math.max(error.retryAfter * 1000, backoffDelay);
           } else {
-            // Exponential backoff with jitter
-            delay = calculateDelay(
-              attemptNumber,
-              opts.initialDelay,
-              opts.maxDelay,
-              opts.exponential,
-              opts.jitter
-            );
+            delay = backoffDelay;
           }
 
           // Set up countdown
