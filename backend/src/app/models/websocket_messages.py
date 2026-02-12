@@ -34,10 +34,16 @@ class ReactionMessage(BaseModel):
     reactionId: int
 
 
+class PlayAgainMessage(BaseModel):
+    """Message to reset room to lobby (host only, finished state only)."""
+
+    type: Literal["PLAY_AGAIN"]
+
+
 class WebSocketClientMessage(BaseModel):
     """Union type for all client-to-server WebSocket messages.
 
     Use this for initial type detection, then validate with specific model.
     """
 
-    type: Literal["START_GAME", "ANSWER", "UPDATE_CONFIG", "REACTION"]
+    type: Literal["START_GAME", "ANSWER", "UPDATE_CONFIG", "REACTION", "PLAY_AGAIN"]

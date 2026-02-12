@@ -188,3 +188,48 @@ class TestGameService:
         game_service.start_game(room)
 
         assert room.current_round.shuffled_options is None
+
+    def test_reset_game_state_resets_all_fields(self, game_service, sample_questions):
+        """reset_game_state resets all game fields to lobby state."""
+        room = Room("TEST1", sample_questions)
+        room.players = {"player1", "player2"}
+        room.scores = {"player1": 500, "player2": 1000}
+
+        # Simulate a completed game
+        game_service.start_game(room)
+        game_service.process_answer(room, "player1", "4")
+        game_service.show_results(room)
+        for _ in range(len(sample_questions)):
+            game_service.advance_question(room)
+
+        assert room.status == GameStatus.FINISHED
+        assert room.finish_time is not None
+
+        game_service.reset_game_state(room)
+
+        assert room.status == GameStatus.WAITING
+        assert room.question_index == 0
+        assert room.questions == []
+        assert room.scores == {"player1": 0, "player2": 0}
+        assert room.current_round.answered_players == set()
+        assert room.current_round.player_answers == {}
+        assert room.current_round.correct_players == set()
+        assert room.current_round.question_points == {}
+        assert room.current_round.shuffled_options is None
+        assert room.finish_time is None
+        assert room.results_start_time is None
+        assert room.last_reaction_times == {}
+
+    def test_reset_game_state_preserves_config(self, game_service, sample_questions):
+        """reset_game_state preserves room config."""
+        room = Room("TEST1", sample_questions)
+        room.players = {"player1"}
+        room.scores = {"player1": 0}
+        room.config.difficulty = "beast"
+        room.config.multiple_choice_enabled = True
+
+        game_service.start_game(room)
+        game_service.reset_game_state(room)
+
+        assert room.config.difficulty == "beast"
+        assert room.config.multiple_choice_enabled is True

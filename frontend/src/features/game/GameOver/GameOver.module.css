@@ -209,6 +209,31 @@
   letter-spacing: 1px;
 }
 
+.playAgainSection {
+  margin: var(--spacing-xl) 0;
+  text-align: center;
+}
+
+.playAgainButton {
+  padding: var(--spacing-md) var(--spacing-3xl);
+  font-size: var(--font-size-xl);
+  background: var(--gradient-gold);
+  color: rgb(14, 12, 22);
+  letter-spacing: 3px;
+}
+
+.playAgainButton:hover {
+  box-shadow: var(--shadow-glow-gold);
+  filter: brightness(1.05);
+}
+
+.waitingText {
+  font-family: var(--font-display);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
+  letter-spacing: 1px;
+}
+
 .finalScoresSection {
   margin-top: var(--spacing-3xl);
 }
@@ -318,6 +343,16 @@
 
   .winnerName {
     font-size: var(--font-size-2xl);
+  }
+
+  .playAgainButton {
+    width: 100%;
+    padding: 16px var(--spacing-xl);
+    font-size: var(--font-size-lg);
+  }
+
+  .waitingText {
+    font-size: var(--font-size-sm);
   }
 
   .finalScoresSection {
