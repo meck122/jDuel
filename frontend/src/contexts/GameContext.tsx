@@ -126,6 +126,7 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
           case "ROOM_CLOSED":
             clearToken(newRoomId, newPlayerId);
             onRoomClosedRef.current?.();
+            window.location.replace("/");
             break;
           case "ERROR":
             setConnectionError(data.message);
