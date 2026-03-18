@@ -1,0 +1,19 @@
+[Unit]
+Description=jDuel FastAPI Backend
+After=network.target
+
+[Service]
+# Adjust User to match your server's username:
+#   Oracle Cloud Ubuntu -> ubuntu
+#   Oracle Cloud Oracle Linux -> opc
+User=ubuntu
+WorkingDirectory=/home/ubuntu/jDuel/backend
+ExecStart=/home/ubuntu/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+Environment=PYTHONUNBUFFERED=1
+# Uncomment to disable CUDA (saves ~1GB RAM on small instances):
+# Environment=CUDA_VISIBLE_DEVICES=
+
+[Install]
+WantedBy=multi-user.target
