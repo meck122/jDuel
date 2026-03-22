@@ -411,7 +411,7 @@ Manual testing workflow (automated tests not currently implemented):
 
 ## Deployment
 
-See [docs/Deployment.md](docs/Deployment.md) for production deployment instructions including:
+See [deploy/README.md](deploy/README.md) for production deployment instructions including:
 
 - Nginx reverse proxy setup
 - SystemD service configuration

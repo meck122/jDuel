@@ -1,6 +1,7 @@
-# jDuel — Oracle VPS Migration
+# jDuel — Deployment
 
-Config files and setup script for migrating jDuel from AWS EC2 to Oracle VPS.
+Production deployment config for Oracle Cloud (Ubuntu). Run `setup.sh` once on a fresh
+instance; use `deploy.sh` from the repo root for all subsequent updates.
 
 ## Files
 
@@ -37,7 +38,7 @@ Before running setup, do these in the Oracle Cloud Console:
 ```bash
 # Clone the repo
 git clone <repo-url>
-cd jDuel
+cd dev/jDuel
 
 # Run provisioning (defaults: --domain jduel.com --user ubuntu)
 bash deploy/setup.sh --domain yourdomain.com --user ubuntu
@@ -48,17 +49,12 @@ That's it. The script:
 2. Installs `uv` if missing; upgrades Node to 22 if < 18
 3. Opens ports 80 and 443 in Oracle's iptables
 4. Builds the React frontend and deploys to `/var/www/jduel-frontend/dist`
-5. Runs `uv sync`, downloads the spaCy model, imports questions
+5. Runs `uv sync` and downloads the spaCy NLP model
 6. Installs and enables `jduel-backend.service` (patched with your username/paths)
 7. Drops the nginx config, removes the default site, reloads nginx
 8. Optionally runs `certbot --nginx` for HTTPS
 
 ## Manual Setup (step by step)
-
-If you prefer to configure each piece yourself, see
-[`docs/DeploymentGuide.md`](../docs/DeploymentGuide.md) — it has the full
-narrative walk-through. The files in this `deploy/` folder are the drop-in
-ready versions of the configs described there.
 
 ### systemd service
 
@@ -93,10 +89,10 @@ The frontend `config.ts` derives API/WebSocket URLs dynamically from
 
 ## Deploying Updates
 
-After initial setup, use the existing deploy script for all future updates:
+After initial setup, use the deploy script for all future updates:
 
 ```bash
-cd ~/jDuel && git pull && ./deploy.sh
+cd ~/dev/jDuel && git pull && ./deploy.sh
 ```
 
 ## Troubleshooting

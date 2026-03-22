@@ -100,7 +100,7 @@ uv sync
 # Install spaCy language model (needed for answer verification NLP)
 uv run python -m spacy download en_core_web_sm
 
-#--------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 # 6. Install systemd service
 # --------------------------------------------------------------------------
 echo ""
