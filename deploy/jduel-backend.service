@@ -12,8 +12,8 @@ ExecStart=/home/ubuntu/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 -
 Restart=always
 RestartSec=3
 Environment=PYTHONUNBUFFERED=1
-# Uncomment to disable CUDA (saves ~1GB RAM on small instances):
-# Environment=CUDA_VISIBLE_DEVICES=
+# Disable CUDA on CPU-only hosts (saves ~1GB RAM on small instances like Oracle 4GB):
+Environment=CUDA_VISIBLE_DEVICES=
 
 [Install]
 WantedBy=multi-user.target

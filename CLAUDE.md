@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
@@ -52,6 +52,15 @@ uvx pre-commit run --all-files               # Run all hooks (lint, format, test
 
 ```bash
 ./deploy.sh          # Full stack deploy (builds frontend, syncs backend, restarts services)
+
+# Initial provisioning on fresh Oracle VPS (run once):
+bash deploy/setup.sh --domain yourdomain.com --user ubuntu
+
+# Service management
+sudo systemctl status jduel-backend   # Check backend service
+journalctl -u jduel-backend -f        # Live backend logs
+sudo systemctl reload nginx           # Reload nginx after config changes
+curl http://127.0.0.1:8000/health     # Backend health check
 ```
 
 ## Architecture
@@ -98,9 +107,32 @@ See [docs/EventProtocol.md](docs/EventProtocol.md) for the complete HTTP + WebSo
 
 - No database - all state is in-memory
 - Room codes are 4-character alphanumeric
-- Production uses systemd + nginx (no Docker)
+- Production uses systemd + nginx (no Docker); backend runs on `127.0.0.1:8000`, nginx proxies `/api/` and `/ws`
+- Frontend static files served from `/var/www/jduel-frontend/dist`
 - Backend linting configured with ruff in `pyproject.toml`
 - Reactions, question count, and config are server-driven (sent in RoomStateData)
+- NLP answer verification uses spaCy + sentence-transformers; set `CUDA_VISIBLE_DEVICES=` in systemd service to prevent GPU memory allocation on CPU-only hosts (important on 4 GB VPS)
+- CORS origins are hardcoded in `backend/src/app/config/environment.py` — must add new domain before deploying to a new host
+
+## Oracle VPS Deployment (Current Production)
+
+This instance is an Oracle Cloud aarch64 VM (4 GB RAM, ~50 GB disk) replacing an AWS EC2 instance.
+
+**Oracle-specific quirk:** Oracle Cloud adds restrictive `iptables` rules that block inbound traffic even when the Security List is open. Ports 80/443 must be opened in both the Oracle Security List console **and** iptables:
+
+```bash
+sudo iptables -I INPUT 5 -m state --state NEW -p tcp --dport 80 -j ACCEPT
+sudo iptables -I INPUT 5 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+sudo netfilter-persistent save
+```
+
+**Key file locations in production:**
+- Systemd service: `/etc/systemd/system/jduel-backend.service`
+- Nginx config: `/etc/nginx/sites-available/jduel`
+- Frontend static files: `/var/www/jduel-frontend/dist`
+- Backend working dir: `/home/ubuntu/dev/jDuel/backend`
+
+**Initial provisioning:** `deploy/setup.sh` handles everything from apt installs through certbot. See `deploy/README.md` for Oracle Cloud prerequisites (Security List, DNS A record) that must be done in the console first.
 
 ## Skills Reference
 
@@ -130,5 +162,6 @@ See [docs/EventProtocol.md](docs/EventProtocol.md) for the complete HTTP + WebSo
 
 - [Getting Started](docs/GettingStarted.md) - Setup and onboarding
 - [Event Protocol](docs/EventProtocol.md) - Complete HTTP + WebSocket API reference
-- [Deployment Guide](docs/DeploymentGuide.md) - Production deployment (EC2, Nginx, SystemD, HTTPS)
+- [Deployment Guide](docs/DeploymentGuide.md) - Production deployment (Nginx, SystemD, HTTPS)
+- [Oracle VPS Migration](deploy/README.md) - Oracle Cloud setup, iptables quirk, troubleshooting
 - [Development](docs/Development.md) - Local dev environment and workflows

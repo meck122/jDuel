@@ -1,7 +1,7 @@
 server {
     listen 80;
     # Replace with your Oracle VPS domain or IP
-    server_name jduel.xyz www.jduel.xyz;
+    server_name jduel.com www.jduel.com;
 
     # Frontend static files
     root /var/www/jduel-frontend/dist;
@@ -55,4 +55,4 @@ server {
     }
 }
 # Note: Certbot will append an HTTPS server block here when you run:
-#   sudo certbot --nginx -d jduel.xyz -d www.jduel.xyz
+#   sudo certbot --nginx -d jduel.com -d www.jduel.com

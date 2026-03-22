@@ -26,8 +26,9 @@ echo -e "${BLUE}📚 Installing backend dependencies...${NC}"
 cd "$SCRIPT_DIR/backend"
 uv sync
 
-# Step 4: Copy frontend files
+# Step 4: Copy frontend files (replace entirely to avoid stale hashed bundles)
 echo -e "${BLUE}📂 Deploying frontend files...${NC}"
+sudo rm -rf /var/www/jduel-frontend/dist
 sudo cp -r "$SCRIPT_DIR/frontend/dist" /var/www/jduel-frontend/
 sudo chown -R www-data:www-data /var/www/jduel-frontend
 sudo chmod -R 755 /var/www/jduel-frontend

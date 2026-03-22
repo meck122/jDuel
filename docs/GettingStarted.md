@@ -5,7 +5,7 @@ Welcome to jDuel! This guide will help you get up and running.
 ## Quick Links
 
 - **[Development](Development.md)** - Set up your local development environment
-- **[Deployment Guide](DeploymentGuide.md)** - Deploy to production (EC2, Nginx, SystemD, HTTPS)
+- **[Deployment Guide](../deploy/README.md)** - Deploy to production (Oracle VPS, Nginx, SystemD, HTTPS)
 - **[Event Protocol](EventProtocol.md)** - Complete HTTP + WebSocket API reference
 - **[Frontend Architecture](FrontendFlow.md)** - React component architecture
 
@@ -19,8 +19,8 @@ Welcome to jDuel! This guide will help you get up and running.
 
 ### For Production
 
-- Ubuntu server (EC2 or other)
-- Domain name (optional but recommended)
+- Ubuntu server (Oracle Cloud or similar)
+- Domain name pointed at the server's public IP
 - Basic knowledge of Linux system administration
 
 ## Project Structure
@@ -45,4 +45,4 @@ jDuel/
 ## Next Steps
 
 - **New to the project?** Start with [Development](Development.md)
-- **Ready to deploy?** See [Deployment Guide](DeploymentGuide.md)
+- **Ready to deploy?** See [Deployment Guide](../deploy/README.md)

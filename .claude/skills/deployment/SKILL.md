@@ -94,7 +94,7 @@ Config file: `/etc/nginx/sites-available/jduel`
 curl http://127.0.0.1:8000/health
 
 # From outside (through Nginx)
-curl https://jduel.xyz/health
+curl https://jduel.com/health
 ```
 
 The `/health` endpoint returns 200 when the FastAPI server is running. It does not verify NLP model loading — the app serves requests immediately, and model loading happens in the background during lifespan startup.

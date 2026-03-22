@@ -1,21 +1,22 @@
 #!/bin/bash
 # jDuel Oracle VPS Initial Setup Script
 # Run once on a fresh Ubuntu instance to provision everything from scratch.
-# Usage: bash deploy/setup.sh [--domain yourdomain.com] [--user ubuntu]
+# Usage: bash deploy/setup.sh [--domain yourdomain.com] [--user ubuntu] [--repo-dir /path/to/jDuel]
 set -e
 
 # --------------------------------------------------------------------------
 # Config (override with flags or edit these defaults)
 # --------------------------------------------------------------------------
-DOMAIN="jduel.xyz"
+DOMAIN="jduel.com"
 SERVER_USER="ubuntu"
-REPO_DIR="/home/${SERVER_USER}/jDuel"
+REPO_DIR="/home/${SERVER_USER}/dev/jDuel"
 DEPLOY_DIR="${REPO_DIR}/deploy"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --domain) DOMAIN="$2"; shift 2 ;;
-        --user)   SERVER_USER="$2"; REPO_DIR="/home/${SERVER_USER}/jDuel"; DEPLOY_DIR="${REPO_DIR}/deploy"; shift 2 ;;
+        --domain)   DOMAIN="$2"; shift 2 ;;
+        --user)     SERVER_USER="$2"; REPO_DIR="/home/${SERVER_USER}/dev/jDuel"; DEPLOY_DIR="${REPO_DIR}/deploy"; shift 2 ;;
+        --repo-dir) REPO_DIR="$2"; DEPLOY_DIR="${REPO_DIR}/deploy"; shift 2 ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
@@ -36,7 +37,9 @@ sudo apt install -y python3-pip nginx npm git certbot python3-certbot-nginx ipta
 # Install uv package manager
 if ! command -v uv &> /dev/null; then
     curl -LsSf https://astral.sh/uv/install.sh | sh
-    source "$HOME/.cargo/env"
+    # uv installs to ~/.local/bin; source cargo env only if it exists
+    [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+    export PATH="$HOME/.local/bin:$PATH"
 fi
 
 # Install Node via nvm if npm version is too old (need Node 18+)
@@ -57,12 +60,13 @@ fi
 # --------------------------------------------------------------------------
 echo ""
 echo "==> [2/8] Opening firewall ports (Oracle Cloud iptables)..."
-# Check if rules already exist before adding
+# Insert rules just before the REJECT rule (Oracle default has REJECT at line 5).
+# Using position 5 ensures our ACCEPT rules are evaluated before the REJECT.
 if ! sudo iptables -C INPUT -m state --state NEW -p tcp --dport 80 -j ACCEPT 2>/dev/null; then
-    sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
+    sudo iptables -I INPUT 5 -m state --state NEW -p tcp --dport 80 -j ACCEPT
 fi
 if ! sudo iptables -C INPUT -m state --state NEW -p tcp --dport 443 -j ACCEPT 2>/dev/null; then
-    sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+    sudo iptables -I INPUT 5 -m state --state NEW -p tcp --dport 443 -j ACCEPT
 fi
 sudo netfilter-persistent save
 
@@ -96,10 +100,7 @@ uv sync
 # Install spaCy language model (needed for answer verification NLP)
 uv run python -m spacy download en_core_web_sm
 
-# Import questions into backend
-uv run python src/scripts/import_questions.py
-
-# --------------------------------------------------------------------------
+#--------------------------------------------------------------------------
 # 6. Install systemd service
 # --------------------------------------------------------------------------
 echo ""
@@ -107,7 +108,7 @@ echo "==> [6/8] Installing systemd service..."
 # Patch User= and WorkingDirectory= to match this machine
 SERVICE_FILE="${DEPLOY_DIR}/jduel-backend.service"
 TEMP_SERVICE="/tmp/jduel-backend.service"
-sed "s|^User=.*|User=${SERVER_USER}|; s|^WorkingDirectory=.*|WorkingDirectory=/home/${SERVER_USER}/jDuel/backend|; s|^ExecStart=.*|ExecStart=/home/${SERVER_USER}/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 --port 8000|" \
+sed "s|^User=.*|User=${SERVER_USER}|; s|^WorkingDirectory=.*|WorkingDirectory=${REPO_DIR}/backend|; s|^ExecStart=.*|ExecStart=/home/${SERVER_USER}/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 --port 8000|" \
     "${SERVICE_FILE}" > "${TEMP_SERVICE}"
 sudo cp "${TEMP_SERVICE}" /etc/systemd/system/jduel-backend.service
 sudo systemctl daemon-reload
@@ -122,7 +123,7 @@ echo "==> [7/8] Configuring nginx..."
 NGINX_CONF="${DEPLOY_DIR}/nginx/jduel"
 TEMP_NGINX="/tmp/jduel-nginx"
 # Replace placeholder domain with the actual domain
-sed "s|jduel.xyz www.jduel.xyz|${DOMAIN} www.${DOMAIN}|" \
+sed "s|jduel.com www.jduel.com|${DOMAIN} www.${DOMAIN}|" \
     "${NGINX_CONF}" > "${TEMP_NGINX}"
 sudo cp "${TEMP_NGINX}" /etc/nginx/sites-available/jduel
 sudo ln -sf /etc/nginx/sites-available/jduel /etc/nginx/sites-enabled/jduel

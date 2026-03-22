@@ -1,6 +1,6 @@
 # jDuel
 
-A real-time multiplayer trivia game built with React and FastAPI featuring AI-powered answer verification at https://jduel.xyz/
+A real-time multiplayer trivia game built with React and FastAPI featuring AI-powered answer verification at https://jduel.com/
 
 ## Project Overview
 

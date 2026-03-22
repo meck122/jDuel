@@ -27,8 +27,8 @@ Before running setup, do these in the Oracle Cloud Console:
 > `netfilter-persistent save`. If you skip `setup.sh` and configure manually, run:
 >
 > ```bash
-> sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
-> sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+> sudo iptables -I INPUT 5 -m state --state NEW -p tcp --dport 80 -j ACCEPT
+> sudo iptables -I INPUT 5 -m state --state NEW -p tcp --dport 443 -j ACCEPT
 > sudo netfilter-persistent save
 > ```
 
@@ -39,7 +39,7 @@ Before running setup, do these in the Oracle Cloud Console:
 git clone <repo-url>
 cd jDuel
 
-# Run provisioning (defaults: --domain jduel.xyz --user ubuntu)
+# Run provisioning (defaults: --domain jduel.com --user ubuntu)
 bash deploy/setup.sh --domain yourdomain.com --user ubuntu
 ```
 
@@ -74,7 +74,7 @@ sudo systemctl enable --now jduel-backend
 ### Nginx
 
 ```bash
-# Edit server_name if your domain differs from jduel.xyz:
+# Edit server_name if your domain differs from jduel.com:
 nano deploy/nginx/jduel
 
 sudo cp deploy/nginx/jduel /etc/nginx/sites-available/jduel
