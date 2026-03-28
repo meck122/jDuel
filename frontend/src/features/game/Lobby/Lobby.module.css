@@ -180,6 +180,15 @@
   filter: brightness(1.05);
 }
 
+/* Desktop: settings in side panel, hidden inline */
+.settingsInline {
+  display: none;
+}
+
+.settingsSide {
+  display: block;
+}
+
 @media (max-width: 768px) {
   .lobbyWrapper {
     flex-direction: column;
@@ -196,6 +205,18 @@
   .startButton {
     padding: var(--spacing-md) var(--spacing-xl);
     font-size: var(--font-size-lg);
+  }
+
+  /* Mobile: settings inline inside card, hide side panel */
+  .settingsInline {
+    display: block;
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 2px solid var(--color-border-default);
+  }
+
+  .settingsSide {
+    display: none;
   }
 }
 

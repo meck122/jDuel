@@ -24,5 +24,10 @@
 @media (max-width: 768px) {
   .container {
     width: 100%;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    gap: var(--spacing-md);
   }
 }

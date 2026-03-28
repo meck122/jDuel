@@ -105,7 +105,14 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
       ws.onmessage = (event) => {
         // Only process messages from the active WebSocket
         if (wsRef.current !== ws) return;
-        const data: WebSocketMessage = JSON.parse(event.data);
+
+        let data: WebSocketMessage;
+        try {
+          data = JSON.parse(event.data);
+        } catch {
+          console.error("Failed to parse WebSocket message:", event.data);
+          return;
+        }
 
         switch (data.type) {
           case "ROOM_STATE":

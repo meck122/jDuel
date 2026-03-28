@@ -168,17 +168,20 @@
     position: fixed;
     inset: 0;
     margin: 0;
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     z-index: 1;
     background: var(--color-bg-primary);
   }
 
+  .questionHeader {
+    margin-bottom: var(--spacing-sm);
+  }
+
   .questionBox {
-    margin: var(--spacing-sm) 0 var(--spacing-md) 0;
+    margin: var(--spacing-xs) 0 var(--spacing-sm) 0;
     flex-shrink: 0;
     max-width: 340px;
     margin-left: auto;
@@ -198,18 +201,19 @@
   .optionsGrid {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
     max-width: 100%;
     flex: 1;
-    min-height: 0; /* Allows flex item to shrink below content size */
-    justify-content: flex-start; /* Prioritize showing top answers */
+    min-height: 0;
+    justify-content: center;
     align-items: stretch;
-    overflow-y: auto; /* Fallback if extreme edge case */
+    margin-top: var(--spacing-sm);
   }
 
   .optionButton {
+    flex: 1;
     padding: var(--spacing-md) var(--spacing-lg);
-    min-height: 56px;
+    min-height: 48px;
   }
 
   .optionLetter {

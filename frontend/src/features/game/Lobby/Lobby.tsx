@@ -83,9 +83,17 @@ export function Lobby() {
             </button>
           )}
         </div>
+
+        {/* Settings merged into lobby card on mobile */}
+        <div className={styles.settingsInline}>
+          <GameSettings />
+        </div>
       </div>
 
-      <GameSettings />
+      {/* Settings as separate panel on desktop */}
+      <div className={styles.settingsSide}>
+        <GameSettings />
+      </div>
     </div>
   );
 }

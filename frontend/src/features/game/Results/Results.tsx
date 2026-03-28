@@ -9,7 +9,7 @@
  */
 
 import { useGame } from "../../../contexts";
-import { LinearTimer, PlayerName } from "../../../components";
+import { Timer, PlayerName } from "../../../components";
 import { sortPlayersByScore } from "../../../utils";
 import styles from "./Results.module.css";
 
@@ -83,12 +83,8 @@ export function Results() {
 
       {/* 4. Timer (least important - just waiting) */}
       <div className={styles.timerSection}>
-        <LinearTimer
-          timeRemainingMs={timeRemainingMs}
-          resetKey={correctAnswer}
-          variant="results"
-          label="Next question in"
-        />
+        <p className={styles.nextQuestionText}>Next question in</p>
+        <Timer timeRemainingMs={timeRemainingMs} resetKey={correctAnswer} variant="results" />
       </div>
     </div>
   );
