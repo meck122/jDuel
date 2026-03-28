@@ -1,5 +1,6 @@
 """Game logic service for handling game rules and scoring."""
 
+import asyncio
 from datetime import UTC, datetime
 
 from app.config import MAX_SCORE_PER_QUESTION, QUESTION_TIME_MS
@@ -32,13 +33,21 @@ class GameService:
             return 0
         return MAX_SCORE_PER_QUESTION // (2**correct_answer_count)
 
-    def process_answer(self, room: Room, player_id: str, answer: str) -> bool:
+    async def process_answer(
+        self,
+        room: Room,
+        player_id: str,
+        answer: str,
+        answer_time: datetime | None = None,
+    ) -> bool:
         """Process a player's answer and update their score.
 
         Args:
             room: The game room
             player_id: The player submitting the answer
             answer: The submitted answer
+            answer_time: When the answer was received (before lock acquisition),
+                used for fair score timing. Falls back to now if not provided.
 
         Returns:
             True if answer is correct, False otherwise
@@ -59,13 +68,17 @@ class GameService:
         if room.config.multiple_choice_enabled:
             correct = answer == current_question.answer
         else:
-            correct = self.answer_service.is_correct(answer, current_question.answer)
+            # Offload blocking NLP to thread pool so the event loop stays free
+            correct = await asyncio.to_thread(
+                self.answer_service.is_correct, answer, current_question.answer
+            )
 
         if correct:
             room.correct_players.add(player_id)
-            # Calculate time on server side for security
+            # Use pre-lock timestamp if provided for fair scoring
+            ref_time = answer_time or datetime.now(UTC)
             elapsed_ms = int(
-                (datetime.now(UTC) - room.question_start_time).total_seconds() * 1000
+                (ref_time - room.question_start_time).total_seconds() * 1000
             )
 
             # Validate time is within bounds
@@ -157,7 +170,7 @@ class GameService:
         room.status = GameStatus.WAITING
         room.question_index = 0
         room.questions = []
-        room.scores = {pid: 0 for pid in room.scores}
+        room.scores = dict.fromkeys(room.scores, 0)
         room.current_round = RoundState()
         room.finish_time = None
         room.results_start_time = None

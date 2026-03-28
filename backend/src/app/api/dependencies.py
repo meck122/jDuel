@@ -26,7 +26,11 @@ def get_services() -> ServiceContainer:
 
 
 def get_client_ip(request: Request) -> str:
-    """Extract client IP from request, handling proxies.
+    """Extract client IP from request.
+
+    ProxyHeadersMiddleware (configured in main.py) resolves
+    X-Forwarded-For from trusted proxies into request.client.host,
+    so we never need to parse the header manually.
 
     Args:
         request: The FastAPI request object
@@ -34,12 +38,6 @@ def get_client_ip(request: Request) -> str:
     Returns:
         Client IP address
     """
-    # Check X-Forwarded-For header (set by nginx/proxy)
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        # Take the first IP (original client)
-        return forwarded.split(",")[0].strip()
-    # Fall back to direct connection IP
     return request.client.host if request.client else "unknown"
 
 

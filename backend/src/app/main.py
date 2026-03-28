@@ -1,5 +1,6 @@
 """Main FastAPI application for the trivia game."""
 
+import asyncio
 import contextlib
 import logging
 
@@ -13,6 +14,26 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
+async def _periodic_rate_limit_cleanup(interval_seconds: int = 300) -> None:
+    """Periodically prune stale rate limiter entries to prevent memory growth."""
+    from app.middleware.rate_limiter import (
+        get_room_create_limiter,
+        get_room_join_limiter,
+        get_ws_message_limiter,
+    )
+
+    while True:
+        await asyncio.sleep(interval_seconds)
+        for limiter in (
+            get_room_create_limiter(),
+            get_room_join_limiter(),
+            get_ws_message_limiter(),
+        ):
+            removed = limiter.cleanup_old_entries()
+            if removed:
+                logger.debug(f"Rate limiter cleanup: removed {removed} stale entries")
+
+
 @contextlib.asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Manage application lifespan events."""
@@ -21,18 +42,26 @@ async def lifespan(_app: FastAPI):
     answer_service = load_answer_service()
     init_services(answer_service)
 
+    cleanup_task = asyncio.create_task(_periodic_rate_limit_cleanup())
+
     yield
 
+    cleanup_task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await cleanup_task
     logger.info("Application shutdown")
 
 
 def create_app(lifespan_override=None) -> FastAPI:
     """App factory. Accepts optional lifespan override for testing."""
+    from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+
     _app = FastAPI(
         title="jDuel API",
         version="1.0.0",
         lifespan=lifespan_override or lifespan,
     )
+    _app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["127.0.0.1"])
     _app.add_middleware(
         CORSMiddleware,
         allow_origins=CORS_ORIGINS,

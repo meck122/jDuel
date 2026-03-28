@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.api.dependencies import RateLimitRoomCreate, RateLimitRoomJoin, Services
 from app.config import ROOM_ID_PATTERN
+from app.services.core.room_repository import RoomFull, RoomLimitExceeded
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,8 @@ class ErrorResponse(BaseModel):
         "GAME_STARTED",
         "VALIDATION_ERROR",
         "INVALID_SESSION",
+        "ROOM_FULL",
+        "SERVER_FULL",
     ]
 
 
@@ -112,7 +115,16 @@ def create_room(
     Returns:
         CreateRoomResponse: The created room's ID, status, and player count
     """
-    room = services.room_manager.create_room()
+    try:
+        room = services.room_manager.create_room()
+    except RoomLimitExceeded as e:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "Server at capacity. Try again later.",
+                "code": "SERVER_FULL",
+            },
+        ) from e
 
     logger.info(f"Room created via HTTP: room_id={room.room_id}")
 
@@ -225,7 +237,13 @@ def join_room(
     session_token = secrets.token_urlsafe(32)
 
     # Pre-register the player (without WebSocket connection)
-    services.room_manager.register_player(room_id_upper, request.playerId)
+    try:
+        services.room_manager.register_player(room_id_upper, request.playerId)
+    except RoomFull as e:
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "Room is full", "code": "ROOM_FULL"},
+        ) from e
 
     # Store session token
     room.session_tokens[request.playerId] = session_token

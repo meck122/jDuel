@@ -20,6 +20,10 @@ RATE_LIMIT_ROOM_CREATE = (5, 60)  # 5 rooms per minute per IP
 RATE_LIMIT_ROOM_JOIN = (20, 60)  # 20 joins per minute per IP
 RATE_LIMIT_WS_MESSAGES = (30, 60)  # 30 messages per minute per connection
 
+# Capacity limits
+MAX_ROOMS = 100  # global room limit (prevent memory exhaustion on 4GB VPS)
+MAX_PLAYERS_PER_ROOM = 20  # per-room player limit
+
 # Input validation
 MAX_ANSWER_LENGTH = 500
 MAX_PLAYER_NAME_LENGTH = 20

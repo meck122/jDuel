@@ -1,5 +1,6 @@
 """Tests for GameOrchestrator."""
 
+import asyncio
 from unittest.mock import MagicMock
 
 from app.models import GameStatus
@@ -262,3 +263,54 @@ class TestOrchestrator:
         assert room.status == GameStatus.PLAYING
         assert len(room.questions) > 0
         assert room.question_index == 0
+
+    # --- Concurrency / lock tests ---
+
+    async def test_concurrent_answers_no_double_scoring(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Two players answering simultaneously should not corrupt state."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room_manager.register_player(room.room_id, "Bob")
+
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+        correct_answer = room.questions[0].answer
+
+        # Submit both answers concurrently
+        await asyncio.gather(
+            orchestrator.handle_answer(room.room_id, "Alice", correct_answer),
+            orchestrator.handle_answer(room.room_id, "Bob", correct_answer),
+        )
+
+        # Both answers recorded, no duplication
+        assert "Alice" in room.answered_players
+        assert "Bob" in room.answered_players
+        assert room.scores["Alice"] > 0
+        assert room.scores["Bob"] > 0
+        # First gets 1000, second gets 500 — total is 1500
+        assert room.scores["Alice"] + room.scores["Bob"] == 1500
+        # All answered → transitioned to results exactly once
+        assert room.status == GameStatus.RESULTS
+
+    async def test_timer_fires_during_answer_processing(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Timer callback waits for lock; room transitions to RESULTS once."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room_manager.register_player(room.room_id, "Bob")
+
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+
+        # Alice answers, then timer fires — both should complete without corruption
+        await orchestrator.handle_answer(
+            room.room_id, "Alice", room.questions[0].answer
+        )
+        await orchestrator._on_question_timeout(room.room_id)
+
+        # Room should be in RESULTS (timer transitioned it since not all answered)
+        assert room.status == GameStatus.RESULTS
+        # Alice's answer should be recorded
+        assert "Alice" in room.answered_players
+        assert room.scores["Alice"] > 0

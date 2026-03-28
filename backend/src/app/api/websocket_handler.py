@@ -2,6 +2,7 @@
 
 import json
 import logging
+from datetime import UTC, datetime
 
 from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
@@ -68,6 +69,15 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
         while True:
             data = await ws.receive_text()
 
+            # Reject oversized messages to prevent memory exhaustion
+            if len(data) > 4096:
+                logger.warning(
+                    f"Oversized message ({len(data)} bytes): "
+                    f"room_id={room_id}, player_id={player_id}"
+                )
+                await ws.close(code=1009, reason="Message too large")
+                return
+
             # Check rate limit before processing
             if not rate_limiter.check(connection_key):
                 logger.warning(
@@ -95,8 +105,10 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
 
                 elif msg_type == "ANSWER":
                     validated = AnswerMessage.model_validate(message)
+                    # Capture timestamp before lock acquisition for fair scoring
+                    answer_time = datetime.now(UTC)
                     await orchestrator.handle_answer(
-                        room_id, player_id, validated.answer
+                        room_id, player_id, validated.answer, answer_time
                     )
 
                 elif msg_type == "UPDATE_CONFIG":

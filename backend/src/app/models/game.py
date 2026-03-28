@@ -1,5 +1,6 @@
 """Data models for the trivia game."""
 
+import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -61,6 +62,8 @@ class Room:
     session_tokens: dict[str, str] = field(default_factory=dict)
     # Per-player cooldown for reactions (player_id -> last reaction timestamp)
     last_reaction_times: dict[str, datetime] = field(default_factory=dict)
+    # Per-room lock for serializing state mutations (not serializable)
+    lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
     def __init__(self, room_id: str, questions: list[Question]):
         """Initialize a room.
@@ -83,6 +86,7 @@ class Room:
         self.finish_time = None
         self.session_tokens = {}
         self.last_reaction_times = {}
+        self.lock = asyncio.Lock()
 
     # Backward-compatible property accessors for round state
     @property

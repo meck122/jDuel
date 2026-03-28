@@ -20,51 +20,51 @@ class TestGameService:
         assert len(room.answered_players) == 0
         assert len(room.player_answers) == 0
 
-    def test_process_correct_answer(self, game_service, sample_questions):
+    async def test_process_correct_answer(self, game_service, sample_questions):
         """Test processing a correct answer awards points."""
         room = Room("TEST1", sample_questions)
         room.players = {"player1"}
         room.scores = {"player1": 0}
         game_service.start_game(room)
 
-        result = game_service.process_answer(room, "player1", "4")
+        result = await game_service.process_answer(room, "player1", "4")
 
         assert result is True
         assert "player1" in room.answered_players
         assert "player1" in room.correct_players
         assert room.scores["player1"] > 0
 
-    def test_process_incorrect_answer(self, game_service, sample_questions):
+    async def test_process_incorrect_answer(self, game_service, sample_questions):
         """Test processing an incorrect answer awards no points."""
         room = Room("TEST1", sample_questions)
         room.players = {"player1"}
         room.scores = {"player1": 0}
         game_service.start_game(room)
 
-        result = game_service.process_answer(room, "player1", "wrong")
+        result = await game_service.process_answer(room, "player1", "wrong")
 
         assert result is False
         assert "player1" in room.answered_players
         assert "player1" not in room.correct_players
         assert room.scores["player1"] == 0
 
-    def test_duplicate_answer_ignored(self, game_service, sample_questions):
+    async def test_duplicate_answer_ignored(self, game_service, sample_questions):
         """Test that duplicate answers are ignored."""
         room = Room("TEST1", sample_questions)
         room.players = {"player1"}
         room.scores = {"player1": 0}
         game_service.start_game(room)
 
-        game_service.process_answer(room, "player1", "4")
+        await game_service.process_answer(room, "player1", "4")
         initial_score = room.scores["player1"]
 
         # Second answer should be ignored
-        result = game_service.process_answer(room, "player1", "4")
+        result = await game_service.process_answer(room, "player1", "4")
 
         assert result is False
         assert room.scores["player1"] == initial_score
 
-    def test_all_players_answered(self, game_service, sample_questions):
+    async def test_all_players_answered(self, game_service, sample_questions):
         """Test detecting when all players have answered."""
         room = Room("TEST1", sample_questions)
         room.players = {"player1", "player2"}
@@ -73,10 +73,10 @@ class TestGameService:
 
         assert game_service.all_players_answered(room) is False
 
-        game_service.process_answer(room, "player1", "4")
+        await game_service.process_answer(room, "player1", "4")
         assert game_service.all_players_answered(room) is False
 
-        game_service.process_answer(room, "player2", "5")
+        await game_service.process_answer(room, "player2", "5")
         assert game_service.all_players_answered(room) is True
 
     def test_advance_question(self, game_service, sample_questions):
@@ -137,27 +137,31 @@ class TestGameService:
 
         assert winner is None
 
-    def test_score_calculation_first_correct(self, game_service, sample_questions):
+    async def test_score_calculation_first_correct(
+        self, game_service, sample_questions
+    ):
         """Test first correct answer gets maximum points."""
         room = Room("TEST1", sample_questions)
         room.players = {"player1", "player2"}
         room.scores = {"player1": 0, "player2": 0}
         game_service.start_game(room)
 
-        game_service.process_answer(room, "player1", "4")
+        await game_service.process_answer(room, "player1", "4")
 
         # First correct answer should get 1000 points (MAX_SCORE_PER_QUESTION)
         assert room.question_points["player1"] == 1000
 
-    def test_score_calculation_second_correct(self, game_service, sample_questions):
+    async def test_score_calculation_second_correct(
+        self, game_service, sample_questions
+    ):
         """Test second correct answer gets half points."""
         room = Room("TEST1", sample_questions)
         room.players = {"player1", "player2"}
         room.scores = {"player1": 0, "player2": 0}
         game_service.start_game(room)
 
-        game_service.process_answer(room, "player1", "4")
-        game_service.process_answer(room, "player2", "4")
+        await game_service.process_answer(room, "player1", "4")
+        await game_service.process_answer(room, "player2", "4")
 
         # Second correct answer should get 500 points
         assert room.question_points["player2"] == 500
@@ -189,7 +193,9 @@ class TestGameService:
 
         assert room.current_round.shuffled_options is None
 
-    def test_reset_game_state_resets_all_fields(self, game_service, sample_questions):
+    async def test_reset_game_state_resets_all_fields(
+        self, game_service, sample_questions
+    ):
         """reset_game_state resets all game fields to lobby state."""
         room = Room("TEST1", sample_questions)
         room.players = {"player1", "player2"}
@@ -197,7 +203,7 @@ class TestGameService:
 
         # Simulate a completed game
         game_service.start_game(room)
-        game_service.process_answer(room, "player1", "4")
+        await game_service.process_answer(room, "player1", "4")
         game_service.show_results(room)
         for _ in range(len(sample_questions)):
             game_service.advance_question(room)
