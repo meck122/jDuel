@@ -8,13 +8,13 @@
 }
 
 .questionNumber {
-  font-family: var(--font-family-mono);
+  font-family: var(--font-mono);
   color: var(--color-accent-teal);
   font-weight: 600;
 }
 
 .separator {
-  color: var(--color-text-tertiary);
+  color: var(--color-text-muted);
 }
 
 .category {

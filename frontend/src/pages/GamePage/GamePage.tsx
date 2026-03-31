@@ -12,12 +12,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Box } from "@mui/material";
 import { useGame } from "../../contexts";
 import { GameView } from "../../features/game";
 import { PageContainer } from "../../components";
 import { usePlayerName, useRetry } from "../../hooks";
 import { joinRoom, ApiError } from "../../services/api";
-import styles from "./GamePage.module.css";
 
 // Module-level constant to avoid re-render instability with useRetry
 const RETRY_OPTIONS = { maxRetries: 4, initialDelay: 2000, maxDelay: 8000 };
@@ -46,6 +46,44 @@ async function joinWithNameTakenRetry(
     }
   }
 }
+
+const errorCardSx = {
+  textAlign: "center",
+  p: 7,
+  background: "var(--color-bg-secondary)",
+  borderRadius: "var(--radius-lg)",
+  boxShadow: "var(--shadow-lg)",
+};
+
+const titleSx = {
+  fontSize: "var(--font-size-xl)",
+  mb: 4,
+  mt: 0,
+};
+
+const messageSx = {
+  color: "var(--color-text-dim)",
+  mb: 6,
+};
+
+const actionsSx = {
+  display: "flex",
+  gap: 4,
+  justifyContent: "center",
+  flexWrap: "wrap" as const,
+};
+
+const secondaryButtonSx = {
+  padding: "var(--spacing-md) var(--spacing-xl)",
+  fontSize: "var(--font-size-md)",
+  background: "transparent",
+  border: "2px solid var(--color-accent-purple)",
+  color: "var(--color-accent-purple)",
+  "&:hover": {
+    background: "var(--color-accent-purple)",
+    color: "var(--color-text-primary)",
+  },
+};
 
 /**
  * Inner component that has access to GameContext.
@@ -170,21 +208,24 @@ function GamePageContent() {
   if (isRetrying && nextRetryIn !== null) {
     return (
       <PageContainer centered maxWidth="sm">
-        <div className={styles.retryContainer}>
-          <h2 className={styles.retryTitle}>Too many attempts</h2>
-          <p className={styles.retryMessage}>
+        <Box sx={{ ...errorCardSx, border: "2px solid var(--color-warning)" }}>
+          <Box component="h2" sx={{ ...titleSx, color: "var(--color-warning)" }}>
+            Too many attempts
+          </Box>
+          <Box component="p" sx={messageSx}>
             Retrying in {nextRetryIn}s... (attempt {currentAttempt}/{RETRY_OPTIONS.maxRetries})
-          </p>
-          <button
+          </Box>
+          <Box
+            component="button"
+            sx={secondaryButtonSx}
             onClick={() => {
               cancel();
               navigate("/", { replace: true });
             }}
-            className={styles.secondaryButton}
           >
             Back to Home
-          </button>
-        </div>
+          </Box>
+        </Box>
       </PageContainer>
     );
   }
@@ -193,26 +234,24 @@ function GamePageContent() {
   if (retryError && !isRetrying && rateLimited) {
     return (
       <PageContainer centered maxWidth="sm">
-        <div className={styles.errorContainer}>
-          <h2 className={styles.errorTitle}>Unable to Reconnect</h2>
-          <p className={styles.errorMessage}>
+        <Box sx={{ ...errorCardSx, border: "2px solid var(--color-accent-red)" }}>
+          <Box component="h2" sx={{ ...titleSx, color: "var(--color-accent-red)" }}>
+            Unable to Reconnect
+          </Box>
+          <Box component="p" sx={messageSx}>
             Could not reconnect after multiple attempts. The room may no longer be available.
-          </p>
-          <div className={styles.errorActions}>
-            <button
+          </Box>
+          <Box sx={actionsSx}>
+            <Box
+              component="button"
+              sx={secondaryButtonSx}
               onClick={() => navigate(`/?join=${roomId}`, { replace: true })}
-              className={styles.secondaryButton}
             >
               Try Rejoining
-            </button>
-            <button
-              onClick={() => navigate("/", { replace: true })}
-              className={styles.primaryButton}
-            >
-              Back to Home
-            </button>
-          </div>
-        </div>
+            </Box>
+            <button onClick={() => navigate("/", { replace: true })}>Back to Home</button>
+          </Box>
+        </Box>
       </PageContainer>
     );
   }
@@ -221,24 +260,24 @@ function GamePageContent() {
   if (connectionError) {
     return (
       <PageContainer centered maxWidth="sm">
-        <div className={styles.errorContainer}>
-          <h2 className={styles.errorTitle}>Connection Error</h2>
-          <p className={styles.errorMessage}>{connectionError}</p>
-          <div className={styles.errorActions}>
-            <button
+        <Box sx={{ ...errorCardSx, border: "2px solid var(--color-accent-red)" }}>
+          <Box component="h2" sx={{ ...titleSx, color: "var(--color-accent-red)" }}>
+            Connection Error
+          </Box>
+          <Box component="p" sx={messageSx}>
+            {connectionError}
+          </Box>
+          <Box sx={actionsSx}>
+            <Box
+              component="button"
+              sx={secondaryButtonSx}
               onClick={() => navigate(`/?join=${roomId}`, { replace: true })}
-              className={styles.secondaryButton}
             >
               Try Rejoining
-            </button>
-            <button
-              onClick={() => navigate("/", { replace: true })}
-              className={styles.primaryButton}
-            >
-              Back to Home
-            </button>
-          </div>
-        </div>
+            </Box>
+            <button onClick={() => navigate("/", { replace: true })}>Back to Home</button>
+          </Box>
+        </Box>
       </PageContainer>
     );
   }
@@ -247,7 +286,16 @@ function GamePageContent() {
   if (isConnecting || !isConnected || !roomState) {
     return (
       <PageContainer centered>
-        <p className={styles.message}>Connecting to room {roomId}...</p>
+        <Box
+          component="p"
+          sx={{
+            fontSize: "var(--font-size-lg)",
+            color: "var(--color-text-dim)",
+            textAlign: "center",
+          }}
+        >
+          Connecting to room {roomId}...
+        </Box>
       </PageContainer>
     );
   }
