@@ -192,6 +192,7 @@
 @media (max-width: 768px) {
   .lobbyWrapper {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .lobbyContainer {

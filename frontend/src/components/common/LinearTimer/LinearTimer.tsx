@@ -9,7 +9,7 @@
  * - Two variants: results (teal gradient bar) and subtle (text-only)
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import styles from "./LinearTimer.module.css";
 
 type LinearTimerVariant = "results" | "subtle";
@@ -32,16 +32,18 @@ export function LinearTimer({
     initialTime: timeRemainingMs,
     startTime: 0,
   });
+  const prevResetKeyRef = useRef(resetKey);
 
   useEffect(() => {
     const now = Date.now();
-    // Timer reset requires synchronous state update when dependencies change
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTimerState({
+    const isNewPhase = resetKey !== prevResetKeyRef.current;
+    prevResetKeyRef.current = resetKey;
+
+    setTimerState((prev) => ({
       displayTime: timeRemainingMs,
-      initialTime: timeRemainingMs,
+      initialTime: isNewPhase ? timeRemainingMs : prev.initialTime,
       startTime: now,
-    });
+    }));
 
     const interval = setInterval(() => {
       setTimerState((prev) => {

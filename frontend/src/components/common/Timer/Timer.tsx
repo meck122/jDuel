@@ -8,7 +8,7 @@
  * - Shows circular progress animation
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import styles from "./Timer.module.css";
 
 type TimerVariant = "default" | "results" | "game-over";
@@ -25,16 +25,20 @@ export function Timer({ timeRemainingMs, resetKey, variant = "default" }: TimerP
     initialTime: timeRemainingMs,
     startTime: 0,
   });
+  const prevResetKeyRef = useRef(resetKey);
 
   useEffect(() => {
     const now = Date.now();
-    // Timer reset requires synchronous state update when dependencies change
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTimerState({
+    const isNewPhase = resetKey !== prevResetKeyRef.current;
+    prevResetKeyRef.current = resetKey;
+
+    setTimerState((prev) => ({
       displayTime: timeRemainingMs,
-      initialTime: timeRemainingMs,
+      // Only reset the baseline on a new phase (new question/screen),
+      // not when timeRemainingMs updates mid-countdown (e.g. another player answers)
+      initialTime: isNewPhase ? timeRemainingMs : prev.initialTime,
       startTime: now,
-    });
+    }));
 
     const interval = setInterval(() => {
       setTimerState((prev) => {
