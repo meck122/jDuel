@@ -1,0 +1,37 @@
+/* ============================================
+   KEYFRAME ANIMATIONS
+   Global keyframes referenced by component sx animation strings.
+   ============================================ */
+
+@keyframes confettiFall {
+  0% {
+    top: -30px;
+    opacity: 1;
+    transform: rotate(0deg) translateX(0);
+  }
+  25% {
+    transform: rotate(180deg) translateX(12px);
+  }
+  50% {
+    transform: rotate(360deg) translateX(-8px);
+  }
+  75% {
+    transform: rotate(540deg) translateX(6px);
+    opacity: 0.8;
+  }
+  100% {
+    top: 110%;
+    opacity: 0;
+    transform: rotate(720deg) translateX(0);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
