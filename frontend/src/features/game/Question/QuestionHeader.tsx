@@ -5,7 +5,7 @@
  * Height: ~24px (down from ~60px stacked layout)
  */
 
-import styles from "./QuestionHeader.module.css";
+import { Box } from "@mui/material";
 
 interface QuestionHeaderProps {
   questionIndex: number;
@@ -15,12 +15,29 @@ interface QuestionHeaderProps {
 
 export function QuestionHeader({ questionIndex, totalQuestions, category }: QuestionHeaderProps) {
   return (
-    <div className={styles.header}>
-      <span className={styles.questionNumber}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        fontSize: { xs: "var(--font-size-xs)", sm: "var(--font-size-sm)" },
+        color: "var(--color-text-secondary)",
+        mb: { xs: 2, sm: 1 },
+        flexShrink: 0,
+      }}
+    >
+      <Box
+        component="span"
+        sx={{ fontFamily: "var(--font-mono)", color: "var(--color-accent-teal)", fontWeight: 600 }}
+      >
         Q{questionIndex + 1}/{totalQuestions}
-      </span>
-      <span className={styles.separator}>•</span>
-      <span className={styles.category}>{category}</span>
-    </div>
+      </Box>
+      <Box component="span" sx={{ color: "var(--color-text-muted)" }}>
+        •
+      </Box>
+      <Box component="span" sx={{ color: "var(--color-text-secondary)" }}>
+        {category}
+      </Box>
+    </Box>
   );
 }
