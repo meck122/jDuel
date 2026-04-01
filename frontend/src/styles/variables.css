@@ -22,14 +22,6 @@
   --color-accent-red: rgb(251, 191, 36);
   --color-accent-red-light: rgb(253, 216, 99);
 
-  /* Legacy aliases for compatibility */
-  --color-accent: var(--color-accent-purple);
-  --color-accent-light: var(--color-accent-purple-light);
-  --color-accent-dark: var(--color-accent-purple-dark);
-  --color-primary: var(--color-bg-secondary);
-  --color-bg-dark: var(--color-bg-elevated);
-  --color-bg-darker: var(--color-bg-hover);
-
   /* Semantic Colors */
   --color-success: rgb(22, 163, 74);
   --color-success-light: rgb(34, 197, 94);
@@ -93,7 +85,7 @@
     var(--color-success-light) 100%
   );
 
-  /* Spacing */
+  /* Spacing — kept for non-migrated CSS modules (Timer, Navbar, AboutPage) */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
@@ -102,7 +94,7 @@
   --spacing-2xl: 3rem;
   --spacing-3xl: 4rem;
 
-  /* Typography */
+  /* Typography — kept for non-migrated CSS modules */
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
@@ -119,7 +111,7 @@
   --font-display: "Bebas Neue", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  /* Border Radius */
+  /* Border Radius — kept for non-migrated CSS modules */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -134,8 +126,4 @@
   /* Layout */
   --navbar-height: 64px;
   --reactions-bar-height: 52px;
-  --container-sm: 640px;
-  --container-md: 768px;
-  --container-lg: 1024px;
-  --container-xl: 1280px;
 }
