@@ -1,7 +1,7 @@
 ---
 title: "refactor: MUI sx Responsive Migration"
 type: refactor
-status: active
+status: completed
 date: 2026-03-31
 origin: docs/brainstorms/2026-03-31-mui-sx-migration-requirements.md
 ---
