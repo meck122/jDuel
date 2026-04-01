@@ -9,29 +9,29 @@
 .label {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  font-family: var(--font-family-mono);
+  font-family: var(--font-mono);
   white-space: nowrap;
 }
 
 .progressBarContainer {
   flex: 1;
   height: 16px;
-  background: var(--color-bg-tertiary);
-  border-radius: var(--border-radius-full);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-full);
   overflow: hidden;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-default);
 }
 
 .progressBar {
   height: 100%;
   background: var(--gradient-teal);
   transition: width 0.1s linear;
-  border-radius: var(--border-radius-full);
+  border-radius: var(--radius-full);
 }
 
 .timeText {
   font-size: var(--font-size-md);
-  font-family: var(--font-family-mono);
+  font-family: var(--font-mono);
   color: var(--color-accent-teal);
   font-weight: 600;
   min-width: 2.5rem;
@@ -51,7 +51,7 @@
 }
 
 .subtleTimer .seconds {
-  font-family: var(--font-family-mono);
+  font-family: var(--font-mono);
   color: var(--color-accent-teal);
   font-weight: 600;
 }

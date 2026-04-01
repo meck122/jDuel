@@ -68,6 +68,23 @@ frontend/src/
 - Player name: 1-20 characters, no control/zero-width chars, no HTML patterns
 - Room code: Auto-uppercase, 4-6 characters, alphanumeric
 
+## Styling Architecture
+
+The frontend uses a two-layer model:
+
+| Layer | What it owns | Location |
+|-------|-------------|----------|
+| **MUI `sx` prop** | Layout, spacing, breakpoints, responsive behavior | Inline on every component |
+| **CSS variables** | Visual identity: colors, shadows, gradients, fonts | `styles/variables.css` |
+
+CSS variable strings (e.g. `"var(--color-accent-purple)"`) work directly inside `sx` values. All component layout is expressed as `sx` props with MUI's object breakpoint syntax (`{ xs: val, sm: val }`). There are no CSS module files for game components — the exceptions are Timer, LinearTimer, Navbar, AboutPage, and `components.css`, which still use CSS modules.
+
+**Custom MUI breakpoints** (`theme.ts`): `xs: 0`, `sm: 600` (primary), `md: 768`, `lg: 1024`, `xl: 1280`. The 600px break is the main mobile-to-desktop transition.
+
+**Shared sx patterns** live in `styles/sxPatterns.ts` — `sxCard`, `sxContentBox`, `sxScoreItem`, `sxGameSection`, `sxGameHeader`, `sxPlayerGrid`.
+
+**Keyframe animations** live in `styles/animations.css` and are referenced by name in `sx`.
+
 ## Key Architectural Decisions
 
 1. **Feature-Based Organization** - Game components in `features/game/` for self-contained feature modules
@@ -76,6 +93,7 @@ frontend/src/
 4. **HTTP + WebSocket Hybrid** - HTTP for room/player registration, WebSocket for real-time game state
 5. **Deep Link via Redirect** - `/room/AB3D` redirects to `/?join=AB3D` (consolidates entry logic in HomePage)
 6. **Server-Driven Data** - Reactions, question count, and config come from `RoomStateData` (no hardcoded values)
+7. **MUI sx for Responsiveness** - All breakpoint-driven layout uses MUI `sx` object syntax; no raw `@media` blocks in component code
 
 ## Performance
 

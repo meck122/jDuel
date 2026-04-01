@@ -1,4 +1,5 @@
 @import "./variables.css";
+@import "./animations.css";
 
 /* ============================================
    RESET & BASE STYLES
@@ -146,93 +147,4 @@ button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
-}
-
-/* ============================================
-   REUSABLE COMPONENT CLASSES
-   ============================================ */
-.card {
-  background: var(--color-bg-secondary);
-  border: 2px solid var(--color-border-default);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow-lg);
-  transition: all var(--transition-base);
-}
-
-.card:hover {
-  border-color: var(--color-accent-purple);
-  box-shadow: var(--shadow-glow-purple);
-}
-
-.game-section {
-  margin: var(--spacing-xl) 0;
-  width: 100%;
-}
-
-.game-header {
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
-  margin-bottom: var(--spacing-lg);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  background: var(--gradient-purple-teal);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.content-box {
-  background: var(--color-bg-elevated);
-  padding: var(--spacing-lg);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-subtle);
-}
-
-.content-box h3 {
-  margin-top: 0;
-  margin-bottom: var(--spacing-md);
-  color: var(--color-accent-purple);
-  font-family: var(--font-display);
-  font-size: var(--font-size-xl);
-  letter-spacing: 1px;
-}
-
-.score-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-sm);
-  border-left: 3px solid var(--color-accent-teal);
-  transition: all var(--transition-base);
-}
-
-.score-item:hover {
-  background: var(--color-bg-hover);
-  transform: translateX(4px);
-}
-
-.score-value {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xl);
-  font-weight: bold;
-  color: var(--color-accent-teal);
-}
-
-.player-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: var(--spacing-lg);
-  margin: var(--spacing-xl) 0;
-}
-
-/* ============================================
-   RESPONSIVE UTILITIES
-   ============================================ */
-@media (max-width: 768px) {
-  .player-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: var(--spacing-md);
-  }
 }

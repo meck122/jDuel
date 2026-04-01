@@ -9,11 +9,11 @@
  * Player names are persisted in localStorage for convenience.
  */
 
-import { FormEvent, useState, useEffect } from "react";
+import { ChangeEvent, FormEvent, useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Box } from "@mui/material";
 import { createRoom, joinRoom, ApiError } from "../../services/api";
 import { usePlayerName } from "../../hooks";
-import styles from "./HomePage.module.css";
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -95,76 +95,264 @@ export function HomePage() {
     }
   };
 
+  const isHostActive = activeCard === "host";
+  const isJoinActive = activeCard === "join";
+
+  const cardSx = (isActive: boolean, isSecond?: boolean) => ({
+    flex: 1,
+    background: isActive ? "var(--color-bg-elevated)" : "var(--color-bg-secondary)",
+    borderRadius: "var(--radius-lg)",
+    border: isActive
+      ? "2px solid var(--color-accent-red)"
+      : "2px solid var(--color-border-default)",
+    p: { xs: 6, sm: 7 },
+    cursor: "pointer",
+    transition:
+      "border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base), background var(--transition-base)",
+    boxShadow: isActive ? "var(--shadow-glow-gold)" : "var(--shadow-md)",
+    transform: isActive ? "translateY(-2px)" : "none",
+    animation: "cardSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both",
+    ...(isSecond ? { animationDelay: "0.12s" } : {}),
+    "&:hover": {
+      borderColor: "var(--color-accent-purple)",
+      transform: "translateY(-4px)",
+      boxShadow: "var(--shadow-glow-purple)",
+    },
+  });
+
   return (
-    <div className={styles.container}>
-      <h1 className={styles.logo}>
-        <span className={styles.logoJ}>j</span>
-        <span className={styles.logoDuel}>Duel</span>
-      </h1>
+    <Box
+      sx={{
+        minHeight: "calc(100dvh - var(--navbar-height))",
+        width: "100%",
+        textAlign: "center",
+        py: { xs: 7, sm: 8 },
+        px: { xs: 4, sm: 6 },
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+      }}
+    >
+      {/* Logo */}
+      <Box
+        component="h1"
+        sx={{
+          fontFamily: "var(--font-display)",
+          fontSize: { xs: "5rem", sm: "7rem" },
+          fontWeight: 400,
+          mb: 5,
+          letterSpacing: { xs: "4px", sm: "8px" },
+          lineHeight: 1,
+          textShadow: "0 4px 20px rgba(139, 92, 246, 0.3)",
+        }}
+      >
+        <Box component="span" sx={{ color: "var(--color-accent-purple)" }}>
+          j
+        </Box>
+        <Box component="span" sx={{ color: "var(--color-accent-red)" }}>
+          Duel
+        </Box>
+      </Box>
 
-      <p className={styles.tagline}>Trivia battles with friends :D</p>
+      {/* Tagline */}
+      <Box
+        component="p"
+        sx={{
+          fontFamily: "var(--font-display)",
+          fontSize: { xs: "var(--font-size-lg)", sm: "var(--font-size-xl)" },
+          color: "var(--color-text-muted)",
+          m: 0,
+          mb: { xs: 7, sm: 8 },
+          fontWeight: 400,
+          letterSpacing: "1.5px",
+        }}
+      >
+        Trivia battles with friends :D
+      </Box>
 
-      {error && <div className={styles.error}>{error}</div>}
-
-      <div className={styles.cards}>
-        {/* Host a Game Card */}
-        <div
-          className={`${styles.card} ${activeCard === "host" ? styles.cardActive : ""}`}
-          onClick={() => setActiveCard("host")}
+      {/* Error banner */}
+      {error && (
+        <Box
+          sx={{
+            color: "var(--color-error)",
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid var(--color-error)",
+            borderRadius: "var(--radius-md)",
+            p: 4,
+            mb: 6,
+            maxWidth: 500,
+            mx: "auto",
+          }}
         >
-          <h2 className={styles.cardTitle}>🎮 Host a Game</h2>
-          <p className={styles.cardDescription}>Create a new room and invite your friends</p>
+          {error}
+        </Box>
+      )}
 
-          {activeCard === "host" && (
-            <form onSubmit={handleCreateRoom} className={styles.form}>
-              <input
+      {/* Cards row */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          gap: 6,
+          maxWidth: { xs: "100%", sm: 500, md: 800 },
+          mx: "auto",
+        }}
+      >
+        {/* Host a Game */}
+        <Box onClick={() => setActiveCard("host")} sx={cardSx(isHostActive)}>
+          <Box
+            component="h2"
+            sx={{
+              fontFamily: "var(--font-display)",
+              fontSize: { xs: "var(--font-size-xl)", sm: "var(--font-size-2xl)" },
+              mb: 2,
+              color: "var(--color-text-primary)",
+              letterSpacing: "1px",
+            }}
+          >
+            🎮 Host a Game
+          </Box>
+          <Box
+            component="p"
+            sx={{
+              color: "var(--color-text-muted)",
+              m: 0,
+              mb: 5,
+              fontSize: "var(--font-size-sm)",
+            }}
+          >
+            Create a new room and invite your friends
+          </Box>
+
+          {isHostActive && (
+            <Box
+              component="form"
+              onSubmit={handleCreateRoom}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                mt: 5,
+                animation: "formReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
+              }}
+            >
+              <Box
+                component="input"
                 type="text"
                 placeholder="Your Name"
                 value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setPlayerName(e.target.value)}
                 maxLength={20}
                 autoFocus
+                sx={{
+                  textAlign: "center",
+                  fontSize: { xs: "1rem", sm: "var(--font-size-md)" },
+                  p: { xs: "16px", sm: 4 },
+                }}
               />
-              <button type="submit" disabled={!playerName.trim() || isLoading}>
+              <Box
+                component="button"
+                type="submit"
+                disabled={!playerName.trim() || isLoading}
+                sx={{
+                  width: { xs: "100%", sm: "auto" },
+                  p: { xs: "16px 32px", sm: undefined },
+                  fontSize: { xs: "var(--font-size-lg)", sm: undefined },
+                }}
+              >
                 {isLoading ? "Creating..." : "Create Room"}
-              </button>
-            </form>
+              </Box>
+            </Box>
           )}
-        </div>
+        </Box>
 
-        {/* Join a Game Card */}
-        <div
-          className={`${styles.card} ${activeCard === "join" ? styles.cardActive : ""}`}
-          onClick={() => setActiveCard("join")}
-        >
-          <h2 className={styles.cardTitle}>🚀 Join a Game</h2>
-          <p className={styles.cardDescription}>Enter a room code to join an existing game</p>
+        {/* Join a Game */}
+        <Box onClick={() => setActiveCard("join")} sx={cardSx(isJoinActive, true)}>
+          <Box
+            component="h2"
+            sx={{
+              fontFamily: "var(--font-display)",
+              fontSize: { xs: "var(--font-size-xl)", sm: "var(--font-size-2xl)" },
+              mb: 2,
+              color: "var(--color-text-primary)",
+              letterSpacing: "1px",
+            }}
+          >
+            🚀 Join a Game
+          </Box>
+          <Box
+            component="p"
+            sx={{
+              color: "var(--color-text-muted)",
+              m: 0,
+              mb: 5,
+              fontSize: "var(--font-size-sm)",
+            }}
+          >
+            Enter a room code to join an existing game
+          </Box>
 
-          {activeCard === "join" && (
-            <form onSubmit={handleJoinRoom} className={styles.form}>
-              <input
+          {isJoinActive && (
+            <Box
+              component="form"
+              onSubmit={handleJoinRoom}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                mt: 5,
+                animation: "formReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
+              }}
+            >
+              <Box
+                component="input"
                 type="text"
                 placeholder="Your Name"
                 value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setPlayerName(e.target.value)}
                 maxLength={20}
+                sx={{
+                  textAlign: "center",
+                  fontSize: { xs: "1rem", sm: "var(--font-size-md)" },
+                  p: { xs: "16px", sm: 4 },
+                }}
               />
-              <input
+              <Box
+                component="input"
                 type="text"
                 placeholder="Room Code"
                 value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setRoomCode(e.target.value.toUpperCase())
+                }
                 maxLength={6}
-                className={styles.roomCodeInput}
                 autoFocus
+                sx={{
+                  textAlign: "center",
+                  textTransform: "uppercase",
+                  letterSpacing: "4px",
+                  fontWeight: 700,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: { xs: "1rem", sm: "var(--font-size-md)" },
+                  p: { xs: "16px", sm: 4 },
+                }}
               />
-              <button type="submit" disabled={!playerName.trim() || !roomCode.trim() || isLoading}>
+              <Box
+                component="button"
+                type="submit"
+                disabled={!playerName.trim() || !roomCode.trim() || isLoading}
+                sx={{
+                  width: { xs: "100%", sm: "auto" },
+                  p: { xs: "16px 32px", sm: undefined },
+                  fontSize: { xs: "var(--font-size-lg)", sm: undefined },
+                }}
+              >
                 {isLoading ? "Joining..." : "Join Room"}
-              </button>
-            </form>
+              </Box>
+            </Box>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }

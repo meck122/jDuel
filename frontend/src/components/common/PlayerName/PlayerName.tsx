@@ -5,8 +5,8 @@
  * the current user from GameContext.
  */
 
+import { Box } from "@mui/material";
 import { useGame } from "../../../contexts";
-import styles from "./PlayerName.module.css";
 
 interface PlayerNameProps {
   /** The player ID to display */
@@ -24,7 +24,14 @@ export function PlayerName({ playerId, className, showYouBadge = true }: PlayerN
   return (
     <span className={className}>
       {playerId}
-      {showYouBadge && isCurrentPlayer && <span className={styles.youBadge}> (You)</span>}
+      {showYouBadge && isCurrentPlayer && (
+        <Box
+          component="span"
+          sx={{ color: "var(--color-accent-teal)", fontSize: "0.85em", fontWeight: 700 }}
+        >
+          {" (You)"}
+        </Box>
+      )}
     </span>
   );
 }

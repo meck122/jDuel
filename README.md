@@ -86,8 +86,8 @@ Open `http://localhost:3000` in multiple browser windows to test multiplayer fun
 - React 19 with TypeScript
 - React Router 7 for page navigation and deep links
 - Vite 7 for build tooling and development server
-- Material-UI (MUI) 7 components and styling
-- CSS Modules for component-scoped styles
+- Material-UI (MUI) 7 with `sx` prop for all layout, spacing, and responsive behavior
+- CSS custom properties (variables) for colors, shadows, and visual identity tokens
 - Native Fetch API for HTTP requests
 - Native WebSocket API for real-time communication
 
@@ -425,7 +425,6 @@ See [deploy/README.md](deploy/README.md) for production deployment instructions 
 - [ ] Question category filtering
 - [ ] Spectator mode (watch games without playing)
 - [ ] Leaderboards and statistics
-- [ ] Mobile-responsive design improvements
 - [ ] Sound effects and victory animations
 - [ ] Automated testing suite (pytest for backend, Vitest for frontend)
 - [ ] Custom question sets (user-uploaded questions)

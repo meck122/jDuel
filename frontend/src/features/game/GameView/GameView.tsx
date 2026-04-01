@@ -13,13 +13,13 @@
  * - finished: GameOver (final scores)
  */
 
+import { Box } from "@mui/material";
 import { useGame } from "../../../contexts";
 import { Lobby } from "../Lobby/Lobby";
 import { Question } from "../Question/Question";
 import { Results } from "../Results/Results";
 import { GameOver } from "../GameOver/GameOver";
 import { Reactions } from "../Reactions/Reactions";
-import styles from "./GameView.module.css";
 
 export function GameView() {
   const { roomState } = useGame();
@@ -29,7 +29,7 @@ export function GameView() {
   }
 
   return (
-    <div className={styles.container}>
+    <Box sx={{ width: "100%", p: { xs: 0, sm: 6 }, textAlign: "center" }}>
       {roomState.status === "waiting" && <Lobby />}
 
       {roomState.status === "playing" &&
@@ -43,6 +43,6 @@ export function GameView() {
       {roomState.status === "finished" && roomState.winner && <GameOver />}
 
       {(roomState.status === "results" || roomState.status === "finished") && <Reactions />}
-    </div>
+    </Box>
   );
 }
