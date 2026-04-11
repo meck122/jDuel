@@ -16,7 +16,6 @@ parts/
 sdist/
 var/
 wheels/
-**/scripts/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -55,6 +54,12 @@ node_modules/
 
 # csv
 *.csv
+
+# SQLite databases
+*.db
+
+# Old backend utility scripts (not for version control)
+backend/src/scripts/
 
 # random
 
