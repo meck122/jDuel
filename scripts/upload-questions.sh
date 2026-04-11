@@ -10,13 +10,12 @@
 #
 # Connection settings (in order of precedence):
 #   1. Environment variables: JDUEL_SSH_HOST, JDUEL_SSH_USER
-#   2. deploy/.env file in the repo root
+#   2. scripts/.env file (same directory as this script)
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-ENV_FILE="$REPO_ROOT/deploy/.env"
+ENV_FILE="$SCRIPT_DIR/.env"
 
 # ── Parse arguments ──────────────────────────────────────────────────────────
 LOCAL_CSV=""
@@ -68,7 +67,7 @@ fi
 
 if [[ -z "$JDUEL_SSH_HOST" ]]; then
   echo "Error: JDUEL_SSH_HOST is not set." >&2
-  echo "  Set it in your environment or in deploy/.env (see deploy/.env.example)" >&2
+  echo "  Set it in your environment or in scripts/.env (see scripts/.env.example)" >&2
   exit 1
 fi
 
