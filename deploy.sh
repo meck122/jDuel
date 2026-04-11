@@ -11,6 +11,24 @@ NC='\033[0m' # No Color
 # Get script directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# Parse arguments
+IMPORT_QUESTIONS=false
+for arg in "$@"; do
+  case $arg in
+    --import-questions) IMPORT_QUESTIONS=true ;;
+  esac
+done
+
+# Pre-flight: verify CSV exists before stopping the backend
+if [ "$IMPORT_QUESTIONS" = true ]; then
+  CSV_PATH="$HOME/questions-import.csv"
+  if [ ! -f "$CSV_PATH" ]; then
+    echo "❌ --import-questions: CSV not found at $CSV_PATH"
+    echo "   Upload it first: ./scripts/upload-questions.sh /path/to/questions.csv"
+    exit 1
+  fi
+fi
+
 # Step 1: Stop backend service (frees up RAM for frontend build)
 echo -e "${BLUE}🛑 Stopping backend service...${NC}"
 sudo systemctl stop jduel-backend
@@ -25,6 +43,13 @@ npm run build
 echo -e "${BLUE}📚 Installing backend dependencies...${NC}"
 cd "$SCRIPT_DIR/backend"
 uv sync
+
+# Step 3b: Import questions (if requested)
+if [ "$IMPORT_QUESTIONS" = true ]; then
+  echo -e "${BLUE}📥 Importing questions from CSV...${NC}"
+  python3 "$SCRIPT_DIR/scripts/import_questions.py" "$CSV_PATH" \
+    --db-path "$SCRIPT_DIR/backend/src/app/db/questions.db"
+fi
 
 # Step 4: Copy frontend files (replace entirely to avoid stale hashed bundles)
 echo -e "${BLUE}📂 Deploying frontend files...${NC}"
