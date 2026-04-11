@@ -50,7 +50,7 @@ done
 if [[ -z "$LOCAL_CSV" ]]; then
   echo "Usage: $0 /path/to/questions.csv [--key /path/to/key.pem]" >&2
   echo "" >&2
-  echo "Connection: set JDUEL_SSH_HOST and JDUEL_SSH_USER in env or deploy/.env" >&2
+  echo "Connection: set JDUEL_SSH_HOST and JDUEL_SSH_USER in env or scripts/.env" >&2
   exit 1
 fi
 
