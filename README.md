@@ -323,7 +323,7 @@ The backend uses a **Service Container** pattern for dependency injection with m
 - **usePlayerName**: Custom React hook for localStorage persistence of player names across sessions
 - **Feature-based structure**: Game components organized in `features/game/` for modularity
 - **React Router**: Client-side routing with deep link redirect (`/room/:roomId` → `/?join=:roomId`)
-- **Material-UI theming**: Custom Jeopardy-inspired theme with consistent typography and colors
+- **Material-UI theming**: Custom theme with consistent typography and colors
 
 ### State Management
 
