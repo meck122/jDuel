@@ -30,7 +30,7 @@ const baseTheme = createTheme({
   },
 });
 
-export const jeopardyTheme = createTheme({
+export const appTheme = createTheme({
   // Expose all theme values as CSS custom properties on :root
   // (e.g. --mui-palette-primary-main). Safe alongside existing --color-* vars.
   cssVariables: true,

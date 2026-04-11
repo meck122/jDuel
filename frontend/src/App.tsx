@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
-import { jeopardyTheme } from "./theme";
+import { appTheme } from "./theme";
 import { Navigation } from "./components";
 import { HomePage, GamePage, AboutPage } from "./pages";
 import { GameProvider } from "./contexts";
@@ -17,7 +17,7 @@ function RoomRedirect() {
 
 function App() {
   return (
-    <ThemeProvider theme={jeopardyTheme}>
+    <ThemeProvider theme={appTheme}>
       <CssBaseline />
       <GameProvider>
         <Router>
