@@ -111,7 +111,7 @@ See [docs/EventProtocol.md](docs/EventProtocol.md) for the complete HTTP + WebSo
 - Frontend static files served from `/var/www/jduel-frontend/dist`
 - Backend linting configured with ruff in `pyproject.toml`
 - Reactions, question count, and config are server-driven (sent in RoomStateData)
-- NLP answer verification uses spaCy + sentence-transformers; set `CUDA_VISIBLE_DEVICES=` in systemd service to prevent GPU memory allocation on CPU-only hosts (important on 4 GB VPS)
+- NLP answer verification uses spaCy + sentence-transformers; CUDA is **always disabled** (`CUDA_VISIBLE_DEVICES=""`) in both local dev and production — all inference runs on CPU. This means GPU/CUDA memory is never a concern; do not attribute high memory usage to CUDA.
 - CORS origins are hardcoded in `backend/src/app/config/environment.py` — must add new domain before deploying to a new host
 
 ## Oracle VPS Deployment (Current Production)
@@ -164,4 +164,6 @@ sudo netfilter-persistent save
 - [Event Protocol](docs/EventProtocol.md) - Complete HTTP + WebSocket API reference
 - [Deployment Guide](docs/DeploymentGuide.md) - Production deployment (Nginx, SystemD, HTTPS)
 - [Oracle VPS Migration](deploy/README.md) - Oracle Cloud setup, iptables quirk, troubleshooting
+- [Metrics Setup](docs/guides/MetricsSetup.md) - Grafana Alloy + Grafana Cloud setup, dashboards, alerting
+- [Metrics Overview](docs/guides/metrics-overview.md) - Conceptual guide to the metrics stack
 - [Development](docs/Development.md) - Local dev environment and workflows

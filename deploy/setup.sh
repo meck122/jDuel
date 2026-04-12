@@ -11,12 +11,14 @@ DOMAIN="jduel.com"
 SERVER_USER="ubuntu"
 REPO_DIR="/home/${SERVER_USER}/dev/jDuel"
 DEPLOY_DIR="${REPO_DIR}/deploy"
+INSTALL_ALLOY=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --domain)   DOMAIN="$2"; shift 2 ;;
         --user)     SERVER_USER="$2"; REPO_DIR="/home/${SERVER_USER}/dev/jDuel"; DEPLOY_DIR="${REPO_DIR}/deploy"; shift 2 ;;
         --repo-dir) REPO_DIR="$2"; DEPLOY_DIR="${REPO_DIR}/deploy"; shift 2 ;;
+        --alloy)    INSTALL_ALLOY=true; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
@@ -116,10 +118,49 @@ sudo systemctl enable jduel-backend
 sudo systemctl start jduel-backend
 
 # --------------------------------------------------------------------------
-# 7. Install nginx config
+# 7. Install Grafana Alloy (optional — pass --alloy to enable)
 # --------------------------------------------------------------------------
 echo ""
-echo "==> [7/8] Configuring nginx..."
+if [ "$INSTALL_ALLOY" = true ]; then
+    echo "==> [7/9] Installing Grafana Alloy (metrics collection agent)..."
+    # Download the latest Alloy release for arm64 (aarch64)
+    ALLOY_VERSION=$(curl -s https://api.github.com/repos/grafana/alloy/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+    curl -LO "https://github.com/grafana/alloy/releases/download/${ALLOY_VERSION}/alloy-linux-arm64.deb"
+    sudo dpkg -i alloy-linux-arm64.deb
+    rm alloy-linux-arm64.deb
+
+    # Create config directory and copy Alloy config
+    sudo mkdir -p /etc/alloy
+    sudo cp "${DEPLOY_DIR}/alloy/config.alloy" /etc/alloy/config.alloy
+
+    # Create placeholder credentials file (operator must fill this in)
+    if [ ! -f /etc/alloy/env ]; then
+        sudo tee /etc/alloy/env > /dev/null <<'EOF'
+# Grafana Cloud credentials — fill in before starting Alloy
+# Get these from: grafana.com -> your stack -> Prometheus -> Details
+GRAFANA_CLOUD_PUSH_URL=https://prometheus-prod-XX-prod-XX.grafana.net/api/prom/push
+GRAFANA_CLOUD_USER=123456
+GRAFANA_CLOUD_API_KEY=your_api_key_here
+EOF
+        sudo chmod 600 /etc/alloy/env
+        sudo chown root:root /etc/alloy/env
+    fi
+
+    # Install and enable systemd service
+    sudo cp "${DEPLOY_DIR}/alloy/grafana-alloy.service" /etc/systemd/system/grafana-alloy.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable grafana-alloy
+    echo "    [OK] Grafana Alloy installed. Fill in /etc/alloy/env before starting."
+    echo "    See docs/guides/MetricsSetup.md for full setup instructions."
+else
+    echo "==> [7/9] Skipping Grafana Alloy (pass --alloy to install)"
+fi
+
+# --------------------------------------------------------------------------
+# 8. Install nginx config
+# --------------------------------------------------------------------------
+echo ""
+echo "==> [8/9] Configuring nginx..."
 NGINX_CONF="${DEPLOY_DIR}/nginx/jduel"
 TEMP_NGINX="/tmp/jduel-nginx"
 # Replace placeholder domain with the actual domain
@@ -133,10 +174,10 @@ sudo nginx -t
 sudo systemctl reload nginx
 
 # --------------------------------------------------------------------------
-# 8. HTTPS with Let's Encrypt
+# 9. HTTPS with Let's Encrypt
 # --------------------------------------------------------------------------
 echo ""
-echo "==> [8/8] Setting up HTTPS with Let's Encrypt..."
+echo "==> [9/9] Setting up HTTPS with Let's Encrypt..."
 echo "    Ensure your DNS A record for ${DOMAIN} points to this server's IP"
 echo "    before running certbot, or it will fail the HTTP-01 challenge."
 read -p "    Run certbot now? [y/N] " -n 1 -r
