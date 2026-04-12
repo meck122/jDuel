@@ -124,10 +124,10 @@ echo ""
 if [ "$INSTALL_ALLOY" = true ]; then
     echo "==> [7/9] Installing Grafana Alloy (metrics collection agent)..."
     # Download the latest Alloy release for arm64 (aarch64)
-    ALLOY_VERSION=$(curl -s https://api.github.com/repos/grafana/alloy/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
-    curl -LO "https://github.com/grafana/alloy/releases/download/${ALLOY_VERSION}/alloy-linux-arm64.deb"
-    sudo dpkg -i alloy-linux-arm64.deb
-    rm alloy-linux-arm64.deb
+    ALLOY_DEB_URL=$(curl -s https://api.github.com/repos/grafana/alloy/releases/latest | python3 -c "import sys,json; r=json.load(sys.stdin); [print(a['browser_download_url']) for a in r.get('assets',[]) if a['name'].endswith('arm64.deb')]")
+    curl -L -o alloy-arm64.deb "$ALLOY_DEB_URL"
+    sudo dpkg -i alloy-arm64.deb
+    rm alloy-arm64.deb
 
     # Create config directory and copy Alloy config
     sudo mkdir -p /etc/alloy
@@ -137,9 +137,11 @@ if [ "$INSTALL_ALLOY" = true ]; then
     if [ ! -f /etc/alloy/env ]; then
         sudo tee /etc/alloy/env > /dev/null <<'EOF'
 # Grafana Cloud credentials — fill in before starting Alloy
-# Get these from: grafana.com -> your stack -> Prometheus -> Details
+# Get these from: grafana.com -> your stack -> Connections -> Prometheus / Loki
 GRAFANA_CLOUD_PUSH_URL=https://prometheus-prod-XX-prod-XX.grafana.net/api/prom/push
 GRAFANA_CLOUD_USER=123456
+GRAFANA_CLOUD_LOGS_URL=https://logs-prod-XXX.grafana.net/loki/api/v1/push
+GRAFANA_CLOUD_LOGS_USER=123456
 GRAFANA_CLOUD_API_KEY=your_api_key_here
 EOF
         sudo chmod 600 /etc/alloy/env
