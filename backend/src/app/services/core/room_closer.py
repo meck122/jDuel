@@ -4,6 +4,7 @@ import contextlib
 import logging
 from typing import TYPE_CHECKING
 
+from app.services.metrics import rooms_closed_total
 from app.services.orchestration.protocols import RoomCloser
 
 if TYPE_CHECKING:
@@ -48,3 +49,4 @@ class WebSocketRoomCloser(RoomCloser):
             logger.info(f"Auto-closing room after game over timeout: room_id={room_id}")
             self._timer_service.cancel_all_timers_for_room(room_id)
             self._room_manager.delete_room(room_id)
+            rooms_closed_total.inc()

@@ -17,6 +17,11 @@ from app.config import (
     RESULTS_TIME_MS,
 )
 from app.models import GameStatus
+from app.services.metrics import (
+    games_completed_total,
+    games_started_total,
+    players_per_game,
+)
 from app.services.orchestration.protocols import RoomCloser
 from app.services.orchestration.state_builder import StateBuilder
 
@@ -137,6 +142,8 @@ class GameOrchestrator:
 
             self._game_service.start_game(room)
             player_list = list(room.players)
+            games_started_total.inc()
+            players_per_game.observe(len(room.players))
             logger.info(
                 f"Game started: room_id={room_id}, players={player_list}, "
                 f"difficulty={difficulty}, total_questions={len(room.questions)}"
@@ -273,7 +280,7 @@ class GameOrchestrator:
 
             if room.status.value != "waiting":
                 logger.warning(
-                    f"Config update rejected (game not waiting): " f"room_id={room_id}"
+                    f"Config update rejected (game not waiting): room_id={room_id}"
                 )
                 return
 
@@ -449,6 +456,7 @@ class GameOrchestrator:
                 self._start_question_timer(room_id)
             else:
                 winner = self._game_service.get_winner(room)
+                games_completed_total.inc()
                 logger.info(
                     f"Game finished: room_id={room_id}, winner={winner}, "
                     f"final_scores={dict(room.scores)}"

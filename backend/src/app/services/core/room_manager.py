@@ -16,6 +16,7 @@ from app.services.core.question_provider import (
     QuestionProvider,
 )
 from app.services.core.room_repository import RoomRepository
+from app.services.metrics import rooms_created_total
 
 if TYPE_CHECKING:
     from app.models import Question
@@ -85,7 +86,9 @@ class RoomManager:
         """
         if questions is None:
             questions = []
-        return self._repository.create(questions)
+        room = self._repository.create(questions)
+        rooms_created_total.inc()
+        return room
 
     def load_questions_by_difficulty(
         self,

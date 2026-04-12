@@ -15,6 +15,7 @@ from app.models.websocket_messages import (
     StartGameMessage,
     UpdateConfigMessage,
 )
+from app.services.metrics import ws_connections_active
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,7 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
     rate_limiter = get_ws_message_limiter()
     connection_key = f"{room_id}:{player_id}"
 
+    ws_connections_active.inc()
     try:
         while True:
             data = await ws.receive_text()
@@ -158,3 +160,5 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
         )
         rate_limiter.reset(connection_key)
         await orchestrator.handle_disconnect(room_id, player_id)
+    finally:
+        ws_connections_active.dec()

@@ -6,6 +6,7 @@ import logging
 
 from fastapi import FastAPI, Query, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api import api_router, handle_websocket
 from app.config import CORS_ORIGINS, ROOM_ID_PATTERN, setup_logging
@@ -70,6 +71,11 @@ def create_app(lifespan_override=None) -> FastAPI:
         allow_headers=["*"],
     )
     _app.include_router(api_router)
+
+    # Instrument all HTTP routes and expose /metrics (scraped locally by Grafana Alloy)
+    Instrumentator().instrument(_app).expose(
+        _app, endpoint="/metrics", include_in_schema=False
+    )
 
     @_app.get("/health")
     def health():
