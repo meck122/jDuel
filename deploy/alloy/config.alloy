@@ -1,0 +1,32 @@
+// Grafana Alloy configuration for jDuel
+// Scrapes app metrics and host metrics, remote-writes to Grafana Cloud.
+// Credentials are loaded from /etc/alloy/env (EnvironmentFile in systemd).
+
+// Remote write destination
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = env("GRAFANA_CLOUD_PUSH_URL")
+    basic_auth {
+      username = env("GRAFANA_CLOUD_USER")
+      password = env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+}
+
+// Scrape jDuel app metrics (FastAPI /metrics endpoint)
+prometheus.scrape "jduel_app" {
+  targets      = [{"__address__" = "127.0.0.1:8000", "job" = "jduel-backend"}]
+  metrics_path = "/metrics"
+  scrape_interval = "15s"
+  forward_to   = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+// Built-in host metrics (CPU, memory, disk, network)
+// Equivalent to running node_exporter but in a single process.
+prometheus.exporter.unix "host" { }
+
+prometheus.scrape "host_metrics" {
+  targets    = prometheus.exporter.unix.host.targets
+  scrape_interval = "60s"
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
