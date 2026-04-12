@@ -67,8 +67,8 @@ def create_app(lifespan_override=None) -> FastAPI:
         CORSMiddleware,
         allow_origins=CORS_ORIGINS,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type"],
     )
     _app.include_router(api_router)
 
