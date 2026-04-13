@@ -14,7 +14,7 @@ server {
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
     # unsafe-inline required for MUI (emotion CSS-in-JS injects <style> tags at runtime)
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss://jduel.com wss://www.jduel.com; font-src 'self' data:; object-src 'none'; base-uri 'self';" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; connect-src 'self' wss://jduel.com wss://www.jduel.com; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; base-uri 'self';" always;
 
     # API endpoints -> FastAPI backend
     location /api/ {
