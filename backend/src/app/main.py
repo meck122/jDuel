@@ -96,9 +96,15 @@ def create_app(lifespan_override=None) -> FastAPI:
             max_length=20,
             description="Player ID (must be pre-registered)",
         ),
+        sessionToken: str = Query(
+            ...,
+            min_length=1,
+            max_length=64,
+            description="Session token issued by the HTTP join endpoint",
+        ),
     ):
         """WebSocket endpoint for real-time game communication."""
-        await handle_websocket(websocket, roomId.upper(), playerId)
+        await handle_websocket(websocket, roomId.upper(), playerId, sessionToken)
 
     return _app
 

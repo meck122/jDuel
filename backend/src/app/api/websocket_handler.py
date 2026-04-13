@@ -20,7 +20,9 @@ from app.services.metrics import ws_connections_active
 logger = logging.getLogger(__name__)
 
 
-async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
+async def handle_websocket(
+    ws: WebSocket, room_id: str, player_id: str, session_token: str
+) -> None:
     """Handle WebSocket connection for game communication.
 
     Players must pre-register via HTTP POST /api/rooms/{roomId}/join before
@@ -31,6 +33,7 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
         ws: The WebSocket connection
         room_id: The room ID to connect to (from query param)
         player_id: The player ID (from query param, must be pre-registered)
+        session_token: Session token issued at HTTP join time
     """
     from app.services.container import get_container
 
@@ -46,6 +49,12 @@ async def handle_websocket(ws: WebSocket, room_id: str, player_id: str) -> None:
 
     if player_id not in room.players:
         await ws.close(code=4003, reason="Player not registered")
+        return
+
+    # Validate session token before accepting the connection
+    stored_token = room.session_tokens.get(player_id)
+    if not stored_token or session_token != stored_token:
+        await ws.close(code=4008, reason="Unauthorized")
         return
 
     # Check if player is already connected (prevent hijacking)
