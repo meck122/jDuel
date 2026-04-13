@@ -13,7 +13,7 @@
 import { createContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { RoomConfig, RoomState, WebSocketMessage } from "../types";
 import { WS_URL } from "../config";
-import { clearToken } from "../services/api";
+import { clearToken, getToken } from "../services/api";
 import { emitReaction } from "../services/reactionEmitter";
 
 export interface GameContextValue {
@@ -90,7 +90,14 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
       setIsConnecting(true);
       setConnectionError(null);
 
-      const wsUrl = `${WS_URL}?roomId=${encodeURIComponent(newRoomId)}&playerId=${encodeURIComponent(newPlayerId)}`;
+      const token = getToken(newRoomId, newPlayerId);
+      if (!token) {
+        setConnectionError("Session expired. Please re-join the room.");
+        setIsConnecting(false);
+        return;
+      }
+
+      const wsUrl = `${WS_URL}?roomId=${encodeURIComponent(newRoomId)}&playerId=${encodeURIComponent(newPlayerId)}&sessionToken=${encodeURIComponent(token)}`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 

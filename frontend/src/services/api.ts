@@ -50,7 +50,7 @@ function storeToken(roomId: string, playerId: string, token: string): void {
   localStorage.setItem(SESSION_TOKEN_KEY, JSON.stringify(tokens));
 }
 
-function getToken(roomId: string, playerId: string): string | undefined {
+export function getToken(roomId: string, playerId: string): string | undefined {
   const key = `${roomId}:${playerId}`;
   return getStoredTokens()[key];
 }

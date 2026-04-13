@@ -5,12 +5,23 @@ from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 
-def _setup_room(client: TestClient, players: list[str]) -> str:
-    """Helper: create a room and register all players. Returns roomId."""
+def _setup_room(client: TestClient, players: list[str]) -> tuple[str, dict[str, str]]:
+    """Helper: create a room and register all players.
+
+    Returns:
+        Tuple of (roomId, {playerName: sessionToken}).
+    """
     room_id = client.post("/api/rooms").json()["roomId"]
+    tokens: dict[str, str] = {}
     for name in players:
-        client.post(f"/api/rooms/{room_id}/join", json={"playerId": name})
-    return room_id
+        resp = client.post(f"/api/rooms/{room_id}/join", json={"playerId": name})
+        tokens[name] = resp.json()["sessionToken"]
+    return room_id, tokens
+
+
+def _ws_url(room_id: str, player_id: str, token: str) -> str:
+    """Build a WebSocket URL with the required sessionToken query param."""
+    return f"/ws?roomId={room_id}&playerId={player_id}&sessionToken={token}"
 
 
 def _assert_ws_close_code(client: TestClient, url: str, expected_code: int):
@@ -29,33 +40,67 @@ class TestWebSocketConnection:
 
     def test_connect_4004_nonexistent_room(self, client: TestClient):
         """Connecting to a non-existent room closes with code 4004."""
-        _assert_ws_close_code(client, "/ws?roomId=ZZZZ&playerId=Alice", 4004)
+        _assert_ws_close_code(
+            client, "/ws?roomId=ZZZZ&playerId=Alice&sessionToken=sometoken", 4004
+        )
 
     def test_connect_4003_unregistered_player(self, client: TestClient):
         """Connecting as an unregistered player closes with code 4003."""
-        room_id = _setup_room(client, ["Alice"])
-        _assert_ws_close_code(client, f"/ws?roomId={room_id}&playerId=Ghost", 4003)
+        room_id, _ = _setup_room(client, ["Alice"])
+        _assert_ws_close_code(
+            client, f"/ws?roomId={room_id}&playerId=Ghost&sessionToken=sometoken", 4003
+        )
+
+    def test_connect_4008_invalid_token(self, client: TestClient):
+        """Connecting with the wrong session token closes with code 4008."""
+        room_id, _ = _setup_room(client, ["Alice"])
+        _assert_ws_close_code(
+            client,
+            f"/ws?roomId={room_id}&playerId=Alice&sessionToken=wrongtoken",
+            4008,
+        )
+
+    def test_connect_missing_token_rejected(self, client: TestClient):
+        """Omitting the required sessionToken query param is rejected.
+
+        FastAPI returns HTTP 422 for the missing required query param; Starlette's
+        TestClient surfaces this as WebSocketDisconnect with code 1008 (policy violation).
+        """
+        room_id, _ = _setup_room(client, ["Alice"])
+        _assert_ws_close_code(client, f"/ws?roomId={room_id}&playerId=Alice", 1008)
 
     def test_connect_4009_already_connected(self, client: TestClient, test_container):
         """Connecting when already connected closes with code 4009."""
-        room_id = _setup_room(client, ["Alice"])
+        room_id, tokens = _setup_room(client, ["Alice"])
 
         # First connection — keep it open
-        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws1:
+        with client.websocket_connect(
+            _ws_url(room_id, "Alice", tokens["Alice"])
+        ) as ws1:
             ws1.receive_json()  # consume ROOM_STATE
 
-            # Second connection attempt should be rejected with 4009
-            _assert_ws_close_code(client, f"/ws?roomId={room_id}&playerId=Alice", 4009)
+            # Second connection attempt (valid token) should be rejected with 4009
+            _assert_ws_close_code(
+                client, _ws_url(room_id, "Alice", tokens["Alice"]), 4009
+            )
 
     def test_connect_receives_room_state(self, client: TestClient):
         """First message after connection is ROOM_STATE with status=waiting."""
-        room_id = _setup_room(client, ["Alice"])
+        room_id, tokens = _setup_room(client, ["Alice"])
 
-        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws:
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             msg = ws.receive_json()
             assert msg["type"] == "ROOM_STATE"
             assert msg["roomState"]["status"] == "waiting"
             assert msg["roomState"]["hostId"] == "Alice"
+
+    def test_connect_valid_token_succeeds(self, client: TestClient):
+        """Connecting with the correct session token succeeds."""
+        room_id, tokens = _setup_room(client, ["Alice"])
+
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
+            msg = ws.receive_json()
+            assert msg["type"] == "ROOM_STATE"
 
 
 class TestWebSocketGameFlow:
@@ -63,9 +108,9 @@ class TestWebSocketGameFlow:
 
     def test_start_game_transitions_to_playing(self, client: TestClient):
         """Sending START_GAME transitions room to playing with a question."""
-        room_id = _setup_room(client, ["Alice"])
+        room_id, tokens = _setup_room(client, ["Alice"])
 
-        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws:
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # initial ROOM_STATE (waiting)
             ws.send_json({"type": "START_GAME"})
             msg = ws.receive_json()
@@ -77,15 +122,15 @@ class TestWebSocketGameFlow:
 
     def test_start_game_non_host_ignored(self, client: TestClient, test_container):
         """Non-host sending START_GAME does not change room status."""
-        room_id = _setup_room(client, ["Alice", "Bob"])
+        room_id, tokens = _setup_room(client, ["Alice", "Bob"])
 
         with client.websocket_connect(
-            f"/ws?roomId={room_id}&playerId=Alice"
+            _ws_url(room_id, "Alice", tokens["Alice"])
         ) as ws_alice:
             ws_alice.receive_json()  # initial state
 
             with client.websocket_connect(
-                f"/ws?roomId={room_id}&playerId=Bob"
+                _ws_url(room_id, "Bob", tokens["Bob"])
             ) as ws_bob:
                 ws_bob.receive_json()  # initial state
                 # Alice also gets broadcast when Bob connects
@@ -100,9 +145,9 @@ class TestWebSocketGameFlow:
 
     def test_correct_answer_transitions_to_results(self, client: TestClient):
         """Single player giving correct answer triggers transition to results."""
-        room_id = _setup_room(client, ["Alice"])
+        room_id, tokens = _setup_room(client, ["Alice"])
 
-        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws:
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # waiting state
             ws.send_json({"type": "START_GAME"})
             ws.receive_json()  # playing state
@@ -118,9 +163,9 @@ class TestWebSocketGameFlow:
 
     def test_incorrect_answer_also_transitions_to_results(self, client: TestClient):
         """Single player giving wrong answer still triggers results (all answered)."""
-        room_id = _setup_room(client, ["Alice"])
+        room_id, tokens = _setup_room(client, ["Alice"])
 
-        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws:
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # waiting
             ws.send_json({"type": "START_GAME"})
             ws.receive_json()  # playing
@@ -132,9 +177,9 @@ class TestWebSocketGameFlow:
 
     def test_config_update_changes_difficulty(self, client: TestClient):
         """Host sending UPDATE_CONFIG updates difficulty in broadcasted state."""
-        room_id = _setup_room(client, ["Alice"])
+        room_id, tokens = _setup_room(client, ["Alice"])
 
-        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws:
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # initial state
 
             ws.send_json({"type": "UPDATE_CONFIG", "config": {"difficulty": "beast"}})
@@ -146,9 +191,9 @@ class TestWebSocketGameFlow:
         self, client: TestClient, test_container
     ):
         """UPDATE_CONFIG after game start is ignored."""
-        room_id = _setup_room(client, ["Alice"])
+        room_id, tokens = _setup_room(client, ["Alice"])
 
-        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws:
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # waiting
             ws.send_json({"type": "START_GAME"})
             ws.receive_json()  # playing
@@ -187,9 +232,9 @@ class TestPlayAgain:
 
     def test_play_again_resets_to_lobby(self, client: TestClient, test_container):
         """Host sending PLAY_AGAIN after game ends returns to waiting state."""
-        room_id = _setup_room(client, ["Alice"])
+        room_id, tokens = _setup_room(client, ["Alice"])
 
-        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws:
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # initial waiting state
             self._play_to_finished(ws, test_container, room_id)
 
@@ -203,9 +248,9 @@ class TestPlayAgain:
 
     def test_play_again_then_new_game(self, client: TestClient, test_container):
         """After play again, host can start a new game successfully."""
-        room_id = _setup_room(client, ["Alice"])
+        room_id, tokens = _setup_room(client, ["Alice"])
 
-        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws:
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # waiting
             self._play_to_finished(ws, test_container, room_id)
 
@@ -224,9 +269,9 @@ class TestPlayAgain:
         self, client: TestClient, test_container
     ):
         """New player can join the room after play again resets to lobby."""
-        room_id = _setup_room(client, ["Alice"])
+        room_id, tokens = _setup_room(client, ["Alice"])
 
-        with client.websocket_connect(f"/ws?roomId={room_id}&playerId=Alice") as ws:
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # waiting
             self._play_to_finished(ws, test_container, room_id)
 
@@ -237,11 +282,10 @@ class TestPlayAgain:
             # New player joins via HTTP
             resp = client.post(f"/api/rooms/{room_id}/join", json={"playerId": "Bob"})
             assert resp.status_code == 200
+            bob_token = resp.json()["sessionToken"]
 
             # Bob can connect via WebSocket
-            with client.websocket_connect(
-                f"/ws?roomId={room_id}&playerId=Bob"
-            ) as ws_bob:
+            with client.websocket_connect(_ws_url(room_id, "Bob", bob_token)) as ws_bob:
                 msg = ws_bob.receive_json()
                 assert msg["type"] == "ROOM_STATE"
                 assert msg["roomState"]["status"] == "waiting"
