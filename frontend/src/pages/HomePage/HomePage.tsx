@@ -174,7 +174,7 @@ export function HomePage() {
           letterSpacing: "1.5px",
         }}
       >
-        Trivia battles with friends :D
+        Real-time trivia. No accounts. Just battles.
       </Box>
 
       {/* Error banner */}
@@ -197,6 +197,7 @@ export function HomePage() {
 
       {/* Cards row */}
       <Box
+        data-nosnippet
         sx={{
           display: "flex",
           flexDirection: { xs: "column", md: "row" },
