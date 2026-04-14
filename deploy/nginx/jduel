@@ -64,7 +64,7 @@ server {
     # Social bot preview for room invite links.
     # Detects known social crawler UAs and returns a minimal HTML page with
     # room-specific OG tags. Real browsers fall through to the SPA as normal.
-    location ~ ^/room/(?<room_code>[A-Z0-9]{4,6})$ {
+    location ~ "^/room/(?<room_code>[A-Z0-9]{4,6})$" {
         default_type text/html;
 
         set $preview 0;
