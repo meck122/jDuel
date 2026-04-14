@@ -22,6 +22,13 @@ import { joinRoom, ApiError } from "../../services/api";
 // Module-level constant to avoid re-render instability with useRetry
 const RETRY_OPTIONS = { maxRetries: 4, initialDelay: 2000, maxDelay: 8000 };
 
+const GAME_TITLES: Record<string, string> = {
+  waiting: "Waiting for players — jDuel",
+  playing: "Round in progress — jDuel",
+  results: "Viewing results — jDuel",
+  finished: "Game over — jDuel",
+};
+
 /**
  * Attempt joinRoom with fast NAME_TAKEN retry (500ms intervals, up to maxRetries).
  * Returns on success, throws on non-NAME_TAKEN errors (including RATE_LIMITED).
@@ -203,6 +210,16 @@ function GamePageContent() {
       retry();
     }
   }, [rateLimited, isRetrying, hasInitialized, retry]);
+
+  // Reactive title — updates as game phase changes
+  useEffect(() => {
+    if (roomState?.status) {
+      document.title = GAME_TITLES[roomState.status] ?? "jDuel";
+    }
+    return () => {
+      document.title = "jDuel";
+    };
+  }, [roomState?.status]);
 
   // Retrying state — auto-retry with countdown
   if (isRetrying && nextRetryIn !== null) {
