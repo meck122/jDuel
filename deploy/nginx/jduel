@@ -61,6 +61,22 @@ server {
         add_header X-Content-Type-Options "nosniff" always;
     }
 
+    # Social bot preview for room invite links.
+    # Detects known social crawler UAs and returns a minimal HTML page with
+    # room-specific OG tags. Real browsers fall through to the SPA as normal.
+    location ~ ^/room/(?<room_code>[A-Z0-9]{4,6})$ {
+        default_type text/html;
+
+        set $preview 0;
+        if ($http_user_agent ~* "(Slackbot|Discordbot|TelegramBot|WhatsApp|Twitterbot|facebookexternalhit|facebookcatalog|LinkedInBot|Applebot)") {
+            set $preview 1;
+        }
+        if ($preview) {
+            return 200 '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta property="og:type" content="website"><meta property="og:url" content="https://jduel.com/room/$room_code"><meta property="og:title" content="Join Room $room_code on jDuel"><meta property="og:description" content="You&#x27;ve been invited to a trivia duel. Click to play &#x2014; no account required."><meta property="og:image" content="https://jduel.com/og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Join Room $room_code on jDuel"><meta name="twitter:description" content="You&#x27;ve been invited to a trivia duel. Click to play &#x2014; no account required."><meta name="twitter:image" content="https://jduel.com/og-image.png"><title>Join Room $room_code on jDuel</title></head><body></body></html>';
+        }
+        try_files $uri $uri/ /index.html;
+    }
+
     # SPA fallback - serves index.html for client-side routing
     location / {
         try_files $uri $uri/ /index.html;
