@@ -31,6 +31,13 @@ export function HomePage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
+  useEffect(() => {
+    document.title = "jDuel — Free Online Multiplayer Trivia";
+    return () => {
+      document.title = "jDuel";
+    };
+  }, []);
+
   // Clear the query param from URL once (cleaner UX)
   useEffect(() => {
     if (joinRoomCode) {

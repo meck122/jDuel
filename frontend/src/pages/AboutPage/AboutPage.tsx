@@ -1,6 +1,14 @@
+import { useEffect } from "react";
 import styles from "./AboutPage.module.css";
 
 export function AboutPage() {
+  useEffect(() => {
+    document.title = "About — jDuel";
+    return () => {
+      document.title = "jDuel";
+    };
+  }, []);
+
   return (
     <div className={styles.container}>
       <div className={styles.paper}>
