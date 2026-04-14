@@ -66,6 +66,13 @@ sudo systemctl daemon-reload
 echo -e "${BLUE}▶️  Starting backend service...${NC}"
 sudo systemctl start jduel-backend
 
+# Step 6b: Sync Grafana Alloy config (if Alloy is installed)
+if systemctl is-enabled --quiet grafana-alloy 2>/dev/null; then
+    echo -e "${BLUE}📊 Syncing Grafana Alloy config...${NC}"
+    sudo cp "$SCRIPT_DIR/deploy/alloy/config.alloy" /etc/alloy/config.alloy
+    sudo systemctl restart grafana-alloy
+fi
+
 # Step 7: Reload nginx
 echo -e "${BLUE}🔄 Reloading nginx...${NC}"
 sudo systemctl reload nginx
@@ -95,3 +102,4 @@ echo -e "${GREEN}🎉 Deployment complete!${NC}"
 echo ""
 echo "View backend logs: journalctl -u jduel-backend -f"
 echo "View nginx logs: sudo tail -f /var/log/nginx/error.log"
+echo "View Alloy logs:  journalctl -u grafana-alloy -f"
