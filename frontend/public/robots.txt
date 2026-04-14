@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Allow: /about
+Disallow: /game/
+Disallow: /room/
+
+Sitemap: https://jduel.com/sitemap.xml
