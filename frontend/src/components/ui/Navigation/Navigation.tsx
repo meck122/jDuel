@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import InfoIcon from "@mui/icons-material/Info";
 import HomeIcon from "@mui/icons-material/Home";
 import { useGame } from "../../../contexts";
+import { ToolbarMuteButton } from "../MuteButton/ToolbarMuteButton";
 import styles from "./Navigation.module.css";
 
 export function Navigation() {
@@ -43,7 +44,8 @@ export function Navigation() {
             Duel
           </Box>
         </Box>
-        <Box>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+          <ToolbarMuteButton />
           {isAboutPage ? (
             <Button
               component={Link}
