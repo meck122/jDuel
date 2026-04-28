@@ -101,7 +101,7 @@ The current orchestrator, timer service, and state builder all assume one shared
 - **Out:** mode-specific difficulty curves, custom question pools, or "infinite mode". The 100-question pool is generous against the practical ~30–40 ceiling for honest play; running out signals cheating or a bug.
 - **Out:** persisting Speed Battle stats across rooms (no DB exists, no scope to add one here).
 - **Out:** spectator mode for late arrivals during a Speed Battle round.
-- **Out (deferred):** observable metrics for the new mode are explicitly scoped into PR 5, not the core mode work.
+- **Out (deferred):** observable metrics for the new mode are explicitly scoped into PR 4, not the core mode work.
 
 ## Key Decisions
 
