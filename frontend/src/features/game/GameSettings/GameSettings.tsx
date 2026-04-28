@@ -1,6 +1,7 @@
 import { Box } from "@mui/material";
 import { useGame } from "../../../contexts";
 import { DifficultySelector } from "./DifficultySelector";
+import { GameModeToggle } from "./GameModeToggle";
 import { MultipleChoiceToggle } from "./MultipleChoiceToggle";
 
 export function GameSettings() {
@@ -46,6 +47,11 @@ export function GameSettings() {
         isHost={isHost}
         enabled={roomState?.config?.multipleChoiceEnabled ?? false}
         onToggle={(enabled) => updateConfig({ multipleChoiceEnabled: enabled })}
+      />
+      <GameModeToggle
+        isHost={isHost}
+        currentMode={roomState?.config?.gameMode ?? "classic"}
+        onSelect={(mode) => updateConfig({ gameMode: mode })}
       />
     </Box>
   );

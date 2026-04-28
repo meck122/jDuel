@@ -388,6 +388,7 @@ Updates room configuration settings. Can only be sent by the host player while t
 - `config` (object, required): Configuration fields to update
   - `multipleChoiceEnabled` (boolean, optional): Enable multiple choice questions
   - `difficulty` (string, optional): Question difficulty level
+  - `gameMode` (string, optional): Game mode — `"classic"` (default) | `"speed_battle"`
 
 **Difficulty Levels:**
 
@@ -400,7 +401,7 @@ Updates room configuration settings. Can only be sent by the host player while t
 - Room must be in `"waiting"` status (before game starts)
 - Only the host can update configuration
 - Non-host requests are silently ignored
-- Invalid difficulty values are ignored with a warning
+- Invalid difficulty or game mode values are ignored with a warning
 
 **Server Response:**
 
@@ -415,6 +416,7 @@ ws.send(
     config: {
       multipleChoiceEnabled: true,
       difficulty: 'master',
+      gameMode: 'speed_battle',
     },
   }),
 );
@@ -427,7 +429,8 @@ The `config` field in `ROOM_STATE` messages contains:
 ```json
 "config": {
   "multipleChoiceEnabled": false,
-  "difficulty": "enjoyer"
+  "difficulty": "enjoyer",
+  "gameMode": "classic"
 }
 ```
 
@@ -438,6 +441,10 @@ The `config` field in `ROOM_STATE` messages contains:
   - Default: `"enjoyer"`
   - Options: `"enjoyer"`, `"master"`, `"beast"`
   - Determines question pool loaded at game start
+- `gameMode` (string): Active game mode
+  - Default: `"classic"`
+  - Options: `"classic"` | `"speed_battle"`
+  - Speed Battle behavior activates in PR 2 — selecting it in PR 1 has no runtime effect
 
 ---
 

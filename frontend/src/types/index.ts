@@ -1,6 +1,7 @@
 export interface RoomConfig {
   multipleChoiceEnabled: boolean;
   difficulty: string;
+  gameMode: "classic" | "speed_battle";
 }
 
 export interface RoomState {
