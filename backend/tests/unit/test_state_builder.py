@@ -2,7 +2,11 @@
 
 from datetime import UTC, datetime
 
+import pytest
+from pydantic import ValidationError
+
 from app.models import GameStatus, Room
+from app.models.state import RoomConfigData
 from app.services.orchestration.state_builder import StateBuilder
 
 
@@ -220,3 +224,48 @@ class TestStateBuilder:
         state_builder.build_room_state(room)
 
         assert room.current_round.shuffled_options is None
+
+
+class TestRoomConfigDataGameMode:
+    """Tests for RoomConfigData.gameMode field and state_builder wiring."""
+
+    def test_default_constructs_with_classic(self):
+        """RoomConfigData() default-constructs with gameMode='classic'."""
+        config = RoomConfigData()
+        assert config.gameMode == "classic"
+
+    def test_explicit_speed_battle(self):
+        """RoomConfigData(gameMode='speed_battle') round-trips correctly."""
+        config = RoomConfigData(gameMode="speed_battle")
+        dumped = config.model_dump(exclude_none=True)
+        assert dumped["gameMode"] == "speed_battle"
+
+    def test_invalid_game_mode_raises(self):
+        """RoomConfigData(gameMode='garbage') raises ValidationError."""
+        with pytest.raises(ValidationError):
+            RoomConfigData(gameMode="garbage")
+
+    def test_state_builder_wires_speed_battle(
+        self, state_builder: StateBuilder, sample_questions
+    ):
+        """state_builder.build_room_state reflects game_mode='speed_battle'."""
+        room = Room("TEST1", sample_questions)
+        room.players = {"Alice"}
+        room.scores = {"Alice": 0}
+        room.host_id = "Alice"
+        room.config.game_mode = "speed_battle"
+
+        msg = state_builder.build_room_state(room)
+        assert msg.roomState.config.gameMode == "speed_battle"
+
+    def test_state_builder_default_game_mode_is_classic(
+        self, state_builder: StateBuilder, sample_questions
+    ):
+        """Fresh room produces ROOM_STATE with config.gameMode=='classic'."""
+        room = Room("TEST1", sample_questions)
+        room.players = {"Alice"}
+        room.scores = {"Alice": 0}
+        room.host_id = "Alice"
+
+        msg = state_builder.build_room_state(room)
+        assert msg.roomState.config.gameMode == "classic"

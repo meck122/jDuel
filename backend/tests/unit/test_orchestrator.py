@@ -109,6 +109,89 @@ class TestOrchestrator:
 
         assert room.config.difficulty == "enjoyer"  # default, unchanged
 
+    async def test_handle_config_update_game_mode_speed_battle(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Host sending gameMode='speed_battle' updates room.config.game_mode."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")  # host
+
+        await orchestrator.handle_config_update(
+            room.room_id, "Alice", {"gameMode": "speed_battle"}
+        )
+
+        assert room.config.game_mode == "speed_battle"
+
+    async def test_handle_config_update_game_mode_switch_back_to_classic(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Host can switch back from speed_battle to classic."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room.config.game_mode = "speed_battle"
+
+        await orchestrator.handle_config_update(
+            room.room_id, "Alice", {"gameMode": "classic"}
+        )
+
+        assert room.config.game_mode == "classic"
+
+    async def test_handle_config_update_game_mode_invalid_ignored(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Invalid game mode is silently dropped; game_mode stays at default."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+
+        await orchestrator.handle_config_update(
+            room.room_id, "Alice", {"gameMode": "garbage"}
+        )
+
+        assert room.config.game_mode == "classic"
+
+    async def test_handle_config_update_other_field_does_not_affect_game_mode(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """UPDATE_CONFIG with only difficulty leaves game_mode unchanged."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room.config.game_mode = "speed_battle"
+
+        await orchestrator.handle_config_update(
+            room.room_id, "Alice", {"difficulty": "beast"}
+        )
+
+        assert room.config.game_mode == "speed_battle"
+        assert room.config.difficulty == "beast"
+
+    async def test_handle_config_update_game_mode_non_host_rejected(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Non-host cannot change game_mode; remains unchanged."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")  # host
+        room_manager.register_player(room.room_id, "Bob")
+
+        await orchestrator.handle_config_update(
+            room.room_id, "Bob", {"gameMode": "speed_battle"}
+        )
+
+        assert room.config.game_mode == "classic"
+
+    async def test_handle_config_update_game_mode_after_game_start_rejected(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Host cannot change game_mode after game has started."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+
+        await orchestrator.handle_config_update(
+            room.room_id, "Alice", {"gameMode": "speed_battle"}
+        )
+
+        assert room.config.game_mode == "classic"
+
     async def test_handle_disconnect_last_player_deletes_room(
         self, orchestrator: GameOrchestrator, room_manager
     ):
