@@ -65,7 +65,7 @@ export function GameModeToggle({ isHost, currentMode, onSelect }: Props) {
           p: 1,
           opacity: isHost ? 1 : 0.5,
           cursor: isHost ? undefined : "not-allowed",
-          width: { xs: "100%", sm: "auto" },
+          width: "100%",
         }}
       >
         {GAME_MODE_OPTIONS.map((option) => {
@@ -80,7 +80,7 @@ export function GameModeToggle({ isHost, currentMode, onSelect }: Props) {
               disabled={!isHost}
               onClick={() => onSelect(option.value)}
               sx={{
-                flex: { xs: 1, sm: "initial" },
+                flex: 1,
                 py: { xs: 2, sm: 4 },
                 px: { xs: 1, sm: 4 },
                 fontFamily: "var(--font-display)",
