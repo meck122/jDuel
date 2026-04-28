@@ -15,3 +15,4 @@ class RoomConfig:
 
     multiple_choice_enabled: bool = True
     difficulty: str = "enjoyer"
+    game_mode: str = "classic"

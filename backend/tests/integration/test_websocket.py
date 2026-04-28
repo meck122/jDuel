@@ -205,6 +205,47 @@ class TestWebSocketGameFlow:
             room = test_container.room_manager.get_room(room_id)
             assert room.config.difficulty == "enjoyer"
 
+    def test_config_update_game_mode_speed_battle_broadcasts(self, client: TestClient):
+        """Host sending gameMode='speed_battle' is reflected in broadcasted ROOM_STATE."""
+        room_id, tokens = _setup_room(client, ["Alice"])
+
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
+            ws.receive_json()  # initial state
+
+            ws.send_json(
+                {"type": "UPDATE_CONFIG", "config": {"gameMode": "speed_battle"}}
+            )
+            msg = ws.receive_json()
+
+            assert msg["roomState"]["config"]["gameMode"] == "speed_battle"
+
+    def test_config_update_game_mode_broadcast_reaches_non_host(
+        self, client: TestClient
+    ):
+        """Both host and non-host WS connections receive the updated gameMode."""
+        room_id, tokens = _setup_room(client, ["Alice", "Bob"])
+
+        with (
+            client.websocket_connect(
+                _ws_url(room_id, "Alice", tokens["Alice"])
+            ) as ws_alice,
+            client.websocket_connect(_ws_url(room_id, "Bob", tokens["Bob"])) as ws_bob,
+        ):
+            ws_alice.receive_json()  # Alice's initial state
+            ws_bob.receive_json()  # Bob's initial state
+            # Bob's connection also triggers an Alice broadcast (new player joined)
+            ws_alice.receive_json()
+
+            ws_alice.send_json(
+                {"type": "UPDATE_CONFIG", "config": {"gameMode": "speed_battle"}}
+            )
+
+            alice_msg = ws_alice.receive_json()
+            bob_msg = ws_bob.receive_json()
+
+            assert alice_msg["roomState"]["config"]["gameMode"] == "speed_battle"
+            assert bob_msg["roomState"]["config"]["gameMode"] == "speed_battle"
+
 
 class TestPlayAgain:
     """Tests for the Play Again feature."""

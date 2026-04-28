@@ -10,6 +10,7 @@ from fastapi import WebSocket
 
 from app.config import (
     DIFFICULTY_RANGES,
+    GAME_MODES,
     GAME_OVER_TIME_MS,
     QUESTION_TIME_MS,
     REACTION_COOLDOWN_MS,
@@ -299,10 +300,21 @@ class GameOrchestrator:
                         f"difficulty={difficulty}"
                     )
 
+            if "gameMode" in config_data:
+                game_mode = config_data["gameMode"]
+                if game_mode in GAME_MODES:
+                    room.config.game_mode = game_mode
+                else:
+                    logger.warning(
+                        f"Invalid game_mode rejected: room_id={room_id}, "
+                        f"game_mode={game_mode}"
+                    )
+
             logger.info(
                 f"Config updated: room_id={room_id}, "
                 f"multiple_choice={room.config.multiple_choice_enabled}, "
-                f"difficulty={room.config.difficulty}"
+                f"difficulty={room.config.difficulty}, "
+                f"game_mode={room.config.game_mode}"
             )
             state_snapshot = self._state_builder.build_room_state(room)
 

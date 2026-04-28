@@ -40,6 +40,7 @@ class StateBuilder:
             config=RoomConfigData(
                 multipleChoiceEnabled=room.config.multiple_choice_enabled,
                 difficulty=room.config.difficulty,
+                gameMode=room.config.game_mode,
             ),
             reactions=[ReactionData(id=r["id"], label=r["label"]) for r in REACTIONS],
         )

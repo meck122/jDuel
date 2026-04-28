@@ -15,6 +15,9 @@ DIFFICULTY_RANGES: dict[str, tuple[int, int]] = {
     "beast": (4, 5),
 }
 
+# Valid game modes
+GAME_MODES: tuple[str, ...] = ("classic", "speed_battle")
+
 # Rate limiting (max requests, window in seconds)
 RATE_LIMIT_ROOM_CREATE = (5, 60)  # 5 rooms per minute per IP
 RATE_LIMIT_ROOM_JOIN = (20, 60)  # 20 joins per minute per IP
