@@ -18,6 +18,11 @@ DIFFICULTY_RANGES: dict[str, tuple[int, int]] = {
 # Valid game modes
 GAME_MODES: tuple[str, ...] = ("classic", "speed_battle")
 
+# Speed Battle configuration
+SPEED_BATTLE_MATCH_TIME_MS: int = 180_000  # 3 minutes per match
+SPEED_BATTLE_WRONG_COOLDOWN_MS: int = 5_000  # 5 seconds cooldown on wrong answer
+SPEED_BATTLE_QUESTION_POOL_SIZE: int = 100  # questions drawn per match
+
 # Rate limiting (max requests, window in seconds)
 RATE_LIMIT_ROOM_CREATE = (5, 60)  # 5 rooms per minute per IP
 RATE_LIMIT_ROOM_JOIN = (20, 60)  # 20 joins per minute per IP

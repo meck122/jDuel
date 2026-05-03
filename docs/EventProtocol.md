@@ -329,12 +329,14 @@ Submits an answer to the current question.
 
 - `type` (string): Always `"ANSWER"`
 - `answer` (string, required): The player's answer text
+- `questionIndex` (integer, optional, `≥ 0`): Required for Speed Battle; ignored in Classic mode. The zero-based index of the question being answered. The server drops answers silently if this does not match the player's current question index (R30 idempotency — defends against double-send races after the player has already advanced).
 
 **Validation:**
 
 - Room must be in `"playing"` status
 - Player can only answer once per question (subsequent answers ignored)
 - Answer is trimmed and processed by AI verification system
+- **Speed Battle only:** `questionIndex` must be present and must equal the player's server-tracked current question index; answers with a missing or mismatched `questionIndex` are silently dropped
 
 **Server Processing:**
 
@@ -548,6 +550,11 @@ The primary message type that broadcasts the complete current state of the room 
 - `results` (object, optional): Answer results after a question
   - Only present when `status: "results"`
   - See ResultsData schema below
+- `speedBattle` (object, optional): Speed Battle per-recipient state block
+  - **Present only in Speed Battle rooms** when `status` is `"playing"` or `"finished"`
+  - **Never present in Classic rooms** (`model_dump(exclude_none=True)` omits it entirely — Classic clients are unaffected)
+  - **Per-recipient**: each connected player receives their own `speedBattle` block; one player's `currentQuestion` text never appears in another player's WebSocket frame
+  - See SpeedBattleStateData schema below
 
 **ResultsData Schema (when status = "results"):**
 
@@ -571,6 +578,42 @@ The primary message type that broadcasts the complete current state of the room 
 - `playerResults` (object): Map of playerIds to points gained this round
   - 0 if incorrect or did not answer
   - Time-based score if correct (1000, 500, 250, etc.)
+
+**SpeedBattleStateData Schema (when mode = "speed_battle" and status = "playing" or "finished"):**
+
+```json
+"speedBattle": {
+  "matchRemainingMs": 120000,
+  "playerState": {
+    "questionIndex": 5,
+    "correctCount": 5,
+    "wrongCount": 1,
+    "cooldownRemainingMs": 3200,
+    "cooldownCorrectAnswer": "Tokyo",
+    "exhausted": false
+  },
+  "leaderboard": [
+    { "playerId": "Alice", "correctCount": 5, "wrongCount": 1, "placement": 1 },
+    { "playerId": "Bob", "correctCount": 3, "wrongCount": 0, "placement": 2 }
+  ]
+}
+```
+
+- `matchRemainingMs` (integer): Milliseconds remaining in the 3-minute match. Server-authoritative monotonic clock. Clients interpolate locally.
+- `playerState` (object): **Per-recipient** — this player's own progress snapshot only
+  - `questionIndex` (integer): The zero-based index of the player's current question
+  - `correctCount` (integer): Number of correct answers so far
+  - `wrongCount` (integer): Number of wrong answers so far
+  - `cooldownRemainingMs` (integer, optional): If the player is in a wrong-answer cooldown, milliseconds until the cooldown expires and they auto-advance. Omitted when not in cooldown.
+  - `cooldownCorrectAnswer` (string, optional): The correct answer revealed during cooldown. Omitted when not in cooldown.
+  - `exhausted` (boolean): `true` when the player has answered all 100 questions before the match ends; `currentQuestion` will be `null` in this case.
+- `leaderboard` (array, optional): Final placement rows. **Only present when `status: "finished"`**; omitted mid-round.
+  - `playerId` (string): Player name
+  - `correctCount` (integer): Final correct answer count
+  - `wrongCount` (integer): Final wrong answer count
+  - `placement` (integer): Final placement (1-based; tied players share the same placement number)
+
+> **Note on `players` field in Speed Battle:** The top-level `players` map (e.g., `{"Alice": 5, "Bob": 3}`) carries live correct counts in Speed Battle (not time-based points as in Classic). It serves as the live leaderboard signal visible to all players; `speedBattle.playerState` carries per-recipient private state.
 
 **Timing Notes:**
 
@@ -2203,3 +2246,295 @@ _Client stays on join form, displays error message._
 4. Messages flow bidirectionally
 5. On disconnect: server removes player, broadcasts updated state
 6. On error: server sends `ERROR`, client can retry without reconnecting
+
+---
+
+## Speed Battle Game Flow
+
+Speed Battle is a fundamentally different game loop from Classic. This section describes the complete event sequence for a Speed Battle match. **Speed Battle v1 requires Multiple Choice to be enabled** (`multipleChoiceEnabled: true`); the server refuses to start a Speed Battle round without it.
+
+### Key Differences from Classic
+
+| Classic | Speed Battle |
+|---------|-------------|
+| Shared question per round | Each player advances independently |
+| 15s per-question timer | Single 3-minute match clock |
+| NLP AI verification | MC-only sync comparison (v1) |
+| Shared ROOM_STATE broadcast | Per-recipient ROOM_STATE (private question) |
+| Score = time-based points | Score = correct answer count |
+| RESULTS phase between questions | No RESULTS phase — immediate advance or cooldown |
+
+### Speed Battle Example Sequence
+
+This example shows a 2-player Speed Battle match between **Alice** (host) and **Bob**.
+
+---
+
+#### Step 1: Configure Speed Battle in lobby
+
+**Alice → Server:**
+```json
+{ "type": "UPDATE_CONFIG", "config": { "gameMode": "speed_battle", "multipleChoiceEnabled": true } }
+```
+
+**Server → All Players (ROOM_STATE):**
+```json
+{
+  "type": "ROOM_STATE",
+  "roomState": {
+    "roomId": "AB3D",
+    "players": { "Alice": 0, "Bob": 0 },
+    "status": "waiting",
+    "questionIndex": 0,
+    "config": { "gameMode": "speed_battle", "multipleChoiceEnabled": true, "difficulty": "enjoyer" }
+  }
+}
+```
+
+---
+
+#### Step 2: Alice starts the game
+
+**Alice → Server:**
+```json
+{ "type": "START_GAME" }
+```
+
+Server loads 100 questions, initializes per-player state, starts the 3-minute match timer.
+
+**Server → Alice (per-recipient ROOM_STATE):**
+```json
+{
+  "type": "ROOM_STATE",
+  "roomState": {
+    "roomId": "AB3D",
+    "players": { "Alice": 0, "Bob": 0 },
+    "status": "playing",
+    "questionIndex": 0,
+    "currentQuestion": {
+      "text": "What is the capital of France?",
+      "category": "Geography",
+      "options": ["Paris", "London", "Berlin", "Madrid"]
+    },
+    "config": { "gameMode": "speed_battle", "multipleChoiceEnabled": true, "difficulty": "enjoyer" },
+    "speedBattle": {
+      "matchRemainingMs": 179980,
+      "playerState": { "questionIndex": 0, "correctCount": 0, "wrongCount": 0, "exhausted": false }
+    }
+  }
+}
+```
+
+**Server → Bob (per-recipient ROOM_STATE, same question — different socket frame):**
+```json
+{
+  "type": "ROOM_STATE",
+  "roomState": {
+    "roomId": "AB3D",
+    "players": { "Alice": 0, "Bob": 0 },
+    "status": "playing",
+    "questionIndex": 0,
+    "currentQuestion": {
+      "text": "What is the capital of France?",
+      "category": "Geography",
+      "options": ["Berlin", "Paris", "Madrid", "London"]
+    },
+    "speedBattle": {
+      "matchRemainingMs": 179980,
+      "playerState": { "questionIndex": 0, "correctCount": 0, "wrongCount": 0, "exhausted": false }
+    }
+  }
+}
+```
+
+> Note: MC options are shuffled independently per player per broadcast. Option order is not a stable signal.
+
+---
+
+#### Step 3: Alice answers correctly
+
+**Alice → Server:**
+```json
+{ "type": "ANSWER", "answer": "Paris", "questionIndex": 0 }
+```
+
+Server verifies `"Paris" == correct answer`, increments Alice's correct count, advances her to question 1.
+
+**Server → Alice (per-recipient ROOM_STATE):**
+```json
+{
+  "type": "ROOM_STATE",
+  "roomState": {
+    "roomId": "AB3D",
+    "players": { "Alice": 1, "Bob": 0 },
+    "status": "playing",
+    "questionIndex": 0,
+    "currentQuestion": {
+      "text": "What is the largest planet?",
+      "category": "Science",
+      "options": ["Jupiter", "Saturn", "Neptune", "Uranus"]
+    },
+    "speedBattle": {
+      "matchRemainingMs": 178500,
+      "playerState": { "questionIndex": 1, "correctCount": 1, "wrongCount": 0, "exhausted": false }
+    }
+  }
+}
+```
+
+**Server → Bob (per-recipient ROOM_STATE, Bob still on question 0):**
+```json
+{
+  "type": "ROOM_STATE",
+  "roomState": {
+    "players": { "Alice": 1, "Bob": 0 },
+    "status": "playing",
+    "currentQuestion": {
+      "text": "What is the capital of France?",
+      "options": ["Paris", "London", "Berlin", "Madrid"]
+    },
+    "speedBattle": {
+      "matchRemainingMs": 178500,
+      "playerState": { "questionIndex": 0, "correctCount": 0, "wrongCount": 0, "exhausted": false }
+    }
+  }
+}
+```
+
+> Bob's `currentQuestion` is still question 0 — Alice's question 1 is never sent to Bob.
+
+---
+
+#### Step 4: Bob answers incorrectly (5-second cooldown)
+
+**Bob → Server:**
+```json
+{ "type": "ANSWER", "answer": "London", "questionIndex": 0 }
+```
+
+Server verifies incorrect, increments Bob's wrong count, sets a 5-second cooldown, reveals the correct answer.
+
+**Server → Bob (per-recipient ROOM_STATE, cooldown revealed):**
+```json
+{
+  "type": "ROOM_STATE",
+  "roomState": {
+    "players": { "Alice": 1, "Bob": 0 },
+    "status": "playing",
+    "currentQuestion": {
+      "text": "What is the capital of France?",
+      "options": ["Paris", "London", "Berlin", "Madrid"]
+    },
+    "speedBattle": {
+      "matchRemainingMs": 177000,
+      "playerState": {
+        "questionIndex": 0,
+        "correctCount": 0,
+        "wrongCount": 1,
+        "cooldownRemainingMs": 5000,
+        "cooldownCorrectAnswer": "Paris",
+        "exhausted": false
+      }
+    }
+  }
+}
+```
+
+**Server → Alice (per-recipient ROOM_STATE, no cooldown reveal for Alice):**
+```json
+{
+  "speedBattle": {
+    "matchRemainingMs": 177000,
+    "playerState": { "questionIndex": 1, "correctCount": 1, "wrongCount": 0, "exhausted": false }
+  }
+}
+```
+
+> `cooldownCorrectAnswer` is private to Bob — Alice's WS frame never contains Bob's cooldown state.
+
+---
+
+#### Step 5: Bob's cooldown expires (server-driven)
+
+After 5 seconds, the server fires the cooldown-end callback, auto-advances Bob to question 1.
+
+**Server → Bob (per-recipient ROOM_STATE, cooldown cleared):**
+```json
+{
+  "speedBattle": {
+    "matchRemainingMs": 172000,
+    "playerState": {
+      "questionIndex": 1,
+      "correctCount": 0,
+      "wrongCount": 1,
+      "exhausted": false
+    },
+    "currentQuestion": {
+      "text": "What is the largest planet?",
+      "options": ["Neptune", "Jupiter", "Saturn", "Uranus"]
+    }
+  }
+}
+```
+
+---
+
+#### Step 6: Match ends at T=180s (hard cut)
+
+The server fires the match-end timer. All in-flight cooldowns are cancelled. Final leaderboard is computed (sort by correct desc, wrong asc; shared placement for ties).
+
+**Server → Alice (per-recipient final ROOM_STATE):**
+```json
+{
+  "type": "ROOM_STATE",
+  "roomState": {
+    "players": { "Alice": 12, "Bob": 9 },
+    "status": "finished",
+    "questionIndex": 0,
+    "speedBattle": {
+      "matchRemainingMs": 0,
+      "playerState": { "questionIndex": 12, "correctCount": 12, "wrongCount": 2, "exhausted": false },
+      "leaderboard": [
+        { "playerId": "Alice", "correctCount": 12, "wrongCount": 2, "placement": 1 },
+        { "playerId": "Bob", "correctCount": 9, "wrongCount": 3, "placement": 2 }
+      ]
+    }
+  }
+}
+```
+
+**Server → Bob (per-recipient final ROOM_STATE — different playerState):**
+```json
+{
+  "speedBattle": {
+    "matchRemainingMs": 0,
+    "playerState": { "questionIndex": 9, "correctCount": 9, "wrongCount": 3, "exhausted": false },
+    "leaderboard": [
+      { "playerId": "Alice", "correctCount": 12, "wrongCount": 2, "placement": 1 },
+      { "playerId": "Bob", "correctCount": 9, "wrongCount": 3, "placement": 2 }
+    ]
+  }
+}
+```
+
+> Both players see the same leaderboard rows but their own `playerState`.
+
+---
+
+### Speed Battle Protocol Rules
+
+1. **`questionIndex` is required in ANSWER messages.** Omitting it or sending a stale value causes the answer to be silently dropped (no ERROR reply).
+
+2. **Answers during cooldown are silently dropped.** The client should disable input while `cooldownRemainingMs > 0`.
+
+3. **No retry on wrong answers.** The player auto-advances after the cooldown expires — they cannot retry the same question.
+
+4. **Match timer is server-authoritative.** `matchRemainingMs` is computed from a monotonic clock on each state build; clients interpolate locally.
+
+5. **Per-recipient privacy.** Each player's WS frame contains only their own `currentQuestion` and `playerState`. Other players' questions and cooldowns are never sent.
+
+6. **Silent drops instead of ERROR on most validation failures.** Rate-limited answers, stale `questionIndex`, answers post-match, and answers from exhausted players are all dropped silently.
+
+7. **60s play-again window.** After `status: "finished"`, the host can send `PLAY_AGAIN` to reset to lobby within 60 seconds, same as Classic. The `speedBattle` field will be absent in the subsequent lobby `ROOM_STATE`.
+
+8. **Multiple Choice required (v1).** Attempting to start a Speed Battle round without `multipleChoiceEnabled: true` results in an ERROR reply: `"Speed Battle requires Multiple Choice in v1."`

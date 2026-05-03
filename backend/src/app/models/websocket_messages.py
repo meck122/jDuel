@@ -18,6 +18,7 @@ class AnswerMessage(BaseModel):
 
     type: Literal["ANSWER"]
     answer: str = Field(..., max_length=MAX_ANSWER_LENGTH)
+    questionIndex: int | None = Field(default=None, ge=0)
 
 
 class UpdateConfigMessage(BaseModel):

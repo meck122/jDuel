@@ -36,6 +36,34 @@ class ResultsData(BaseModel):
     playerResults: dict[str, int]  # Map of player ID to points gained (0 if incorrect)
 
 
+class SpeedBattleLeaderRow(BaseModel):
+    """One row in the Speed Battle leaderboard."""
+
+    playerId: str
+    correctCount: int
+    wrongCount: int
+    placement: int
+
+
+class SpeedBattlePlayerState(BaseModel):
+    """Per-recipient Speed Battle player state."""
+
+    questionIndex: int
+    correctCount: int
+    wrongCount: int
+    cooldownRemainingMs: int | None = None
+    cooldownCorrectAnswer: str | None = None
+    exhausted: bool = False
+
+
+class SpeedBattleStateData(BaseModel):
+    """Speed Battle block on RoomStateData — present only in Speed Battle rooms."""
+
+    matchRemainingMs: int
+    playerState: SpeedBattlePlayerState
+    leaderboard: list[SpeedBattleLeaderRow] | None = None
+
+
 class RoomStateData(BaseModel):
     """Room state data sent to clients."""
 
@@ -51,6 +79,7 @@ class RoomStateData(BaseModel):
     winner: str | None = None
     results: ResultsData | None = None
     reactions: list[ReactionData] | None = None
+    speedBattle: SpeedBattleStateData | None = None
 
 
 class RoomStateMessage(BaseModel):
