@@ -19,6 +19,9 @@ class TimerService:
         self._question_timers: dict[str, asyncio.Task] = {}
         self._result_timers: dict[str, asyncio.Task] = {}
         self._game_over_timers: dict[str, asyncio.Task] = {}
+        # Speed Battle timers
+        self._match_timers: dict[str, asyncio.Task] = {}
+        self._player_cooldowns: dict[tuple[str, str], asyncio.Task] = {}
 
     def start_question_timer(
         self,
@@ -71,6 +74,59 @@ class TimerService:
         task = asyncio.create_task(self._run_timer(duration_ms, callback))
         self._game_over_timers[room_id] = task
 
+    def start_match_timer(
+        self,
+        room_id: str,
+        duration_ms: int,
+        callback: Callable[[], Awaitable[None]],
+    ) -> None:
+        """Start a Speed Battle match timer for a room.
+
+        Args:
+            room_id: The room ID
+            duration_ms: Timer duration in milliseconds
+            callback: Async function to call when the match timer expires
+        """
+        self._cancel_match_timer(room_id)
+        task = asyncio.create_task(self._run_timer(duration_ms, callback))
+        self._match_timers[room_id] = task
+
+    def start_player_cooldown(
+        self,
+        room_id: str,
+        player_id: str,
+        duration_ms: int,
+        callback: Callable[[], Awaitable[None]],
+    ) -> None:
+        """Start a per-player wrong-answer cooldown timer.
+
+        Replaces any existing cooldown for the same (room_id, player_id).
+
+        Args:
+            room_id: The room ID
+            player_id: The player ID
+            duration_ms: Cooldown duration in milliseconds
+            callback: Async function to call when cooldown expires
+        """
+        key = (room_id, player_id)
+        if key in self._player_cooldowns:
+            self._player_cooldowns[key].cancel()
+            del self._player_cooldowns[key]
+        task = asyncio.create_task(self._run_timer(duration_ms, callback))
+        self._player_cooldowns[key] = task
+
+    def cancel_player_cooldown(self, room_id: str, player_id: str) -> None:
+        """Cancel a specific player's cooldown timer.
+
+        Args:
+            room_id: The room ID
+            player_id: The player ID
+        """
+        key = (room_id, player_id)
+        if key in self._player_cooldowns:
+            self._player_cooldowns[key].cancel()
+            del self._player_cooldowns[key]
+
     def cancel_all_timers_for_room(self, room_id: str) -> None:
         """Cancel all timers for a room.
 
@@ -80,6 +136,17 @@ class TimerService:
         self._cancel_timer(self._question_timers, room_id)
         self._cancel_timer(self._result_timers, room_id)
         self._cancel_timer(self._game_over_timers, room_id)
+        self._cancel_match_timer(room_id)
+        self._cancel_all_player_cooldowns_for_room(room_id)
+
+    def _cancel_match_timer(self, room_id: str) -> None:
+        self._cancel_timer(self._match_timers, room_id)
+
+    def _cancel_all_player_cooldowns_for_room(self, room_id: str) -> None:
+        keys_to_cancel = [k for k in self._player_cooldowns if k[0] == room_id]
+        for key in keys_to_cancel:
+            self._player_cooldowns[key].cancel()
+            del self._player_cooldowns[key]
 
     def _cancel_timer(self, timer_dict: dict[str, asyncio.Task], room_id: str) -> None:
         """Cancel a specific timer.
