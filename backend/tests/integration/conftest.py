@@ -18,6 +18,7 @@ from app.services.core.room_closer import WebSocketRoomCloser
 from app.services.core.room_manager import RoomManager
 from app.services.core.timer_service import TimerService
 from app.services.orchestration.orchestrator import GameOrchestrator
+from app.services.orchestration.speed_battle_handler import SpeedBattleHandler
 from app.services.orchestration.state_builder import StateBuilder
 
 
@@ -37,13 +38,21 @@ def test_container(mock_answer_service, static_question_provider) -> ServiceCont
     state_builder = StateBuilder()
     game_service = GameService(mock_answer_service)
     room_closer = WebSocketRoomCloser(room_manager, timer_service)
+    speed_battle_handler = SpeedBattleHandler(
+        room_manager=room_manager,
+        timer_service=timer_service,
+        state_builder=state_builder,
+        room_closer=room_closer,
+    )
     orchestrator = GameOrchestrator(
         room_manager=room_manager,
         game_service=game_service,
         timer_service=timer_service,
         state_builder=state_builder,
         room_closer=room_closer,
+        speed_battle_handler=speed_battle_handler,
     )
+    speed_battle_handler.set_orchestrator(orchestrator)
 
     container = ServiceContainer(
         answer_service=mock_answer_service,
@@ -52,6 +61,7 @@ def test_container(mock_answer_service, static_question_provider) -> ServiceCont
         timer_service=timer_service,
         state_builder=state_builder,
         orchestrator=orchestrator,
+        speed_battle_handler=speed_battle_handler,
     )
 
     # Patch the module-level singleton so get_container() returns our test container

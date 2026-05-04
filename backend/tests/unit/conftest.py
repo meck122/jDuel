@@ -92,12 +92,16 @@ def orchestrator(
     timer_service: TimerService,
     state_builder: StateBuilder,
     mock_room_closer: MagicMock,
+    speed_battle_handler: SpeedBattleHandler,
 ) -> GameOrchestrator:
     """GameOrchestrator with all real services except mocked room_closer."""
-    return GameOrchestrator(
+    orch = GameOrchestrator(
         room_manager=room_manager,
         game_service=game_service,
         timer_service=timer_service,
         state_builder=state_builder,
         room_closer=mock_room_closer,
+        speed_battle_handler=speed_battle_handler,
     )
+    speed_battle_handler.set_orchestrator(orch)
+    return orch

@@ -218,6 +218,15 @@ class SpeedBattleHandler:
         """Drop round state for a room (called on disconnect-last and play-again)."""
         self._round_states.pop(room_id, None)
 
+    def build_per_recipient_closure(self, room: Room) -> Callable[[str], dict]:
+        """Return a per-recipient state closure using the current round state.
+
+        Called by the orchestrator while holding room.lock, so the round state
+        is guaranteed to exist (start_match was just called).
+        """
+        round_state = self._round_states[room.room_id]
+        return self._make_per_recipient_closure(room, round_state)
+
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------

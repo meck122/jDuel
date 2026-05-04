@@ -12,7 +12,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.services.answer import AnswerService
     from app.services.core import GameService, RoomManager, TimerService
-    from app.services.orchestration import GameOrchestrator, StateBuilder
+    from app.services.orchestration import (
+        GameOrchestrator,
+        SpeedBattleHandler,
+        StateBuilder,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +31,7 @@ class ServiceContainer:
     timer_service: "TimerService"
     state_builder: "StateBuilder"
     orchestrator: "GameOrchestrator"
+    speed_battle_handler: "SpeedBattleHandler"
 
 
 # Singleton instance - None until initialized
@@ -64,7 +69,11 @@ def init_services(answer_service: "AnswerService") -> ServiceContainer:
     # Import here to avoid circular imports
     from app.services.core import GameService, RoomManager, TimerService
     from app.services.core.room_closer import WebSocketRoomCloser
-    from app.services.orchestration import GameOrchestrator, StateBuilder
+    from app.services.orchestration import (
+        GameOrchestrator,
+        SpeedBattleHandler,
+        StateBuilder,
+    )
 
     logger.info("Initializing service container...")
 
@@ -77,6 +86,14 @@ def init_services(answer_service: "AnswerService") -> ServiceContainer:
     # RoomCloser needs room_manager and timer_service
     room_closer = WebSocketRoomCloser(room_manager, timer_service)
 
+    # SpeedBattleHandler depends on room_manager, timer_service, state_builder, room_closer
+    speed_battle_handler = SpeedBattleHandler(
+        room_manager=room_manager,
+        timer_service=timer_service,
+        state_builder=state_builder,
+        room_closer=room_closer,
+    )
+
     # Orchestrator depends on all other services
     orchestrator = GameOrchestrator(
         room_manager=room_manager,
@@ -84,7 +101,11 @@ def init_services(answer_service: "AnswerService") -> ServiceContainer:
         timer_service=timer_service,
         state_builder=state_builder,
         room_closer=room_closer,
+        speed_battle_handler=speed_battle_handler,
     )
+
+    # Resolve handler↔orchestrator circular dependency via setter injection
+    speed_battle_handler.set_orchestrator(orchestrator)
 
     _container = ServiceContainer(
         answer_service=answer_service,
@@ -93,6 +114,7 @@ def init_services(answer_service: "AnswerService") -> ServiceContainer:
         timer_service=timer_service,
         state_builder=state_builder,
         orchestrator=orchestrator,
+        speed_battle_handler=speed_battle_handler,
     )
 
     logger.info("Service container initialized")

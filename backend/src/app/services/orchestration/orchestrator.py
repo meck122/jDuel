@@ -16,6 +16,7 @@ from app.config import (
     REACTION_COOLDOWN_MS,
     REACTIONS,
     RESULTS_TIME_MS,
+    SPEED_BATTLE_QUESTION_POOL_SIZE,
 )
 from app.models import GameStatus
 from app.services.metrics import (
@@ -28,6 +29,7 @@ from app.services.orchestration.state_builder import StateBuilder
 
 if TYPE_CHECKING:
     from app.services.core import GameService, RoomManager, TimerService
+    from app.services.orchestration.speed_battle_handler import SpeedBattleHandler
 
 logger = logging.getLogger(__name__)
 
@@ -57,12 +59,18 @@ class GameOrchestrator:
         timer_service: TimerService,
         state_builder: StateBuilder,
         room_closer: RoomCloser,
+        speed_battle_handler: SpeedBattleHandler | None = None,
     ):
         self._room_manager = room_manager
         self._game_service = game_service
         self._timer_service = timer_service
         self._state_builder = state_builder
         self._room_closer = room_closer
+        self._speed_battle_handler = speed_battle_handler
+
+    def start_game_over_timer(self, room_id: str) -> None:
+        """Public delegate used by SpeedBattleHandler to schedule room close."""
+        self._start_game_over_timer(room_id)
 
     async def handle_connect(
         self, room_id: str, player_id: str, websocket: WebSocket
@@ -89,6 +97,7 @@ class GameOrchestrator:
             return False
 
         state_snapshot = None
+        is_speed_battle_active = False
         async with room.lock:
             if player_id not in room.players:
                 logger.warning(
@@ -101,7 +110,18 @@ class GameOrchestrator:
                 room_id, player_id, websocket
             )
             if success:
-                state_snapshot = self._state_builder.build_room_state(room)
+                if (
+                    room.config.game_mode == "speed_battle"
+                    and room.status in (GameStatus.PLAYING, GameStatus.FINISHED)
+                    and self._speed_battle_handler is not None
+                ):
+                    is_speed_battle_active = True
+                else:
+                    state_snapshot = self._state_builder.build_room_state(room)
+
+        if success and is_speed_battle_active:
+            await self._speed_battle_handler.handle_connect(room, player_id)  # type: ignore[union-attr]
+            return True
 
         if state_snapshot:
             await self._room_manager.broadcast_state(room_id, state_snapshot.to_dict())
@@ -122,6 +142,7 @@ class GameOrchestrator:
             return
 
         state_snapshot = None
+        build_state = None
         async with room.lock:
             if player_id != room.host_id:
                 logger.warning(
@@ -132,26 +153,139 @@ class GameOrchestrator:
 
             difficulty = room.config.difficulty
             min_diff, max_diff = DIFFICULTY_RANGES.get(difficulty, (1, 2))
-            self._room_manager.load_questions_by_difficulty(room_id, min_diff, max_diff)
 
-            if not room.questions:
-                logger.error(
-                    f"Game start failed (no questions): room_id={room_id}, "
-                    f"difficulty={difficulty}"
+            if (
+                room.config.game_mode == "speed_battle"
+                and self._speed_battle_handler is not None
+            ):
+                if not room.config.multiple_choice_enabled:
+                    logger.warning(
+                        f"Speed Battle start rejected (MC required): room_id={room_id}"
+                    )
+                    ws = room.connections.get(player_id)
+                    if ws:
+                        await ws.send_json(
+                            {
+                                "type": "ERROR",
+                                "message": "Speed Battle requires Multiple Choice in v1",
+                            }
+                        )
+                    return
+
+                self._room_manager.load_questions_by_difficulty(
+                    room_id, min_diff, max_diff, count=SPEED_BATTLE_QUESTION_POOL_SIZE
+                )
+                if len(room.questions) < SPEED_BATTLE_QUESTION_POOL_SIZE:
+                    logger.error(
+                        f"Speed Battle start failed (too few questions): "
+                        f"room_id={room_id}, got={len(room.questions)}, "
+                        f"need={SPEED_BATTLE_QUESTION_POOL_SIZE}"
+                    )
+                    ws = room.connections.get(player_id)
+                    if ws:
+                        await ws.send_json(
+                            {
+                                "type": "ERROR",
+                                "message": (
+                                    f"Not enough questions in this difficulty for Speed Battle "
+                                    f"(got {len(room.questions)}, need {SPEED_BATTLE_QUESTION_POOL_SIZE})"
+                                ),
+                            }
+                        )
+                    return
+
+                self._game_service.start_game(room)
+                games_started_total.inc()
+                players_per_game.observe(len(room.players))
+                logger.info(
+                    f"Speed Battle started: room_id={room_id}, "
+                    f"players={list(room.players)}, difficulty={difficulty}"
+                )
+                await self._speed_battle_handler.start_match(room)
+                build_state = self._speed_battle_handler.build_per_recipient_closure(
+                    room
+                )
+            else:
+                self._room_manager.load_questions_by_difficulty(
+                    room_id, min_diff, max_diff
+                )
+
+                if not room.questions:
+                    logger.error(
+                        f"Game start failed (no questions): room_id={room_id}, "
+                        f"difficulty={difficulty}"
+                    )
+                    return
+
+                self._game_service.start_game(room)
+                player_list = list(room.players)
+                games_started_total.inc()
+                players_per_game.observe(len(room.players))
+                logger.info(
+                    f"Game started: room_id={room_id}, players={player_list}, "
+                    f"difficulty={difficulty}, total_questions={len(room.questions)}"
+                )
+
+                state_snapshot = self._state_builder.build_room_state(room)
+                self._start_question_timer(room_id)
+
+        if build_state is not None:
+            await self._room_manager.broadcast_state_per_recipient(room_id, build_state)
+        elif state_snapshot is not None:
+            await self._room_manager.broadcast_state(room_id, state_snapshot.to_dict())
+
+    async def handle_answer(
+        self,
+        room_id: str,
+        player_id: str,
+        answer: str,
+        answer_time: datetime | None = None,
+        question_index: int | None = None,
+    ) -> None:
+        """Handle player answer submission.
+
+        Args:
+            room_id: The room ID
+            player_id: The answering player's ID
+            answer: The submitted answer
+            answer_time: When the answer was received (before lock acquisition)
+            question_index: For Speed Battle idempotency guard (R30)
+        """
+        room = self._room_manager.get_room(room_id)
+        if not room:
+            return
+
+        if (
+            room.config.game_mode == "speed_battle"
+            and self._speed_battle_handler is not None
+        ):
+            if room.status != GameStatus.PLAYING:
+                return
+            await self._speed_battle_handler.handle_answer(
+                room, player_id, answer, question_index
+            )
+            return
+
+        state_snapshot = None
+        async with room.lock:
+            if room.status != GameStatus.PLAYING:
+                logger.warning(
+                    f"Answer rejected (wrong phase): room_id={room_id}, "
+                    f"player_id={player_id}, phase={room.status.value}"
                 )
                 return
 
-            self._game_service.start_game(room)
-            player_list = list(room.players)
-            games_started_total.inc()
-            players_per_game.observe(len(room.players))
-            logger.info(
-                f"Game started: room_id={room_id}, players={player_list}, "
-                f"difficulty={difficulty}, total_questions={len(room.questions)}"
+            await self._game_service.process_answer(
+                room, player_id, answer, answer_time
             )
 
+            if self._game_service.all_players_answered(room):
+                self._timer_service.cancel_all_timers_for_room(room_id)
+                # Inline _transition_to_results to avoid re-entrant lock
+                self._game_service.show_results(room)
+                self._start_results_timer(room_id)
+
             state_snapshot = self._state_builder.build_room_state(room)
-            self._start_question_timer(room_id)
 
         if state_snapshot:
             await self._room_manager.broadcast_state(room_id, state_snapshot.to_dict())
@@ -190,6 +324,10 @@ class GameOrchestrator:
             # Cancel game-over timer FIRST (prevents room deletion race)
             self._timer_service.cancel_all_timers_for_room(room_id)
 
+            # Drop Speed Battle round state (safe no-op if Classic)
+            if self._speed_battle_handler is not None:
+                self._speed_battle_handler.cleanup_room(room_id)
+
             # Prune disconnected players (connection-layer concern)
             connected_ids = set(room.connections.keys())
             room.players = {pid for pid in room.players if pid in connected_ids}
@@ -206,49 +344,6 @@ class GameOrchestrator:
             self._game_service.reset_game_state(room)
 
             logger.info(f"Play again: room_id={room_id}, resetting to lobby")
-            state_snapshot = self._state_builder.build_room_state(room)
-
-        if state_snapshot:
-            await self._room_manager.broadcast_state(room_id, state_snapshot.to_dict())
-
-    async def handle_answer(
-        self,
-        room_id: str,
-        player_id: str,
-        answer: str,
-        answer_time: datetime | None = None,
-    ) -> None:
-        """Handle player answer submission.
-
-        Args:
-            room_id: The room ID
-            player_id: The answering player's ID
-            answer: The submitted answer
-            answer_time: When the answer was received (before lock acquisition)
-        """
-        room = self._room_manager.get_room(room_id)
-        if not room:
-            return
-
-        state_snapshot = None
-        async with room.lock:
-            if room.status != GameStatus.PLAYING:
-                logger.warning(
-                    f"Answer rejected (wrong phase): room_id={room_id}, "
-                    f"player_id={player_id}, phase={room.status.value}"
-                )
-                return
-
-            await self._game_service.process_answer(
-                room, player_id, answer, answer_time
-            )
-
-            if self._game_service.all_players_answered(room):
-                self._timer_service.cancel_all_timers_for_room(room_id)
-                # Inline _transition_to_results to avoid re-entrant lock
-                self._game_service.show_results(room)
-                self._start_results_timer(room_id)
-
             state_snapshot = self._state_builder.build_room_state(room)
 
         if state_snapshot:
@@ -396,6 +491,8 @@ class GameOrchestrator:
                     f"No active connections in room {room_id}, cleaning up room"
                 )
                 self._timer_service.cancel_all_timers_for_room(room_id)
+                if self._speed_battle_handler is not None:
+                    self._speed_battle_handler.cleanup_room(room_id)
                 self._room_manager.delete_room(room_id)
                 return
 

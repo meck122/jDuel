@@ -1,7 +1,7 @@
 """Tests for GameOrchestrator."""
 
 import asyncio
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from app.models import GameStatus
 from app.services.orchestration.orchestrator import GameOrchestrator
@@ -397,3 +397,225 @@ class TestOrchestrator:
         # Alice's answer should be recorded
         assert "Alice" in room.answered_players
         assert room.scores["Alice"] > 0
+
+
+class TestOrchestratorSpeedBattleDelegation:
+    """Tests for Speed Battle mode delegation points in GameOrchestrator."""
+
+    def _make_mock_handler(self):
+        """Return a MagicMock that looks like SpeedBattleHandler."""
+        handler = MagicMock()
+        handler.start_match = AsyncMock()
+        handler.handle_answer = AsyncMock()
+        handler.handle_connect = AsyncMock()
+        handler.cleanup_room = MagicMock()
+        handler.build_per_recipient_closure = MagicMock(return_value=lambda _pid: {})
+        return handler
+
+    def _make_orchestrator(
+        self,
+        room_manager,
+        game_service,
+        timer_service,
+        state_builder,
+        mock_room_closer,
+        handler,
+    ):
+        """Create orchestrator wired with a mock handler."""
+        orch = GameOrchestrator(
+            room_manager=room_manager,
+            game_service=game_service,
+            timer_service=timer_service,
+            state_builder=state_builder,
+            room_closer=mock_room_closer,
+            speed_battle_handler=handler,
+        )
+        handler.set_orchestrator = MagicMock()
+        return orch
+
+    async def test_handle_start_game_speed_battle_calls_start_match(
+        self, orchestrator: GameOrchestrator, room_manager, monkeypatch
+    ):
+        """handle_start_game with speed_battle delegates to handler.start_match."""
+        import app.services.orchestration.orchestrator as orch_mod
+
+        monkeypatch.setattr(orch_mod, "SPEED_BATTLE_QUESTION_POOL_SIZE", 5)
+
+        mock_handler = self._make_mock_handler()
+        orchestrator._speed_battle_handler = mock_handler
+
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room.config.game_mode = "speed_battle"
+        room.config.multiple_choice_enabled = True
+
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+
+        mock_handler.start_match.assert_awaited_once()
+        assert room.status == GameStatus.PLAYING
+
+    async def test_handle_start_game_speed_battle_mc_gate_sends_error(
+        self, orchestrator: GameOrchestrator, room_manager, monkeypatch
+    ):
+        """handle_start_game with speed_battle + MC off sends ERROR and does not start."""
+        mock_handler = self._make_mock_handler()
+        orchestrator._speed_battle_handler = mock_handler
+
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room.config.game_mode = "speed_battle"
+        room.config.multiple_choice_enabled = False
+
+        mock_ws = MagicMock()
+        mock_ws.send_json = AsyncMock()
+        room_manager.attach_connection(room.room_id, "Alice", mock_ws)
+
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+
+        mock_handler.start_match.assert_not_awaited()
+        assert room.status == GameStatus.WAITING
+        mock_ws.send_json.assert_awaited_once()
+        sent = mock_ws.send_json.call_args[0][0]
+        assert sent["type"] == "ERROR"
+
+    async def test_handle_start_game_speed_battle_r7_too_few_questions(
+        self, orchestrator: GameOrchestrator, room_manager, monkeypatch
+    ):
+        """R7: when fewer questions returned than pool size, start_match not called, ERROR sent."""
+        import app.services.orchestration.orchestrator as orch_mod
+
+        monkeypatch.setattr(orch_mod, "SPEED_BATTLE_QUESTION_POOL_SIZE", 1000)
+
+        mock_handler = self._make_mock_handler()
+        orchestrator._speed_battle_handler = mock_handler
+
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room.config.game_mode = "speed_battle"
+        room.config.multiple_choice_enabled = True
+
+        mock_ws = MagicMock()
+        mock_ws.send_json = AsyncMock()
+        room_manager.attach_connection(room.room_id, "Alice", mock_ws)
+
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+
+        mock_handler.start_match.assert_not_awaited()
+        assert room.status == GameStatus.WAITING
+        mock_ws.send_json.assert_awaited_once()
+        sent = mock_ws.send_json.call_args[0][0]
+        assert sent["type"] == "ERROR"
+
+    async def test_handle_answer_speed_battle_delegates_to_handler(
+        self, orchestrator: GameOrchestrator, room_manager, monkeypatch
+    ):
+        """handle_answer in speed_battle delegates to handler, not Classic path."""
+        mock_handler = self._make_mock_handler()
+        orchestrator._speed_battle_handler = mock_handler
+
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room.config.game_mode = "speed_battle"
+        room.status = GameStatus.PLAYING
+
+        await orchestrator.handle_answer(
+            room.room_id, "Alice", "Paris", question_index=0
+        )
+
+        mock_handler.handle_answer.assert_awaited_once_with(room, "Alice", "Paris", 0)
+        assert "Alice" not in room.answered_players  # Classic path not entered
+
+    async def test_handle_answer_classic_mode_not_delegated(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Classic mode handle_answer does not delegate to handler."""
+        mock_handler = self._make_mock_handler()
+        orchestrator._speed_battle_handler = mock_handler
+
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room_manager.register_player(room.room_id, "Bob")
+        # room.config.game_mode defaults to "classic"
+
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+        await orchestrator.handle_answer(room.room_id, "Alice", "Paris")
+
+        mock_handler.handle_answer.assert_not_awaited()
+        assert "Alice" in room.answered_players
+
+    async def test_handle_connect_speed_battle_playing_delegates_to_handler(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """handle_connect in speed_battle PLAYING delegates to handler.handle_connect."""
+        mock_handler = self._make_mock_handler()
+        orchestrator._speed_battle_handler = mock_handler
+
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room.config.game_mode = "speed_battle"
+        room.status = GameStatus.PLAYING
+
+        mock_ws = MagicMock()
+        mock_ws.send_json = AsyncMock()
+        result = await orchestrator.handle_connect(room.room_id, "Alice", mock_ws)
+
+        assert result is True
+        mock_handler.handle_connect.assert_awaited_once_with(room, "Alice")
+
+    async def test_handle_connect_speed_battle_waiting_uses_classic_broadcast(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Speed Battle WAITING lobby uses Classic broadcast (no handler delegation)."""
+        mock_handler = self._make_mock_handler()
+        orchestrator._speed_battle_handler = mock_handler
+
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room.config.game_mode = "speed_battle"
+        # room.status is WAITING by default
+
+        mock_ws = MagicMock()
+        mock_ws.send_json = AsyncMock()
+        result = await orchestrator.handle_connect(room.room_id, "Alice", mock_ws)
+
+        assert result is True
+        mock_handler.handle_connect.assert_not_awaited()
+        mock_ws.send_json.assert_awaited_once()  # Classic broadcast to the single WS
+
+    async def test_handle_disconnect_last_player_calls_cleanup_room(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """handle_disconnect (last player) calls handler.cleanup_room regardless of mode."""
+        mock_handler = self._make_mock_handler()
+        orchestrator._speed_battle_handler = mock_handler
+
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        mock_ws = MagicMock()
+        mock_ws.send_json = AsyncMock()
+        await orchestrator.handle_connect(room.room_id, "Alice", mock_ws)
+        room_id = room.room_id
+
+        await orchestrator.handle_disconnect(room_id, "Alice")
+
+        mock_handler.cleanup_room.assert_called_once_with(room_id)
+        assert room_manager.get_room(room_id) is None
+
+    async def test_handle_play_again_calls_cleanup_room(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """handle_play_again calls handler.cleanup_room before resetting state."""
+        mock_handler = self._make_mock_handler()
+        orchestrator._speed_battle_handler = mock_handler
+
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        mock_ws = MagicMock()
+        mock_ws.send_json = AsyncMock()
+        await orchestrator.handle_connect(room.room_id, "Alice", mock_ws)
+        room.status = GameStatus.FINISHED
+
+        await orchestrator.handle_play_again(room.room_id, "Alice")
+
+        mock_handler.cleanup_room.assert_called_once_with(room.room_id)
+        assert room.status == GameStatus.WAITING
