@@ -1,8 +1,11 @@
 """Builds room state for client communication."""
 
+from __future__ import annotations
+
 import logging
 import random
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from app.config import GAME_OVER_TIME_MS, QUESTION_TIME_MS, REACTIONS, RESULTS_TIME_MS
 from app.models import GameStatus, Room
@@ -13,7 +16,16 @@ from app.models.state import (
     RoomConfigData,
     RoomStateData,
     RoomStateMessage,
+    SpeedBattleLeaderRow,
+    SpeedBattlePlayerState,
+    SpeedBattleStateData,
 )
+
+if TYPE_CHECKING:
+    from app.services.orchestration.speed_battle_handler import (
+        PlayerProgress,
+        SpeedBattleRoundState,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +136,101 @@ class StateBuilder:
             state.timeRemainingMs = max(0, RESULTS_TIME_MS - elapsed_ms)
         else:
             state.timeRemainingMs = RESULTS_TIME_MS
+
+    def build_speed_battle_state_for_player(
+        self,
+        room: Room,
+        player_id: str,
+        round_state: SpeedBattleRoundState,
+        player_progress: PlayerProgress,
+        match_remaining_ms: int | None = None,
+        leaderboard: list[SpeedBattleLeaderRow] | None = None,
+    ) -> RoomStateMessage:
+        """Build a per-recipient Speed Battle ROOM_STATE message.
+
+        The caller pre-computes match_remaining_ms and leaderboard once and
+        passes them in so the closure in the handler doesn't recompute per player.
+
+        Args:
+            room: The game room
+            player_id: The recipient player
+            round_state: Current Speed Battle round state
+            player_progress: The recipient's PlayerProgress
+            match_remaining_ms: Pre-computed remaining milliseconds (or None to compute now)
+            leaderboard: Pre-computed final leaderboard rows (None mid-round)
+        """
+        import asyncio
+
+        if match_remaining_ms is None:
+            match_remaining_ms = int(
+                max(
+                    0,
+                    (round_state.match_end_monotonic - asyncio.get_event_loop().time())
+                    * 1000,
+                )
+            )
+
+        state_data = RoomStateData(
+            roomId=room.room_id,
+            players=room.scores,
+            status=room.status.value,
+            questionIndex=0,
+            totalQuestions=len(room.questions),
+            hostId=room.host_id,
+            config=RoomConfigData(
+                multipleChoiceEnabled=room.config.multiple_choice_enabled,
+                difficulty=room.config.difficulty,
+                gameMode=room.config.game_mode,
+            ),
+            reactions=[ReactionData(id=r["id"], label=r["label"]) for r in REACTIONS],
+        )
+
+        # Compute cooldown remaining for this player
+        cooldown_remaining_ms: int | None = None
+        if player_progress.cooldown_expires_at_monotonic is not None:
+            remaining = (
+                player_progress.cooldown_expires_at_monotonic
+                - asyncio.get_event_loop().time()
+            )
+            cooldown_remaining_ms = int(max(0, remaining * 1000))
+
+        player_state = SpeedBattlePlayerState(
+            questionIndex=player_progress.current_question_index,
+            correctCount=player_progress.correct_count,
+            wrongCount=player_progress.wrong_count,
+            cooldownRemainingMs=cooldown_remaining_ms,
+            cooldownCorrectAnswer=player_progress.revealed_correct_answer,
+            exhausted=player_progress.exhausted,
+        )
+
+        if room.status == GameStatus.PLAYING:
+            # Per-recipient currentQuestion (private — never shared with other players)
+            if (
+                not player_progress.exhausted
+                and player_progress.current_question_index < len(room.questions)
+            ):
+                q = room.questions[player_progress.current_question_index]
+                options: list[str] | None = None
+                if room.config.multiple_choice_enabled and q.wrong_answers:
+                    options = [q.answer, *q.wrong_answers]
+                    random.shuffle(options)
+                state_data.currentQuestion = CurrentQuestion(
+                    text=q.text, category=q.category, options=options
+                )
+
+            state_data.speedBattle = SpeedBattleStateData(
+                matchRemainingMs=match_remaining_ms,
+                playerState=player_state,
+            )
+
+        elif room.status == GameStatus.FINISHED:
+            state_data.speedBattle = SpeedBattleStateData(
+                matchRemainingMs=0,
+                playerState=player_state,
+                leaderboard=leaderboard,
+            )
+
+        return RoomStateMessage(roomState=state_data)
 
     def _add_finished_state(self, state: RoomStateData, room: Room) -> None:
         """Add finished state details.

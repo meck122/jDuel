@@ -10,6 +10,7 @@ from app.services.core.room_manager import RoomManager
 from app.services.core.room_repository import RoomRepository
 from app.services.core.timer_service import TimerService
 from app.services.orchestration.orchestrator import GameOrchestrator
+from app.services.orchestration.speed_battle_handler import SpeedBattleHandler
 from app.services.orchestration.state_builder import StateBuilder
 
 
@@ -55,6 +56,33 @@ def mock_room_closer() -> MagicMock:
     closer = MagicMock()
     closer.close_room = AsyncMock()
     return closer
+
+
+@pytest.fixture
+def mock_orchestrator_timer() -> MagicMock:
+    """MagicMock implementing the GameOverTimerStarter protocol."""
+    mock = MagicMock()
+    mock.start_game_over_timer = MagicMock()
+    return mock
+
+
+@pytest.fixture
+def speed_battle_handler(
+    room_manager: RoomManager,
+    timer_service: TimerService,
+    state_builder: StateBuilder,
+    mock_room_closer: MagicMock,
+    mock_orchestrator_timer: MagicMock,
+) -> SpeedBattleHandler:
+    """SpeedBattleHandler wired to real services, with mocked orchestrator."""
+    handler = SpeedBattleHandler(
+        room_manager=room_manager,
+        timer_service=timer_service,
+        state_builder=state_builder,
+        room_closer=mock_room_closer,
+    )
+    handler.set_orchestrator(mock_orchestrator_timer)
+    return handler
 
 
 @pytest.fixture

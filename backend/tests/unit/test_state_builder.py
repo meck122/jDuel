@@ -269,3 +269,135 @@ class TestRoomConfigDataGameMode:
 
         msg = state_builder.build_room_state(room)
         assert msg.roomState.config.gameMode == "classic"
+
+
+class TestBuildSpeedBattleStateForPlayer:
+    """Tests for StateBuilder.build_speed_battle_state_for_player."""
+
+    def _make_round_state(self):
+        import asyncio
+
+        from app.services.orchestration.speed_battle_handler import (
+            PlayerProgress,
+            SpeedBattleRoundState,
+        )
+
+        now = asyncio.get_event_loop().time()
+        round_state = SpeedBattleRoundState(
+            match_start_monotonic=now,
+            match_end_monotonic=now + 180,
+            match_start_wall=datetime.now(UTC),
+        )
+        round_state.per_player["Alice"] = PlayerProgress(
+            current_question_index=3, correct_count=3, wrong_count=0
+        )
+        return round_state
+
+    def test_playing_room_includes_current_question(
+        self, state_builder: StateBuilder, sample_questions
+    ):
+        """PLAYING state includes Alice's per-recipient currentQuestion."""
+
+        room = Room("TEST1", sample_questions)
+        room.players = {"Alice"}
+        room.scores = {"Alice": 3}
+        room.host_id = "Alice"
+        room.status = GameStatus.PLAYING
+        room.config.multiple_choice_enabled = True
+
+        round_state = self._make_round_state()
+        progress = round_state.per_player["Alice"]
+
+        msg = state_builder.build_speed_battle_state_for_player(
+            room, "Alice", round_state, progress, match_remaining_ms=120_000
+        )
+
+        assert msg.roomState.status == "playing"
+        assert msg.roomState.currentQuestion is not None
+        assert msg.roomState.speedBattle is not None
+        assert msg.roomState.speedBattle.matchRemainingMs == 120_000
+        assert msg.roomState.speedBattle.leaderboard is None
+        assert msg.roomState.speedBattle.playerState.questionIndex == 3
+
+    def test_finished_room_includes_leaderboard(
+        self, state_builder: StateBuilder, sample_questions
+    ):
+        """FINISHED state has leaderboard, matchRemainingMs=0, currentQuestion=None."""
+        from app.models.state import SpeedBattleLeaderRow
+
+        room = Room("TEST1", sample_questions)
+        room.players = {"Alice"}
+        room.scores = {"Alice": 3}
+        room.host_id = "Alice"
+        room.status = GameStatus.FINISHED
+
+        round_state = self._make_round_state()
+        progress = round_state.per_player["Alice"]
+        leaderboard = [
+            SpeedBattleLeaderRow(
+                playerId="Alice", correctCount=3, wrongCount=0, placement=1
+            )
+        ]
+
+        msg = state_builder.build_speed_battle_state_for_player(
+            room,
+            "Alice",
+            round_state,
+            progress,
+            match_remaining_ms=0,
+            leaderboard=leaderboard,
+        )
+
+        assert msg.roomState.status == "finished"
+        assert msg.roomState.currentQuestion is None
+        assert msg.roomState.speedBattle.matchRemainingMs == 0
+        assert len(msg.roomState.speedBattle.leaderboard) == 1
+
+    def test_exhausted_player_has_no_current_question(
+        self, state_builder: StateBuilder, sample_questions
+    ):
+        """Exhausted player has currentQuestion=None even while PLAYING."""
+
+        room = Room("TEST1", sample_questions)
+        room.players = {"Alice"}
+        room.scores = {"Alice": 5}
+        room.host_id = "Alice"
+        room.status = GameStatus.PLAYING
+
+        round_state = self._make_round_state()
+        round_state.per_player["Alice"].exhausted = True
+        progress = round_state.per_player["Alice"]
+
+        msg = state_builder.build_speed_battle_state_for_player(
+            room, "Alice", round_state, progress, match_remaining_ms=60_000
+        )
+
+        assert msg.roomState.currentQuestion is None
+        assert msg.roomState.speedBattle.playerState.exhausted is True
+
+    def test_cooldown_player_state_includes_reveal(
+        self, state_builder: StateBuilder, sample_questions
+    ):
+        """Player in cooldown has cooldownRemainingMs and cooldownCorrectAnswer."""
+        import asyncio
+
+        room = Room("TEST1", sample_questions)
+        room.players = {"Alice"}
+        room.scores = {"Alice": 0}
+        room.host_id = "Alice"
+        room.status = GameStatus.PLAYING
+
+        round_state = self._make_round_state()
+        now_mono = asyncio.get_event_loop().time()
+        round_state.per_player["Alice"].cooldown_expires_at_monotonic = now_mono + 3
+        round_state.per_player["Alice"].revealed_correct_answer = "Paris"
+        progress = round_state.per_player["Alice"]
+
+        msg = state_builder.build_speed_battle_state_for_player(
+            room, "Alice", round_state, progress, match_remaining_ms=60_000
+        )
+
+        ps = msg.roomState.speedBattle.playerState
+        assert ps.cooldownRemainingMs is not None
+        assert ps.cooldownRemainingMs > 0
+        assert ps.cooldownCorrectAnswer == "Paris"
