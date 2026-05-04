@@ -1,6 +1,7 @@
 """Tests for RoomManager."""
 
 import string
+from unittest.mock import AsyncMock, MagicMock
 
 
 class TestRoomManager:
@@ -53,3 +54,43 @@ class TestRoomManager:
         room_id = room.room_id
         room_manager.delete_room(room_id)
         assert room_manager.get_room(room_id) is None
+
+    async def test_broadcast_state_per_recipient_delegates(self, room_manager):
+        """broadcast_state_per_recipient sends per-player payload to each connected WS."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room_manager.register_player(room.room_id, "Bob")
+
+        ws_alice = MagicMock()
+        ws_alice.send_json = AsyncMock()
+        ws_bob = MagicMock()
+        ws_bob.send_json = AsyncMock()
+        room_manager.attach_connection(room.room_id, "Alice", ws_alice)
+        room_manager.attach_connection(room.room_id, "Bob", ws_bob)
+
+        await room_manager.broadcast_state_per_recipient(
+            room.room_id, lambda pid: {"player": pid}
+        )
+
+        ws_alice.send_json.assert_called_once_with({"player": "Alice"})
+        ws_bob.send_json.assert_called_once_with({"player": "Bob"})
+
+    async def test_send_to_player_state_delegates(self, room_manager):
+        """send_to_player_state sends payload to only the named player."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room_manager.register_player(room.room_id, "Bob")
+
+        ws_alice = MagicMock()
+        ws_alice.send_json = AsyncMock()
+        ws_bob = MagicMock()
+        ws_bob.send_json = AsyncMock()
+        room_manager.attach_connection(room.room_id, "Alice", ws_alice)
+        room_manager.attach_connection(room.room_id, "Bob", ws_bob)
+
+        await room_manager.send_to_player_state(
+            room.room_id, "Alice", {"hello": "alice"}
+        )
+
+        ws_alice.send_json.assert_called_once_with({"hello": "alice"})
+        ws_bob.send_json.assert_not_called()
