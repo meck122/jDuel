@@ -140,7 +140,26 @@ class TimerService:
         self._cancel_all_player_cooldowns_for_room(room_id)
 
     def _cancel_match_timer(self, room_id: str) -> None:
+        # No-self-cancel guard: if the match timer's own callback is the
+        # currently-running task (e.g. _on_match_end calling
+        # cancel_all_timers_for_room), do not cancel ourselves — that would
+        # raise CancelledError at the next await checkpoint and abort the
+        # callback's remaining work.
+        task = self._match_timers.get(room_id)
+        if task is None:
+            return
+        try:
+            current = asyncio.current_task()
+        except RuntimeError:
+            current = None
+        if task is current:
+            del self._match_timers[room_id]
+            return
         self._cancel_timer(self._match_timers, room_id)
+
+    def cancel_all_player_cooldowns_for_room(self, room_id: str) -> None:
+        """Cancel every per-player cooldown timer registered for a room."""
+        self._cancel_all_player_cooldowns_for_room(room_id)
 
     def _cancel_all_player_cooldowns_for_room(self, room_id: str) -> None:
         keys_to_cancel = [k for k in self._player_cooldowns if k[0] == room_id]
@@ -172,6 +191,16 @@ class TimerService:
         """
         try:
             await asyncio.sleep(duration_ms / 1000)
-            await callback()
         except asyncio.CancelledError:
             logger.debug("Timer cancelled")
+            return
+        try:
+            await callback()
+        except asyncio.CancelledError:
+            logger.debug("Timer cancelled during callback")
+            raise
+        except Exception:
+            # Surface callback failures instead of swallowing them silently —
+            # a silent failure can permanently strand a room (e.g., stuck in
+            # PLAYING) with no log line for diagnosis.
+            logger.exception("timer callback failed")

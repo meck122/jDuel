@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import time
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -12,7 +14,11 @@ import app.services.orchestration.speed_battle_handler as sbh_module
 from app.models import GameStatus
 from app.services.core.room_manager import RoomManager
 from app.services.core.timer_service import TimerService
-from app.services.orchestration.speed_battle_handler import SpeedBattleHandler
+from app.services.orchestration.speed_battle_handler import (
+    PlayerProgress,
+    SpeedBattleHandler,
+    SpeedBattleRoundState,
+)
 from app.services.orchestration.state_builder import StateBuilder
 
 # ---------------------------------------------------------------------------
@@ -418,20 +424,11 @@ class TestMatchEnd:
         monkeypatch,
     ):
         """_compute_leaderboard sorts by correct desc, wrong asc (R17)."""
-        import asyncio as _asyncio
-
-        from app.services.orchestration.speed_battle_handler import (
-            PlayerProgress,
-            SpeedBattleRoundState,
-        )
-
-        now = _asyncio.get_event_loop().time()
+        now = time.monotonic()
         round_state = SpeedBattleRoundState(
             match_start_monotonic=now,
             match_end_monotonic=now + 180,
-            match_start_wall=__import__("datetime").datetime.now(
-                __import__("datetime").timezone.utc
-            ),
+            match_start_wall=datetime.now(UTC),
         )
         round_state.per_player["A"] = PlayerProgress(correct_count=10, wrong_count=2)
         round_state.per_player["B"] = PlayerProgress(correct_count=10, wrong_count=3)
@@ -449,20 +446,11 @@ class TestMatchEnd:
         speed_battle_handler: SpeedBattleHandler,
     ):
         """Tied players share a placement number (R17)."""
-        import asyncio as _asyncio
-
-        from app.services.orchestration.speed_battle_handler import (
-            PlayerProgress,
-            SpeedBattleRoundState,
-        )
-
-        now = _asyncio.get_event_loop().time()
+        now = time.monotonic()
         round_state = SpeedBattleRoundState(
             match_start_monotonic=now,
             match_end_monotonic=now + 180,
-            match_start_wall=__import__("datetime").datetime.now(
-                __import__("datetime").timezone.utc
-            ),
+            match_start_wall=datetime.now(UTC),
         )
         round_state.per_player["A"] = PlayerProgress(correct_count=5, wrong_count=2)
         round_state.per_player["B"] = PlayerProgress(correct_count=5, wrong_count=2)
@@ -579,6 +567,8 @@ class TestReconnect:
         ws_alice.send_json.assert_called_once()
         payload = ws_alice.send_json.call_args[0][0]
         assert payload["roomState"]["status"] == "finished"
+        # Finding 7: FINISHED broadcast carries matchRemainingMs == 0
+        assert payload["roomState"]["speedBattle"]["matchRemainingMs"] == 0
 
 
 # ---------------------------------------------------------------------------
@@ -693,19 +683,11 @@ class TestCleanup:
         speed_battle_handler: SpeedBattleHandler,
     ):
         """cleanup_room removes the round state entry."""
-        import asyncio as _asyncio
-
-        from app.services.orchestration.speed_battle_handler import (
-            SpeedBattleRoundState,
-        )
-
-        now = _asyncio.get_event_loop().time()
+        now = time.monotonic()
         speed_battle_handler._round_states["ROOM1"] = SpeedBattleRoundState(
             match_start_monotonic=now,
             match_end_monotonic=now + 180,
-            match_start_wall=__import__("datetime").datetime.now(
-                __import__("datetime").timezone.utc
-            ),
+            match_start_wall=datetime.now(UTC),
         )
         speed_battle_handler.cleanup_room("ROOM1")
         assert "ROOM1" not in speed_battle_handler._round_states
@@ -739,3 +721,312 @@ class TestCleanup:
         await speed_battle_handler.handle_answer(
             room, "Alice", room.questions[0].answer, 0
         )
+
+
+# ---------------------------------------------------------------------------
+# Review-fixer regression tests (PR review findings 1, 2, 4, 6)
+# ---------------------------------------------------------------------------
+
+
+def _all_mc_questions() -> list:
+    """Question pool where every question has wrong_answers (for MC tests)."""
+    from app.models import Question
+
+    return [
+        Question(
+            text=f"Q{i}",
+            answer=f"correct_{i}",
+            category="Test",
+            wrong_answers=(f"w{i}_a", f"w{i}_b", f"w{i}_c"),
+        )
+        for i in range(10)
+    ]
+
+
+def _setup_mc_room(room_manager: RoomManager, player_ids: list[str]):
+    """Like _setup_room but ensures every question has wrong_answers."""
+    from app.services.core.question_provider import StaticQuestionProvider
+
+    room_manager._question_provider = StaticQuestionProvider(_all_mc_questions())
+    room = room_manager.create_room()
+    for pid in player_ids:
+        room_manager.register_player(room.room_id, pid)
+    room_manager.load_questions_by_difficulty(room.room_id, 1, 5, count=10)
+    return room
+
+
+class TestOptionsStableAcrossBroadcasts:
+    """Finding 1: per-recipient broadcasts must not reshuffle MC options."""
+
+    async def test_options_stable_across_peer_answer_broadcast(
+        self,
+        speed_battle_handler: SpeedBattleHandler,
+        room_manager: RoomManager,
+        monkeypatch,
+    ):
+        """Alice's options for Q5 stay identical when Bob answers and triggers a broadcast."""
+        _patch(monkeypatch, "SPEED_BATTLE_QUESTION_POOL_SIZE", 10)
+        _patch(monkeypatch, "SPEED_BATTLE_MATCH_TIME_MS", 60_000)
+        room = _setup_mc_room(room_manager, ["Alice", "Bob"])
+        room.config.multiple_choice_enabled = True
+        ws_alice = _attach_mock_ws(room_manager, room, "Alice")
+        _attach_mock_ws(room_manager, room, "Bob")
+
+        async with room.lock:
+            await speed_battle_handler.start_match(room)
+        room.status = GameStatus.PLAYING
+
+        # Park Alice on Q5
+        speed_battle_handler._round_states[room.room_id].per_player[
+            "Alice"
+        ].current_question_index = 5
+
+        # Bob answers Q0 correctly → triggers per-recipient broadcast (Alice receives one)
+        ws_alice.send_json.reset_mock()
+        await speed_battle_handler.handle_answer(
+            room, "Bob", room.questions[0].answer, 0
+        )
+        first_payload = ws_alice.send_json.call_args[0][0]
+        first_options = first_payload["roomState"]["currentQuestion"]["options"]
+
+        # Bob answers Q1 correctly → another broadcast
+        ws_alice.send_json.reset_mock()
+        await speed_battle_handler.handle_answer(
+            room, "Bob", room.questions[1].answer, 1
+        )
+        second_payload = ws_alice.send_json.call_args[0][0]
+        second_options = second_payload["roomState"]["currentQuestion"]["options"]
+
+        assert first_options is not None
+        assert second_options is not None
+        assert first_options == second_options
+
+
+class TestMatchEndUnderRealTimer:
+    """Finding 2: _on_match_end must complete its broadcast + start_game_over_timer
+    even when invoked as the match timer's own callback (no self-cancel)."""
+
+    async def test_match_end_via_real_timer_starts_game_over(
+        self,
+        room_manager: RoomManager,
+        timer_service: TimerService,
+        state_builder: StateBuilder,
+        mock_room_closer,
+        mock_orchestrator_timer,
+        monkeypatch,
+    ):
+        _patch(monkeypatch, "SPEED_BATTLE_MATCH_TIME_MS", 50)
+        _patch(monkeypatch, "SPEED_BATTLE_QUESTION_POOL_SIZE", 5)
+
+        handler = SpeedBattleHandler(
+            room_manager=room_manager,
+            timer_service=timer_service,
+            state_builder=state_builder,
+            room_closer=mock_room_closer,
+        )
+        handler.set_orchestrator(mock_orchestrator_timer)
+
+        room = _setup_room(room_manager, ["Alice"])
+        ws_alice = _attach_mock_ws(room_manager, room, "Alice")
+
+        async with room.lock:
+            await handler.start_match(room)
+        room.status = GameStatus.PLAYING
+
+        # Allow the match timer to fire naturally
+        await asyncio.sleep(0.20)
+
+        # FINISHED broadcast was emitted
+        assert ws_alice.send_json.called
+        last_payload = ws_alice.send_json.call_args[0][0]
+        assert last_payload["roomState"]["status"] == "finished"
+        # And start_game_over_timer was scheduled — was NOT aborted by self-cancel
+        mock_orchestrator_timer.start_game_over_timer.assert_called_once_with(
+            room.room_id
+        )
+
+
+class TestAnswerAfterDeadline:
+    """Finding 4: ANSWER arriving past match_end_monotonic must be dropped."""
+
+    async def test_answer_after_match_deadline_dropped(
+        self,
+        speed_battle_handler: SpeedBattleHandler,
+        room_manager: RoomManager,
+        monkeypatch,
+    ):
+        _patch(monkeypatch, "SPEED_BATTLE_QUESTION_POOL_SIZE", 5)
+        _patch(monkeypatch, "SPEED_BATTLE_MATCH_TIME_MS", 60_000)
+        room = _setup_room(room_manager, ["Alice"])
+        ws_alice = _attach_mock_ws(room_manager, room, "Alice")
+
+        async with room.lock:
+            await speed_battle_handler.start_match(room)
+        room.status = GameStatus.PLAYING
+
+        round_state = speed_battle_handler._round_states[room.room_id]
+        deadline_plus = round_state.match_end_monotonic + 0.001
+
+        ws_alice.send_json.reset_mock()
+        # Force time.monotonic to return T = deadline + 1ms
+        monkeypatch.setattr(sbh_module.time, "monotonic", lambda: deadline_plus)
+
+        await speed_battle_handler.handle_answer(
+            room, "Alice", room.questions[0].answer, 0
+        )
+
+        progress = round_state.per_player["Alice"]
+        assert progress.correct_count == 0
+        assert room.scores["Alice"] == 0
+        ws_alice.send_json.assert_not_called()
+
+
+class TestPerRecipientBroadcastSnapshotsScores:
+    """Finding 6: scores mutated between sends must not leak into later recipients."""
+
+    async def test_scores_frozen_per_broadcast(
+        self,
+        speed_battle_handler: SpeedBattleHandler,
+        room_manager: RoomManager,
+        monkeypatch,
+    ):
+        _patch(monkeypatch, "SPEED_BATTLE_QUESTION_POOL_SIZE", 10)
+        _patch(monkeypatch, "SPEED_BATTLE_MATCH_TIME_MS", 60_000)
+        room = _setup_room(room_manager, ["Alice", "Bob", "Carol"])
+
+        # Build fake WebSockets where Bob's send_json mutates room.scores between
+        # the first and subsequent sends. We assert every recipient sees the
+        # same "players" dict regardless of mutation.
+        seen: dict[str, dict] = {}
+
+        def make_ws(pid: str):
+            ws = MagicMock()
+
+            async def send_json(payload, _pid=pid):
+                seen[_pid] = payload["roomState"]["players"]
+                # Mutate room.scores AFTER each send to simulate a concurrent
+                # task acquiring the lock between iterations of broadcast.
+                room.scores["Carol"] = room.scores.get("Carol", 0) + 100
+
+            ws.send_json = AsyncMock(side_effect=send_json)
+            room_manager.attach_connection(room.room_id, pid, ws)
+            return ws
+
+        make_ws("Alice")
+        make_ws("Bob")
+        make_ws("Carol")
+
+        async with room.lock:
+            await speed_battle_handler.start_match(room)
+        room.status = GameStatus.PLAYING
+
+        # Trigger a single per-recipient broadcast via Alice's correct answer
+        await speed_battle_handler.handle_answer(
+            room, "Alice", room.questions[0].answer, 0
+        )
+
+        assert set(seen.keys()) == {"Alice", "Bob", "Carol"}
+        # All three recipients must have observed identical "players" snapshots
+        # even though the mock send_json mutated room.scores between calls.
+        first = seen["Alice"]
+        for pid in ("Bob", "Carol"):
+            assert seen[pid] == first, (
+                f"Recipient {pid} saw different scores than Alice — "
+                f"per-recipient closure is not snapshotting under lock"
+            )
+
+
+class TestCooldownEndRevalidatesRoom:
+    """Finding 8: _on_cooldown_end must be a no-op if room dropped before lock."""
+
+    async def test_cooldown_after_room_deleted_is_noop(
+        self,
+        speed_battle_handler: SpeedBattleHandler,
+        room_manager: RoomManager,
+        monkeypatch,
+    ):
+        _patch(monkeypatch, "SPEED_BATTLE_QUESTION_POOL_SIZE", 5)
+        _patch(monkeypatch, "SPEED_BATTLE_MATCH_TIME_MS", 60_000)
+        _patch(monkeypatch, "SPEED_BATTLE_WRONG_COOLDOWN_MS", 60_000)
+        room = _setup_room(room_manager, ["Alice"])
+        _attach_mock_ws(room_manager, room, "Alice")
+
+        async with room.lock:
+            await speed_battle_handler.start_match(room)
+        room.status = GameStatus.PLAYING
+        room_id = room.room_id
+
+        # Simulate the room being torn down before _on_cooldown_end runs.
+        room_manager._repository.delete(room_id)
+
+        # Direct invocation of the callback — must not raise and must not mutate.
+        await speed_battle_handler._on_cooldown_end(room_id, "Alice")
+
+
+class TestTimerCallbackExceptionLogged:
+    """Finding 3: callback exceptions must be logged, not swallowed silently."""
+
+    async def test_callback_exception_is_logged(
+        self,
+        timer_service: TimerService,
+        caplog,
+    ):
+        async def boom():
+            raise RuntimeError("boom")
+
+        import logging as _logging
+
+        caplog.set_level(_logging.ERROR, logger="app.services.core.timer_service")
+        timer_service.start_question_timer("ROOMX", 10, boom)
+        await asyncio.sleep(0.05)
+
+        assert any(
+            "timer callback failed" in rec.message for rec in caplog.records
+        ), f"expected log entry; got: {[rec.message for rec in caplog.records]}"
+
+
+class TestMatchEndFallbackUnderLock:
+    """Finding 5: fallback close_room runs under room.lock."""
+
+    async def test_fallback_close_room_acquires_lock(
+        self,
+        room_manager: RoomManager,
+        timer_service: TimerService,
+        state_builder: StateBuilder,
+        mock_room_closer,
+        monkeypatch,
+    ):
+        _patch(monkeypatch, "SPEED_BATTLE_MATCH_TIME_MS", 60_000)
+        _patch(monkeypatch, "SPEED_BATTLE_QUESTION_POOL_SIZE", 5)
+
+        bad_orchestrator = MagicMock()
+        bad_orchestrator.start_game_over_timer = MagicMock(
+            side_effect=RuntimeError("boom")
+        )
+
+        lock_held_during_close: list[bool] = []
+
+        async def recording_close(room_id):
+            r = room_manager.get_room(room_id)
+            lock_held_during_close.append(r.lock.locked() if r else False)
+
+        mock_room_closer.close_room = AsyncMock(side_effect=recording_close)
+
+        handler = SpeedBattleHandler(
+            room_manager=room_manager,
+            timer_service=timer_service,
+            state_builder=state_builder,
+            room_closer=mock_room_closer,
+        )
+        handler.set_orchestrator(bad_orchestrator)
+
+        room = _setup_room(room_manager, ["Alice"])
+        _attach_mock_ws(room_manager, room, "Alice")
+        async with room.lock:
+            await handler.start_match(room)
+        room.status = GameStatus.PLAYING
+
+        await handler._on_match_end(room.room_id)
+
+        mock_room_closer.close_room.assert_called_once()
+        assert lock_held_during_close == [True]

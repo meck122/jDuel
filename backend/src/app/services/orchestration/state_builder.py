@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
+import time
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -145,6 +146,7 @@ class StateBuilder:
         player_progress: PlayerProgress,
         match_remaining_ms: int | None = None,
         leaderboard: list[SpeedBattleLeaderRow] | None = None,
+        scores_override: dict[str, int] | None = None,
     ) -> RoomStateMessage:
         """Build a per-recipient Speed Battle ROOM_STATE message.
 
@@ -158,21 +160,25 @@ class StateBuilder:
             player_progress: The recipient's PlayerProgress
             match_remaining_ms: Pre-computed remaining milliseconds (or None to compute now)
             leaderboard: Pre-computed final leaderboard rows (None mid-round)
+            scores_override: Snapshot of scores to use instead of room.scores
+                (lets the per-recipient closure freeze scores under the lock
+                so peer mutations between sends do not leak into later recipients)
         """
-        import asyncio
-
         if match_remaining_ms is None:
-            match_remaining_ms = int(
-                max(
-                    0,
-                    (round_state.match_end_monotonic - asyncio.get_event_loop().time())
-                    * 1000,
+            if round_state.ended:
+                match_remaining_ms = 0
+            else:
+                match_remaining_ms = int(
+                    max(
+                        0,
+                        (round_state.match_end_monotonic - time.monotonic()) * 1000,
+                    )
                 )
-            )
 
+        scores_view = scores_override if scores_override is not None else room.scores
         state_data = RoomStateData(
             roomId=room.room_id,
-            players=room.scores,
+            players=scores_view,
             status=room.status.value,
             questionIndex=0,
             totalQuestions=len(room.questions),
@@ -188,10 +194,7 @@ class StateBuilder:
         # Compute cooldown remaining for this player
         cooldown_remaining_ms: int | None = None
         if player_progress.cooldown_expires_at_monotonic is not None:
-            remaining = (
-                player_progress.cooldown_expires_at_monotonic
-                - asyncio.get_event_loop().time()
-            )
+            remaining = player_progress.cooldown_expires_at_monotonic - time.monotonic()
             cooldown_remaining_ms = int(max(0, remaining * 1000))
 
         player_state = SpeedBattlePlayerState(
@@ -212,8 +215,21 @@ class StateBuilder:
                 q = room.questions[player_progress.current_question_index]
                 options: list[str] | None = None
                 if room.config.multiple_choice_enabled and q.wrong_answers:
-                    options = [q.answer, *q.wrong_answers]
-                    random.shuffle(options)
+                    # Use cached shuffled options when present and matching
+                    # the current question index. The handler is responsible
+                    # for populating / invalidating the cache under room.lock
+                    # before invoking this builder so per-recipient broadcasts
+                    # within the same question return identical option order.
+                    cached = player_progress.shuffled_options
+                    cached_idx = player_progress.shuffled_options_question_index
+                    if (
+                        cached is not None
+                        and cached_idx == player_progress.current_question_index
+                    ):
+                        options = cached
+                    else:
+                        options = [q.answer, *q.wrong_answers]
+                        random.shuffle(options)
                 state_data.currentQuestion = CurrentQuestion(
                     text=q.text, category=q.category, options=options
                 )

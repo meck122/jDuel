@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-import asyncio
+import copy
 import logging
+import random
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -34,6 +36,13 @@ class PlayerProgress:
     cooldown_expires_at_monotonic: float | None = None
     revealed_correct_answer: str | None = None
     exhausted: bool = False
+    # Cache of shuffled MC options keyed by question_index, mirroring the
+    # Classic mode pattern (room.current_round.shuffled_options). Without
+    # this cache the per-recipient broadcast re-shuffles options on every
+    # peer answer / cooldown_end / reconnect, causing the recipient's
+    # display to reorder mid-question.
+    shuffled_options: list[str] | None = None
+    shuffled_options_question_index: int | None = None
 
 
 @dataclass
@@ -86,7 +95,7 @@ class SpeedBattleHandler:
                 "call set_orchestrator() before starting a match"
             )
 
-        now_mono = asyncio.get_event_loop().time()
+        now_mono = time.monotonic()
         round_state = SpeedBattleRoundState(
             match_start_monotonic=now_mono,
             match_end_monotonic=now_mono + SPEED_BATTLE_MATCH_TIME_MS / 1000,
@@ -129,7 +138,11 @@ class SpeedBattleHandler:
             if progress is None or progress.exhausted:
                 return  # silent drop
 
-            now_mono = asyncio.get_event_loop().time()
+            now_mono = time.monotonic()
+
+            # R30 idempotency: drop if match deadline has passed (R11a)
+            if now_mono >= round_state.match_end_monotonic:
+                return  # silent drop — server is authoritative on T=180s
 
             # R30 idempotency: drop if player is in cooldown
             if (
@@ -204,6 +217,7 @@ class SpeedBattleHandler:
             if progress is None:
                 return
 
+            self._refresh_shuffled_options(room, progress)
             snapshot = self._state_builder.build_speed_battle_state_for_player(
                 room, player_id, round_state, progress
             )
@@ -245,8 +259,12 @@ class SpeedBattleHandler:
                 return
 
             round_state.ended = True
-            # Cancel all in-flight per-player cooldowns (R11b)
-            self._timer_service.cancel_all_timers_for_room(room_id)
+            # Cancel all in-flight per-player cooldowns (R11b).
+            # NOTE: We deliberately do not call cancel_all_timers_for_room here —
+            # that would cancel the match timer task we are currently running on,
+            # raising CancelledError at the next await checkpoint and aborting
+            # the FINISHED broadcast / start_game_over_timer scheduling below.
+            self._timer_service.cancel_all_player_cooldowns_for_room(room_id)
 
             room.status = GameStatus.FINISHED
 
@@ -268,7 +286,14 @@ class SpeedBattleHandler:
                 f"start_game_over_timer raised — falling back to direct close: "
                 f"room_id={room_id}"
             )
-            await self._room_closer.close_room(room_id)
+            # Re-fetch and lock-wrap to mirror orchestrator._on_game_over_timeout
+            # so a concurrent handle_disconnect cannot race a double delete /
+            # invert ROOM_CLOSED relative to FINISHED.
+            fallback_room = self._room_manager.get_room(room_id)
+            if fallback_room is None:
+                return
+            async with fallback_room.lock:
+                await self._room_closer.close_room(room_id)
 
     async def _on_cooldown_end(self, room_id: str, player_id: str) -> None:
         """Cooldown timer callback — auto-advance player to next question (R9)."""
@@ -279,6 +304,13 @@ class SpeedBattleHandler:
         build_state_closure: Callable[[str], dict] | None = None
 
         async with room.lock:
+            # Re-fetch under lock — the room may have been torn down while this
+            # callback was queued behind the lock (mirrors
+            # orchestrator._on_question_timeout).
+            current_room = self._room_manager.get_room(room_id)
+            if current_room is None or current_room.status != GameStatus.PLAYING:
+                return
+
             round_state = self._round_states.get(room_id)
             if round_state is None or round_state.ended:
                 return  # match ended while cooldown was in flight
@@ -342,30 +374,91 @@ class SpeedBattleHandler:
         return rows
 
     def _match_remaining_ms(self, round_state: SpeedBattleRoundState) -> int:
+        if round_state.ended:
+            return 0
         return int(
             max(
                 0,
-                (round_state.match_end_monotonic - asyncio.get_event_loop().time())
-                * 1000,
+                (round_state.match_end_monotonic - time.monotonic()) * 1000,
             )
         )
+
+    def _refresh_shuffled_options(self, room: Room, progress: PlayerProgress) -> None:
+        """Populate progress.shuffled_options for the player's current question.
+
+        Caller MUST hold room.lock. No-op if MC is disabled, the question has
+        no wrong answers, the player is exhausted, or the cache is already
+        valid for the current question_index.
+        """
+        if not room.config.multiple_choice_enabled:
+            return
+        if progress.exhausted or progress.current_question_index >= len(room.questions):
+            return
+        q = room.questions[progress.current_question_index]
+        if not q.wrong_answers:
+            return
+        if (
+            progress.shuffled_options is not None
+            and progress.shuffled_options_question_index
+            == progress.current_question_index
+        ):
+            return
+        options = [q.answer, *q.wrong_answers]
+        random.shuffle(options)
+        progress.shuffled_options = options
+        progress.shuffled_options_question_index = progress.current_question_index
 
     def _make_per_recipient_closure(
         self, room: Room, round_state: SpeedBattleRoundState
     ) -> Callable[[str], dict]:
-        """Return a closure that builds a per-recipient ROOM_STATE dict."""
+        """Return a closure that builds a per-recipient ROOM_STATE dict.
+
+        Snapshots all mutable per-broadcast inputs (room.scores,
+        round_state.per_player) under the caller's lock so concurrent
+        coroutines mutating these between per-recipient sends cannot leak
+        into recipients later in the iteration. Without this snapshot,
+        broadcast_per_recipient awaits between sends and recipient B can
+        see scores that mutated after recipient A's send.
+        """
         leaderboard = (
             self._compute_leaderboard(round_state) if round_state.ended else None
         )
         match_remaining = self._match_remaining_ms(round_state)
 
+        # Refresh each player's cached shuffled options if the cache is missing
+        # or stale relative to their current question index. We do this on the
+        # LIVE PlayerProgress (under the caller's lock) so the cache persists
+        # across broadcasts; if we cached on the snapshot below, every
+        # broadcast would reshuffle.
+        for live_progress in round_state.per_player.values():
+            self._refresh_shuffled_options(room, live_progress)
+
+        # Snapshot mutable state under the caller's lock.
+        scores_snapshot = dict(room.scores)
+        per_player_snapshot: dict[str, PlayerProgress] = {
+            pid: copy.copy(progress) for pid, progress in round_state.per_player.items()
+        }
+        round_state_snapshot = SpeedBattleRoundState(
+            match_start_monotonic=round_state.match_start_monotonic,
+            match_end_monotonic=round_state.match_end_monotonic,
+            match_start_wall=round_state.match_start_wall,
+            per_player=per_player_snapshot,
+            ended=round_state.ended,
+        )
+
         def build(player_id: str) -> dict:
-            progress = round_state.per_player.get(player_id)
+            progress = per_player_snapshot.get(player_id)
             if progress is None:
                 # Fallback: player not in round state (shouldn't happen, but safe)
                 return {}
             msg = self._state_builder.build_speed_battle_state_for_player(
-                room, player_id, round_state, progress, match_remaining, leaderboard
+                room,
+                player_id,
+                round_state_snapshot,
+                progress,
+                match_remaining,
+                leaderboard,
+                scores_override=scores_snapshot,
             )
             return msg.to_dict()
 
