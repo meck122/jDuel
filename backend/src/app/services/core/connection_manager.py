@@ -1,6 +1,7 @@
 """Manager for WebSocket connections within rooms."""
 
 import logging
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from fastapi import WebSocket
@@ -86,3 +87,58 @@ class ConnectionManager:
                     f"Failed to broadcast to player: room_id={room_id}, "
                     f"player_id={player_id}, error={e!s}"
                 )
+
+    async def broadcast_per_recipient(
+        self, room_id: str, build_state: Callable[[str], dict]
+    ) -> None:
+        """Broadcast a per-recipient payload to every connected player.
+
+        Calls build_state(player_id) for each connected player and sends the
+        resulting dict to that player's WebSocket. Snapshots the connection list
+        before iterating so concurrent disconnects cannot cause a
+        RuntimeError: dictionary changed size during iteration.
+
+        Args:
+            room_id: The room ID
+            build_state: Callable that takes a player_id and returns the payload
+        """
+        room = self._room_repository.get(room_id)
+        if not room:
+            return
+
+        for player_id, ws in list(room.connections.items()):
+            try:
+                await ws.send_json(build_state(player_id))
+            except Exception as e:
+                logger.warning(
+                    f"Failed to send per-recipient state: room_id={room_id}, "
+                    f"player_id={player_id}, error={e!s}"
+                )
+
+    async def send_to_player(self, room_id: str, player_id: str, state: dict) -> None:
+        """Send a state payload to a single player's WebSocket.
+
+        Args:
+            room_id: The room ID
+            player_id: The target player
+            state: The payload to send
+        """
+        room = self._room_repository.get(room_id)
+        if not room:
+            return
+
+        ws = room.connections.get(player_id)
+        if ws is None:
+            logger.warning(
+                f"send_to_player: player not connected: "
+                f"room_id={room_id}, player_id={player_id}"
+            )
+            return
+
+        try:
+            await ws.send_json(state)
+        except Exception as e:
+            logger.warning(
+                f"Failed to send to player: room_id={room_id}, "
+                f"player_id={player_id}, error={e!s}"
+            )

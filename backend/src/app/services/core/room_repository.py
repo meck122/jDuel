@@ -6,7 +6,7 @@ import string
 from typing import TYPE_CHECKING
 
 from app.config.game import MAX_PLAYERS_PER_ROOM, MAX_ROOMS
-from app.models import Room
+from app.models import GameStatus, Room
 
 
 class RoomLimitExceeded(Exception):
@@ -89,6 +89,9 @@ class RoomRepository:
         """Pre-register a player in a room.
 
         This reserves the player name without requiring a WebSocket connection.
+        Registration is only permitted while the room is in WAITING status —
+        mid-game joins are refused (defense-in-depth; the HTTP route also gates
+        on this, but the check here protects future internal callers too).
 
         Safety: This method is called from the HTTP route (not the orchestrator)
         and is NOT covered by the per-room asyncio.Lock. This is safe because
@@ -100,10 +103,14 @@ class RoomRepository:
             player_id: The player ID to register
 
         Returns:
-            bool: True if registration successful, False if room not found or name taken
+            bool: True if registration successful, False if room not found, name taken,
+                  or room not in WAITING status
         """
         room = self.get(room_id)
         if not room:
+            return False
+
+        if room.status != GameStatus.WAITING:
             return False
 
         if player_id in room.players:

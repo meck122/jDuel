@@ -5,6 +5,7 @@ delegating to specialized services: RoomRepository and ConnectionManager.
 """
 
 import logging
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from fastapi import WebSocket
@@ -181,3 +182,26 @@ class RoomManager:
             state: The state dictionary to broadcast
         """
         await self._connection_manager.broadcast(room_id, state)
+
+    async def broadcast_state_per_recipient(
+        self, room_id: str, build_state: Callable[[str], dict]
+    ) -> None:
+        """Broadcast a per-recipient payload to every connected player.
+
+        Args:
+            room_id: The room ID
+            build_state: Callable that takes a player_id and returns that player's payload
+        """
+        await self._connection_manager.broadcast_per_recipient(room_id, build_state)
+
+    async def send_to_player_state(
+        self, room_id: str, player_id: str, state: dict
+    ) -> None:
+        """Send a state payload to a single player's WebSocket.
+
+        Args:
+            room_id: The room ID
+            player_id: The target player
+            state: The payload to send
+        """
+        await self._connection_manager.send_to_player(room_id, player_id, state)

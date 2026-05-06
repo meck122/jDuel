@@ -119,7 +119,11 @@ async def handle_websocket(
                     # Capture timestamp before lock acquisition for fair scoring
                     answer_time = datetime.now(UTC)
                     await orchestrator.handle_answer(
-                        room_id, player_id, validated.answer, answer_time
+                        room_id,
+                        player_id,
+                        validated.answer,
+                        answer_time,
+                        validated.questionIndex,
                     )
 
                 elif msg_type == "UPDATE_CONFIG":

@@ -17,3 +17,19 @@ class RoomCloser(Protocol):
             room_id: The ID of the room to close
         """
         ...
+
+
+class GameOverTimerStarter(Protocol):
+    """Protocol for scheduling the post-game 60s auto-close timer.
+
+    The SpeedBattleHandler calls this after match end to reuse the
+    same 60s play-again window Classic uses (Decision § 10).
+    """
+
+    def start_game_over_timer(self, room_id: str) -> None:
+        """Schedule the 60-second game-over auto-close timer.
+
+        Args:
+            room_id: The ID of the finished room
+        """
+        ...

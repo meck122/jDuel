@@ -18,6 +18,9 @@ from app.config.game import (
     REACTIONS,
     RESULTS_TIME_MS,
     ROOM_ID_PATTERN,
+    SPEED_BATTLE_MATCH_TIME_MS,
+    SPEED_BATTLE_QUESTION_POOL_SIZE,
+    SPEED_BATTLE_WRONG_COOLDOWN_MS,
 )
 from app.config.logging import setup_logging
 
@@ -39,5 +42,8 @@ __all__ = [
     "REACTION_COOLDOWN_MS",
     "RESULTS_TIME_MS",
     "ROOM_ID_PATTERN",
+    "SPEED_BATTLE_MATCH_TIME_MS",
+    "SPEED_BATTLE_QUESTION_POOL_SIZE",
+    "SPEED_BATTLE_WRONG_COOLDOWN_MS",
     "setup_logging",
 ]
