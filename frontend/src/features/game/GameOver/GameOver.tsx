@@ -12,6 +12,7 @@ import { useGame } from "../../../contexts";
 import { LinearTimer } from "../../../components";
 import { sortPlayersByScore } from "../../../utils";
 import { Confetti } from "../Confetti";
+import { FinalStandings, FinalRow } from "../FinalStandings";
 
 export function GameOver() {
   const { roomState, playerId, playAgain } = useGame();
@@ -24,6 +25,12 @@ export function GameOver() {
 
   const sortedPlayers = sortPlayersByScore(players);
   const firstPlace = sortedPlayers[0];
+
+  const rows: FinalRow[] = sortedPlayers.map(([pid, score], i) => ({
+    placement: i + 1,
+    playerId: pid,
+    scoreDisplay: `${score} pts`,
+  }));
 
   return (
     <Box
@@ -178,104 +185,7 @@ export function GameOver() {
         )}
       </Box>
 
-      {/* Final standings */}
-      <Box
-        sx={{
-          mt: { xs: 2, sm: 8 },
-          flex: { xs: 1, sm: "none" },
-          minHeight: { xs: 0, sm: "auto" },
-          overflowY: { xs: "auto", sm: "visible" },
-        }}
-      >
-        <Box
-          component="h3"
-          sx={{
-            fontFamily: "var(--font-display)",
-            fontSize: { xs: "var(--font-size-lg)", sm: "var(--font-size-2xl)" },
-            color: "var(--color-accent-purple)",
-            mb: { xs: 2, sm: 6 },
-            mt: 0,
-            fontWeight: 400,
-            textTransform: "uppercase",
-            letterSpacing: { xs: "2px", sm: "3px" },
-            textShadow: "0 2px 8px rgba(0, 0, 0, 0.5)",
-          }}
-        >
-          Final Standings
-        </Box>
-        <Box
-          sx={{
-            maxWidth: { xs: "100%", sm: 500 },
-            mx: "auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-          }}
-        >
-          {sortedPlayers.map(([player, score], index) => (
-            <Box
-              key={player}
-              sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "28px 1fr auto", sm: "40px 1fr auto" },
-                gap: { xs: 2, sm: 4 },
-                alignItems: "center",
-                background:
-                  index === 0
-                    ? "linear-gradient(90deg, rgba(139, 92, 246, 0.15), rgba(251, 191, 36, 0.08))"
-                    : "var(--color-bg-elevated)",
-                py: { xs: 1, sm: 4 },
-                px: { xs: 4, sm: 5 },
-                borderRadius: "var(--radius-md)",
-                border: "2px solid",
-                borderColor:
-                  index === 0 ? "var(--color-accent-purple)" : "var(--color-border-default)",
-                boxShadow: index === 0 ? "var(--shadow-glow-purple)" : "none",
-                transition: "all var(--transition-base)",
-                "&:hover": {
-                  borderColor: "var(--color-accent-purple)",
-                  transform: "translateX(4px)",
-                  boxShadow: "var(--shadow-glow-purple)",
-                },
-              }}
-            >
-              <Box
-                component="span"
-                sx={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-xl)" },
-                  fontWeight: 700,
-                  color: index === 0 ? "var(--color-accent-red)" : "var(--color-accent-teal)",
-                  textAlign: "center",
-                }}
-              >
-                {index + 1}
-              </Box>
-              <Box
-                component="span"
-                sx={{
-                  fontSize: { xs: "var(--font-size-sm)", sm: "var(--font-size-lg)" },
-                  fontWeight: 600,
-                  color: "var(--color-text-primary)",
-                }}
-              >
-                {player}
-              </Box>
-              <Box
-                component="span"
-                sx={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-xl)" },
-                  fontWeight: 700,
-                  color: index === 0 ? "var(--color-accent-red)" : "var(--color-accent-teal)",
-                }}
-              >
-                {score}
-              </Box>
-            </Box>
-          ))}
-        </Box>
-      </Box>
+      <FinalStandings rows={rows} selfPlayerId={playerId} />
     </Box>
   );
 }

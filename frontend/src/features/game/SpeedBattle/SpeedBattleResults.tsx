@@ -12,29 +12,30 @@
 import { useState } from "react";
 import { Box } from "@mui/material";
 import { useGame } from "../../../contexts";
+import { LinearTimer } from "../../../components";
 import { PlayerName } from "../../../components/common/PlayerName/PlayerName";
 import { SpeedBattleLeaderRow } from "../../../types";
 import { Confetti } from "../Confetti";
+import { FinalStandings, FinalRow } from "../FinalStandings";
 import { TimesUpOverlay } from "./TimesUpOverlay";
-
-function rankEmoji(placement: number): string {
-  if (placement === 1) return "🥇";
-  if (placement === 2) return "🥈";
-  if (placement === 3) return "🥉";
-  return String(placement);
-}
 
 export function SpeedBattleResults() {
   const { roomState, playerId, playAgain } = useGame();
   const [showTimesUp, setShowTimesUp] = useState(true);
 
   const isHost = roomState?.hostId === playerId;
+  const timeRemainingMs = roomState?.timeRemainingMs;
 
   const leaderboard: SpeedBattleLeaderRow[] = roomState?.speedBattle?.leaderboard ?? [];
 
-  // Sort by placement ascending (server assigns placement; 1 = winner)
   const sorted = [...leaderboard].sort((a, b) => a.placement - b.placement);
   const winner = sorted[0] ?? null;
+
+  const rows: FinalRow[] = sorted.map((row) => ({
+    placement: row.placement,
+    playerId: row.playerId,
+    scoreDisplay: `${row.correctCount} correct · ${row.wrongCount} wrong`,
+  }));
 
   return (
     <>
@@ -144,6 +145,18 @@ export function SpeedBattleResults() {
           </Box>
         )}
 
+        {/* Room closing timer */}
+        {timeRemainingMs !== undefined && (
+          <Box sx={{ my: { xs: 2, sm: 7 } }}>
+            <LinearTimer
+              timeRemainingMs={timeRemainingMs}
+              resetKey={winner?.playerId ?? ""}
+              variant="subtle"
+              label="Room closing in"
+            />
+          </Box>
+        )}
+
         {/* Play again */}
         <Box sx={{ my: { xs: 2, sm: 6 }, textAlign: "center" }}>
           {isHost ? (
@@ -182,204 +195,11 @@ export function SpeedBattleResults() {
           )}
         </Box>
 
-        {/* Final standings table */}
-        <Box
-          sx={{
-            mt: { xs: 2, sm: 8 },
-            flex: { xs: 1, sm: "none" },
-            minHeight: { xs: 0, sm: "auto" },
-            overflowY: { xs: "auto", sm: "visible" },
-          }}
-        >
-          <Box
-            component="h3"
-            sx={{
-              fontFamily: "var(--font-display)",
-              fontSize: { xs: "var(--font-size-lg)", sm: "var(--font-size-2xl)" },
-              color: "var(--color-accent-purple)",
-              mb: { xs: 2, sm: 6 },
-              mt: 0,
-              fontWeight: 400,
-              textTransform: "uppercase",
-              letterSpacing: { xs: "2px", sm: "3px" },
-              textShadow: "0 2px 8px rgba(0, 0, 0, 0.5)",
-            }}
-          >
-            Final Standings
-          </Box>
-
-          {/* Table header */}
-          <Box
-            sx={{
-              maxWidth: { xs: "100%", sm: 560 },
-              mx: "auto",
-              mb: 2,
-              display: "grid",
-              gridTemplateColumns: { xs: "36px 1fr 60px 60px", sm: "48px 1fr 80px 80px" },
-              gap: { xs: 2, sm: 3 },
-              px: { xs: 4, sm: 5 },
-            }}
-          >
-            {["Rank", "Player", "Correct", "Wrong"].map((heading) => (
-              <Box
-                key={heading}
-                sx={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: "var(--font-size-xs)",
-                  color: "var(--color-text-muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "1.5px",
-                  textAlign: heading === "Player" ? "left" : "center",
-                }}
-              >
-                {heading}
-              </Box>
-            ))}
-          </Box>
-
-          <Box
-            sx={{
-              maxWidth: { xs: "100%", sm: 560 },
-              mx: "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-            }}
-          >
-            {sorted.map((row) => {
-              const isSelf = row.playerId === playerId;
-              const isWinner = row.placement === 1;
-
-              return (
-                <Box
-                  key={row.playerId}
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: {
-                      xs: "36px 1fr 60px 60px",
-                      sm: "48px 1fr 80px 80px",
-                    },
-                    gap: { xs: 2, sm: 3 },
-                    alignItems: "center",
-                    background: isSelf
-                      ? "linear-gradient(90deg, rgba(139, 92, 246, 0.18), rgba(139, 92, 246, 0.05))"
-                      : isWinner
-                        ? "linear-gradient(90deg, rgba(139, 92, 246, 0.12), rgba(251, 191, 36, 0.06))"
-                        : "var(--color-bg-elevated)",
-                    py: { xs: 2, sm: 4 },
-                    px: { xs: 4, sm: 5 },
-                    borderRadius: "var(--radius-md)",
-                    border: "2px solid",
-                    borderColor: isSelf
-                      ? "var(--color-accent-purple)"
-                      : isWinner
-                        ? "var(--color-accent-purple)"
-                        : "var(--color-border-default)",
-                    boxShadow: isSelf
-                      ? "var(--shadow-glow-purple)"
-                      : isWinner
-                        ? "var(--shadow-glow-purple)"
-                        : "none",
-                    transition: "all var(--transition-base)",
-                    "&:hover": {
-                      borderColor: "var(--color-accent-purple)",
-                      transform: "translateX(4px)",
-                      boxShadow: "var(--shadow-glow-purple)",
-                    },
-                  }}
-                >
-                  {/* Rank */}
-                  <Box
-                    component="span"
-                    sx={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-xl)" },
-                      fontWeight: 700,
-                      color:
-                        row.placement === 1
-                          ? "var(--color-accent-gold)"
-                          : "var(--color-accent-teal)",
-                      textAlign: "center",
-                    }}
-                  >
-                    {rankEmoji(row.placement)}
-                  </Box>
-
-                  {/* Player name */}
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: { xs: "var(--font-size-sm)", sm: "var(--font-size-lg)" },
-                      fontWeight: isSelf ? 700 : 600,
-                      color: isSelf ? "var(--color-accent-purple)" : "var(--color-text-primary)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      minWidth: 0,
-                    }}
-                  >
-                    <PlayerName playerId={row.playerId} />
-                  </Box>
-
-                  {/* Correct count */}
-                  <Box
-                    component="span"
-                    sx={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-xl)" },
-                      fontWeight: 700,
-                      color: "var(--color-success-light)",
-                      textAlign: "center",
-                    }}
-                  >
-                    {row.correctCount}
-                  </Box>
-
-                  {/* Wrong count */}
-                  <Box
-                    component="span"
-                    sx={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-xl)" },
-                      fontWeight: 700,
-                      color: "var(--color-error-light)",
-                      textAlign: "center",
-                    }}
-                  >
-                    {row.wrongCount}
-                  </Box>
-                </Box>
-              );
-            })}
-
-            {sorted.length === 0 && (
-              <Box
-                sx={{
-                  textAlign: "center",
-                  color: "var(--color-text-muted)",
-                  fontSize: "var(--font-size-sm)",
-                  py: 4,
-                }}
-              >
-                No results available
-              </Box>
-            )}
-          </Box>
-
-          {/* Tiebreaker footnote */}
-          <Box
-            sx={{
-              mt: { xs: 3, sm: 5 },
-              textAlign: "center",
-              fontFamily: "var(--font-mono)",
-              fontSize: "var(--font-size-xs)",
-              color: "var(--color-text-disabled)",
-              letterSpacing: "0.5px",
-            }}
-          >
-            Tiebreaker: fewer wrong answers wins
-          </Box>
-        </Box>
+        <FinalStandings
+          rows={rows}
+          selfPlayerId={playerId}
+          tiebreakerText="Tiebreaker: fewer wrong answers wins"
+        />
       </Box>
     </>
   );
