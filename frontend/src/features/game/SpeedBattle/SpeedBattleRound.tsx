@@ -1,16 +1,5 @@
 /**
  * SpeedBattleRound - Main in-round component for Speed Battle game mode.
- *
- * Layout:
- *   Top bar: SBBadge | MatchTimerBar | Q{n}/100
- *   Mobile strip: LiveLeaderboard (compact)
- *   Main area: Question card (left) + desktop leaderboard panel slot (right, U5)
- *
- * Local state:
- *   - countdownDone: shows 3→2→1→GO! on fresh playing transition
- *   - localMatchMs: ticks down every 100ms, re-seeded from server
- *   - localCooldownMs: ticks down every 100ms during cooldown
- *   - hasSubmittedThisQuestion: prevents double-submit per question
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -22,6 +11,12 @@ import { CountdownOverlay } from "./CountdownOverlay";
 import { CooldownRing } from "./CooldownRing";
 import { LiveLeaderboard } from "./LiveLeaderboard";
 
+// Match is 3 minutes; countdown is ~3.2s.
+// If the match has been running for longer than the countdown duration when
+// we mount, we're reconnecting mid-round — skip the countdown.
+const MATCH_TIME_MS = 180_000;
+const COUNTDOWN_DURATION_MS = 3_200;
+
 export function SpeedBattleRound() {
   const { roomState, submitAnswer } = useGame();
 
@@ -32,37 +27,24 @@ export function SpeedBattleRound() {
   const serverCooldownMs = playerState?.cooldownRemainingMs ?? null;
 
   // ── Countdown gate ───────────────────────────────────────────────────────
-  // Only show countdown on fresh waiting→playing transition, not on reconnect.
-  // We track the "seenStatuses" pattern by keeping prevStatus in state so we
-  // can compare without reading a ref during render (avoids react-hooks/refs rule).
-  const [countdownDone, setCountdownDone] = useState<boolean>(
-    // If we mount already in playing (reconnect mid-round), skip the countdown
-    () => roomState?.status === "playing"
-  );
-  const [prevStatus, setPrevStatus] = useState<string | undefined>(roomState?.status);
+  // Skip countdown on reconnect (match already underway) by checking how much
+  // time has elapsed. Fresh starts have matchRemainingMs ≈ MATCH_TIME_MS.
+  const [countdownDone, setCountdownDone] = useState<boolean>(() => {
+    const remaining = roomState?.speedBattle?.matchRemainingMs ?? MATCH_TIME_MS;
+    return remaining < MATCH_TIME_MS - COUNTDOWN_DURATION_MS;
+  });
 
-  if (prevStatus !== roomState?.status) {
-    setPrevStatus(roomState?.status);
-    if (prevStatus === "waiting" && roomState?.status === "playing") {
-      setCountdownDone(false);
-    }
-  }
-
-  const handleCountdownDone = useCallback(() => {
-    setCountdownDone(true);
-  }, []);
+  const handleCountdownDone = useCallback(() => setCountdownDone(true), []);
 
   // ── Match timer ──────────────────────────────────────────────────────────
+  // Re-seed from server on every broadcast, tick down 100ms between updates.
+  // The server broadcasts on each player answer, so drift is bounded to the
+  // inter-answer window. useEffect re-seed avoids calling impure time functions
+  // in the render/effect body (React Compiler purity rule).
   const [localMatchMs, setLocalMatchMs] = useState<number>(serverMatchMs);
-
-  // Re-seed from server when value changes (render-time, same pattern as Question.tsx)
-  const prevServerMatchMsRef = useRef<number>(serverMatchMs);
-  if (prevServerMatchMsRef.current !== serverMatchMs) {
-    prevServerMatchMsRef.current = serverMatchMs;
+  useEffect(() => {
     setLocalMatchMs(serverMatchMs);
-  }
-
-  // Tick match timer down every 100ms
+  }, [serverMatchMs]);
   useEffect(() => {
     const id = setInterval(() => {
       setLocalMatchMs((prev) => Math.max(0, prev - 100));
@@ -72,15 +54,9 @@ export function SpeedBattleRound() {
 
   // ── Cooldown timer ───────────────────────────────────────────────────────
   const [localCooldownMs, setLocalCooldownMs] = useState<number>(serverCooldownMs ?? 0);
-
-  // Re-seed cooldown when server value changes (render-time pattern)
-  const prevCooldownMsRef = useRef<number | null>(serverCooldownMs);
-  if (prevCooldownMsRef.current !== serverCooldownMs) {
-    prevCooldownMsRef.current = serverCooldownMs;
+  useEffect(() => {
     setLocalCooldownMs(serverCooldownMs ?? 0);
-  }
-
-  // Tick cooldown down every 100ms (only when server says we are in cooldown)
+  }, [serverCooldownMs]);
   useEffect(() => {
     if (serverCooldownMs === null) return;
     const id = setInterval(() => {
@@ -89,16 +65,46 @@ export function SpeedBattleRound() {
     return () => clearInterval(id);
   }, [serverCooldownMs]);
 
-  // ── Per-question submission gate ─────────────────────────────────────────
-  const [hasSubmittedThisQuestion, setHasSubmittedThisQuestion] = useState(false);
-  // Reset when question index changes (same render-time pattern as Question.tsx lines 27-32)
-  const prevQuestionIndexRef = useRef<number>(questionIndex);
-  if (prevQuestionIndexRef.current !== questionIndex) {
-    prevQuestionIndexRef.current = questionIndex;
-    setHasSubmittedThisQuestion(false);
-  }
+  // ── Correct-answer feedback ──────────────────────────────────────────────
+  // When the player submits a correct answer, snapshot their selection and the
+  // current options so we can show a green highlight for 600ms BEFORE the new
+  // question appears (the server advances questionIndex almost instantly).
+  const [submittedFlash, setSubmittedFlash] = useState<{
+    options: string[];
+    selected: string;
+  } | null>(null);
 
-  // ── Guard: need speedBattle state ────────────────────────────────────────
+  const [hasSubmittedThisQuestion, setHasSubmittedThisQuestion] = useState(false);
+
+  // Detect question advance. submittedFlash is in the dep array so the effect
+  // reads the current value without needing a render-time ref write.
+  const prevQuestionIndexRef = useRef(questionIndex);
+  useEffect(() => {
+    if (questionIndex === prevQuestionIndexRef.current) return;
+    prevQuestionIndexRef.current = questionIndex;
+
+    if (submittedFlash) {
+      // Submitted + question advanced → correct answer. Hold the green flash
+      // for 600ms so the player sees confirmation before the next question loads.
+      const t = setTimeout(() => {
+        setSubmittedFlash(null);
+        setHasSubmittedThisQuestion(false);
+      }, 600);
+      return () => clearTimeout(t);
+    } else {
+      // Cooldown ended (or no answer) → just advance
+      setHasSubmittedThisQuestion(false);
+    }
+  }, [questionIndex, submittedFlash]);
+
+  // Clear the flash immediately if a cooldown starts (wrong answer confirmed)
+  useEffect(() => {
+    if (serverCooldownMs !== null && submittedFlash) {
+      setSubmittedFlash(null);
+    }
+  }, [serverCooldownMs, submittedFlash]);
+
+  // ── Guard ────────────────────────────────────────────────────────────────
   if (!speedBattle || !playerState) {
     return (
       <Box
@@ -122,10 +128,18 @@ export function SpeedBattleRound() {
   const inCooldown = serverCooldownMs !== null && serverCooldownMs > 0;
   const cardBorderTopColor = inCooldown ? "var(--color-error)" : "var(--color-accent-purple)";
 
+  // During the correct-answer flash, show the snapshot options so the player
+  // sees their selection highlighted even after the server has advanced.
+  const displayOptions = submittedFlash?.options ?? currentQuestion?.options;
+  const showingCorrectFlash = submittedFlash !== null && !inCooldown;
+
   const handleOptionClick = (option: string) => {
     if (hasSubmittedThisQuestion || inCooldown) return;
     submitAnswer(option, questionIndex);
     setHasSubmittedThisQuestion(true);
+    if (currentQuestion?.options) {
+      setSubmittedFlash({ options: currentQuestion.options, selected: option });
+    }
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -140,10 +154,9 @@ export function SpeedBattleRound() {
         overflow: "hidden",
       }}
     >
-      {/* Countdown overlay — shown on fresh round start */}
       {!countdownDone && <CountdownOverlay onDone={handleCountdownDone} />}
 
-      {/* ── Top bar ─────────────────────────────────────────────────────── */}
+      {/* Top bar */}
       <Box
         sx={{
           display: "flex",
@@ -174,10 +187,10 @@ export function SpeedBattleRound() {
         </Box>
       </Box>
 
-      {/* ── Mobile leaderboard strip ─────────────────────────────────────── */}
+      {/* Mobile leaderboard strip */}
       <LiveLeaderboard />
 
-      {/* ── Main content area ────────────────────────────────────────────── */}
+      {/* Main content */}
       <Box
         sx={{
           flex: 1,
@@ -190,7 +203,7 @@ export function SpeedBattleRound() {
           alignItems: { xs: "stretch", sm: "flex-start" },
         }}
       >
-        {/* ── Left: Question area ──────────────────────────────────────── */}
+        {/* Question area */}
         <Box
           sx={{
             flex: { xs: "none", sm: 1 },
@@ -201,7 +214,6 @@ export function SpeedBattleRound() {
           }}
         >
           {exhausted ? (
-            /* Exhausted state — answered all 100 questions */
             <Box
               sx={{
                 p: 6,
@@ -209,7 +221,6 @@ export function SpeedBattleRound() {
                 border: "2px solid var(--color-accent-teal)",
                 borderRadius: "var(--radius-lg)",
                 textAlign: "center",
-                animation: "cardSlideUp 0.4s ease forwards",
               }}
             >
               <Box
@@ -250,57 +261,76 @@ export function SpeedBattleRound() {
                 Waiting for the match to end...
               </Box>
             </Box>
-          ) : currentQuestion ? (
+          ) : currentQuestion || showingCorrectFlash ? (
             <>
-              {/* Category label */}
-              <Box
-                sx={{
-                  fontSize: "var(--font-size-sm)",
-                  color: "var(--color-text-muted)",
-                  textAlign: "left",
-                  textTransform: "uppercase",
-                  letterSpacing: "1px",
-                }}
-              >
-                {currentQuestion.category}
-              </Box>
+              {/* Category */}
+              {!showingCorrectFlash && (
+                <Box
+                  sx={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--color-text-muted)",
+                    textAlign: "left",
+                    textTransform: "uppercase",
+                    letterSpacing: "1px",
+                  }}
+                >
+                  {currentQuestion?.category}
+                </Box>
+              )}
 
               {/* Question card */}
               <Box
                 sx={{
                   position: "relative",
                   p: { xs: 4, sm: 5 },
-                  background: "var(--color-bg-elevated)",
+                  background: showingCorrectFlash
+                    ? "rgba(34, 197, 94, 0.06)"
+                    : "var(--color-bg-elevated)",
                   border: "2px solid var(--color-border-default)",
                   borderRadius: "var(--radius-lg)",
                   borderTopWidth: "3px",
-                  borderTopColor: cardBorderTopColor,
-                  boxShadow: inCooldown
-                    ? "0 -3px 12px rgba(239, 68, 68, 0.2)"
-                    : "0 -3px 12px rgba(139, 92, 246, 0.15)",
-                  transition: "border-top-color 0.3s, box-shadow 0.3s",
+                  borderTopColor: showingCorrectFlash ? "var(--color-success)" : cardBorderTopColor,
+                  boxShadow: showingCorrectFlash
+                    ? "0 -3px 12px rgba(34, 197, 94, 0.25)"
+                    : inCooldown
+                      ? "0 -3px 12px rgba(239, 68, 68, 0.2)"
+                      : "0 -3px 12px rgba(139, 92, 246, 0.15)",
+                  transition: "border-top-color 0.3s, box-shadow 0.3s, background 0.3s",
                 }}
               >
-                {/* CooldownRing in top-right corner */}
                 {inCooldown && (
                   <Box sx={{ position: "absolute", top: 12, right: 12 }}>
                     <CooldownRing remainingMs={localCooldownMs} totalMs={5000} size={48} />
                   </Box>
                 )}
 
-                <Box
-                  component="p"
-                  sx={{
-                    fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-xl)" },
-                    fontWeight: 500,
-                    color: "var(--color-text-primary)",
-                    m: 0,
-                    lineHeight: 1.4,
-                    pr: inCooldown ? 7 : 0,
-                  }}
-                >
-                  {currentQuestion.text}
-                </Box>
+                {showingCorrectFlash ? (
+                  <Box
+                    sx={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: { xs: "var(--font-size-xl)", sm: "var(--font-size-2xl)" },
+                      color: "var(--color-success-light)",
+                      letterSpacing: "2px",
+                      textAlign: "center",
+                    }}
+                  >
+                    ✓ Correct!
+                  </Box>
+                ) : (
+                  <Box
+                    component="p"
+                    sx={{
+                      fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-xl)" },
+                      fontWeight: 500,
+                      color: "var(--color-text-primary)",
+                      m: 0,
+                      lineHeight: 1.4,
+                      pr: inCooldown ? 7 : 0,
+                    }}
+                  >
+                    {currentQuestion?.text}
+                  </Box>
+                )}
               </Box>
 
               {/* Cooldown strip */}
@@ -342,7 +372,7 @@ export function SpeedBattleRound() {
               </Box>
 
               {/* Answer options */}
-              {currentQuestion.options ? (
+              {displayOptions ? (
                 <Box
                   sx={{
                     display: "grid",
@@ -350,8 +380,10 @@ export function SpeedBattleRound() {
                     gap: { xs: 2, sm: 3 },
                   }}
                 >
-                  {currentQuestion.options.map((option, index) => {
-                    const isCorrectOption = inCooldown && cooldownCorrectAnswer === option;
+                  {displayOptions.map((option, index) => {
+                    const isCorrectReveal = inCooldown && cooldownCorrectAnswer === option;
+                    const isSelectedCorrect =
+                      showingCorrectFlash && submittedFlash?.selected === option;
                     const disabled = hasSubmittedThisQuestion || inCooldown;
 
                     return (
@@ -366,17 +398,24 @@ export function SpeedBattleRound() {
                           gap: 3,
                           p: { xs: "12px 20px", sm: 4 },
                           minHeight: 52,
-                          background: "var(--color-bg-elevated)",
-                          border: isCorrectOption
+                          background: isSelectedCorrect
+                            ? "rgba(34, 197, 94, 0.12)"
+                            : "var(--color-bg-elevated)",
+                          border: isCorrectReveal
                             ? "2px solid var(--color-success)"
-                            : "2px solid var(--color-border-default)",
+                            : isSelectedCorrect
+                              ? "2px solid var(--color-success)"
+                              : "2px solid var(--color-border-default)",
                           borderRadius: "var(--radius-md)",
                           cursor: disabled ? "not-allowed" : "pointer",
                           textAlign: "left",
                           transition: "all var(--transition-base)",
                           width: "100%",
-                          opacity: disabled && !isCorrectOption ? 0.55 : 1,
-                          boxShadow: isCorrectOption ? "0 0 12px rgba(34, 197, 94, 0.3)" : "none",
+                          opacity: disabled && !isCorrectReveal && !isSelectedCorrect ? 0.55 : 1,
+                          boxShadow:
+                            isCorrectReveal || isSelectedCorrect
+                              ? "0 0 12px rgba(34, 197, 94, 0.3)"
+                              : "none",
                           "&:hover:not(:disabled)": {
                             borderColor: "var(--color-accent-purple)",
                             background: "rgba(139, 92, 246, 0.08)",
@@ -391,9 +430,10 @@ export function SpeedBattleRound() {
                             fontFamily: "var(--font-display)",
                             fontSize: "var(--font-size-xl)",
                             fontWeight: 400,
-                            color: isCorrectOption
-                              ? "var(--color-success)"
-                              : "var(--color-accent-teal)",
+                            color:
+                              isCorrectReveal || isSelectedCorrect
+                                ? "var(--color-success)"
+                                : "var(--color-accent-teal)",
                             minWidth: 24,
                             flexShrink: 0,
                             letterSpacing: "1px",
@@ -417,7 +457,6 @@ export function SpeedBattleRound() {
                   })}
                 </Box>
               ) : (
-                /* No options: shouldn't happen in SB but guard gracefully */
                 <Box
                   sx={{
                     p: 4,
@@ -432,26 +471,8 @@ export function SpeedBattleRound() {
                   Answer options loading...
                 </Box>
               )}
-
-              {/* Submitted (waiting for server) */}
-              {hasSubmittedThisQuestion && !inCooldown && (
-                <Box
-                  sx={{
-                    p: 3,
-                    background: "rgba(34, 197, 94, 0.08)",
-                    border: "1px solid rgba(34, 197, 94, 0.25)",
-                    borderRadius: "var(--radius-md)",
-                    textAlign: "center",
-                    fontSize: "var(--font-size-sm)",
-                    color: "var(--color-success-light)",
-                  }}
-                >
-                  Answer submitted — awaiting next question...
-                </Box>
-              )}
             </>
           ) : (
-            /* Brief gap between questions */
             <Box
               sx={{
                 p: 6,
@@ -465,7 +486,7 @@ export function SpeedBattleRound() {
           )}
         </Box>
 
-        {/* ── Right: Desktop leaderboard panel ────────────────────────────── */}
+        {/* Desktop leaderboard panel */}
         <Box
           sx={{
             display: { xs: "none", sm: "flex" },
