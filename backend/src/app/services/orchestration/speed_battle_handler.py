@@ -267,6 +267,7 @@ class SpeedBattleHandler:
             self._timer_service.cancel_all_player_cooldowns_for_room(room_id)
 
             room.status = GameStatus.FINISHED
+            room.finish_time = datetime.now(UTC)
 
             logger.info(
                 f"Speed Battle match ended: room_id={room_id}, "
