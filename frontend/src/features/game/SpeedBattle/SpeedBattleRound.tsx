@@ -183,7 +183,7 @@ export function SpeedBattleRound() {
             flexShrink: 0,
           }}
         >
-          Q{questionIndex + 1}/100
+          Q{questionIndex + 1}
         </Box>
       </Box>
 
@@ -234,7 +234,7 @@ export function SpeedBattleRound() {
                   letterSpacing: "1px",
                 }}
               >
-                All 100 questions answered!
+                All questions answered!
               </Box>
               <Box
                 component="p"
