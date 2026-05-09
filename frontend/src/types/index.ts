@@ -4,6 +4,28 @@ export interface RoomConfig {
   gameMode: "classic" | "speed_battle";
 }
 
+export interface SpeedBattleLeaderRow {
+  playerId: string;
+  correctCount: number;
+  wrongCount: number;
+  placement: number;
+}
+
+export interface SpeedBattlePlayerState {
+  questionIndex: number;
+  correctCount: number;
+  wrongCount: number;
+  cooldownRemainingMs: number | null;
+  cooldownCorrectAnswer: string | null;
+  exhausted: boolean;
+}
+
+export interface SpeedBattleStateData {
+  matchRemainingMs: number;
+  playerState: SpeedBattlePlayerState;
+  leaderboard: SpeedBattleLeaderRow[] | null;
+}
+
 export interface RoomState {
   roomId: string;
   players: Record<string, number>;
@@ -25,6 +47,7 @@ export interface RoomState {
     playerResults: Record<string, number>;
   };
   reactions?: { id: number; label: string }[];
+  speedBattle?: SpeedBattleStateData;
 }
 
 export interface Reaction {

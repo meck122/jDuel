@@ -7,17 +7,19 @@ import { MultipleChoiceToggle } from "./MultipleChoiceToggle";
 export function GameSettings() {
   const { playerId, roomState, updateConfig } = useGame();
   const isHost = roomState?.hostId === playerId;
+  const currentMode = roomState?.config?.gameMode ?? "classic";
+  const mcForced = currentMode === "speed_battle";
 
   return (
     <Box
       sx={{
-        width: { xs: "100%", md: 280 },
+        width: { xs: "100%", md: 300 },
         flexShrink: 0,
-        p: { xs: 0, md: 5 },
-        background: { xs: "transparent", md: "rgba(139, 92, 246, 0.06)" },
-        border: { xs: "none", md: "1px solid rgba(139, 92, 246, 0.3)" },
+        p: { xs: 0, md: 6 },
+        background: { xs: "transparent", md: "var(--color-bg-elevated)" },
+        border: { xs: "none", md: "2px solid var(--color-accent-purple)" },
         borderRadius: "var(--radius-lg)",
-        boxShadow: { xs: "none", md: "0 4px 16px rgba(139, 92, 246, 0.12)" },
+        boxShadow: { xs: "none", md: "var(--shadow-glow-purple)" },
         display: "flex",
         flexDirection: "column",
         gap: { xs: 4, md: 5 },
@@ -45,13 +47,25 @@ export function GameSettings() {
       />
       <MultipleChoiceToggle
         isHost={isHost}
-        enabled={roomState?.config?.multipleChoiceEnabled ?? false}
+        enabled={mcForced ? true : (roomState?.config?.multipleChoiceEnabled ?? false)}
+        forced={mcForced}
         onToggle={(enabled) => updateConfig({ multipleChoiceEnabled: enabled })}
       />
       <GameModeToggle
         isHost={isHost}
-        currentMode={roomState?.config?.gameMode ?? "classic"}
-        onSelect={(mode) => updateConfig({ gameMode: mode })}
+        currentMode={currentMode}
+        onSelect={(mode) => {
+          if (mode === "speed_battle") {
+            const mcCurrentlyOn = roomState?.config?.multipleChoiceEnabled ?? false;
+            if (mcCurrentlyOn) {
+              updateConfig({ gameMode: "speed_battle" });
+            } else {
+              updateConfig({ gameMode: "speed_battle", multipleChoiceEnabled: true });
+            }
+          } else {
+            updateConfig({ gameMode: mode });
+          }
+        }}
       />
     </Box>
   );

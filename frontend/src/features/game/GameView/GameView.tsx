@@ -1,16 +1,17 @@
 /**
  * GameView - Main game container that orchestrates game phases.
  *
- * This component:
- * - Displays the game header with room info
- * - Renders the appropriate phase component based on game status
- * - Uses GameContext for all state (no prop drilling)
+ * Dispatches on both config.gameMode and status:
  *
- * Game phases:
- * - waiting: Lobby (waiting for host to start)
- * - playing: Question (answering questions)
- * - results: Results (showing answers after each question)
- * - finished: GameOver (final scores)
+ * classic  / waiting  → Lobby
+ * classic  / playing  → Question
+ * classic  / results  → Results
+ * classic  / finished → GameOver
+ *
+ * speed_battle / waiting  → Lobby (MC gate active)
+ * speed_battle / playing  → SpeedBattleRound (countdown + cooldown + leaderboard)
+ * speed_battle / finished → SpeedBattleResults (Time's Up + final leaderboard)
+ * speed_battle / results  → unreachable (log + render nothing)
  */
 
 import { Box } from "@mui/material";
@@ -20,6 +21,7 @@ import { Question } from "../Question/Question";
 import { Results } from "../Results/Results";
 import { GameOver } from "../GameOver/GameOver";
 import { Reactions } from "../Reactions/Reactions";
+import { SpeedBattleRound, SpeedBattleResults } from "../SpeedBattle";
 
 export function GameView() {
   const { roomState } = useGame();
@@ -28,21 +30,41 @@ export function GameView() {
     return null;
   }
 
+  const gameMode = roomState.config?.gameMode ?? "classic";
+  const { status } = roomState;
+
   return (
     <Box sx={{ width: "100%", p: { xs: 0, sm: 6 }, textAlign: "center" }}>
-      {roomState.status === "waiting" && <Lobby />}
+      {status === "waiting" && <Lobby />}
 
-      {roomState.status === "playing" &&
+      {gameMode === "classic" &&
+        status === "playing" &&
         roomState.currentQuestion &&
         roomState.timeRemainingMs !== undefined && <Question />}
 
-      {roomState.status === "results" &&
+      {gameMode === "classic" &&
+        status === "results" &&
         roomState.results &&
         roomState.timeRemainingMs !== undefined && <Results />}
 
-      {roomState.status === "finished" && roomState.winner && <GameOver />}
+      {gameMode === "classic" && status === "finished" && roomState.winner && <GameOver />}
 
-      {(roomState.status === "results" || roomState.status === "finished") && <Reactions />}
+      {gameMode === "speed_battle" && status === "playing" && <SpeedBattleRound />}
+
+      {gameMode === "speed_battle" && status === "finished" && <SpeedBattleResults />}
+
+      {gameMode === "speed_battle" &&
+        status === "results" &&
+        // Speed Battle has no per-question results phase — this status is unreachable
+        // from the backend but guarded here to catch regressions early.
+        (() => {
+          console.warn("GameView: unexpected status=results for speed_battle");
+          return null;
+        })()}
+
+      {/* Reactions: Classic shows on results+finished; Speed Battle only on finished */}
+      {gameMode === "classic" && (status === "results" || status === "finished") && <Reactions />}
+      {gameMode === "speed_battle" && status === "finished" && <Reactions />}
     </Box>
   );
 }

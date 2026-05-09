@@ -245,6 +245,13 @@ class StateBuilder:
                 playerState=player_state,
                 leaderboard=leaderboard,
             )
+            if room.finish_time:
+                elapsed_ms = int(
+                    (datetime.now(UTC) - room.finish_time).total_seconds() * 1000
+                )
+                state_data.timeRemainingMs = max(0, GAME_OVER_TIME_MS - elapsed_ms)
+            else:
+                state_data.timeRemainingMs = GAME_OVER_TIME_MS
 
         return RoomStateMessage(roomState=state_data)
 

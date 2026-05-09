@@ -36,7 +36,7 @@ export interface GameContextValue {
   connect: (roomId: string, playerId: string) => void;
   disconnect: () => void;
   startGame: () => void;
-  submitAnswer: (answer: string) => void;
+  submitAnswer: (answer: string, questionIndex?: number) => void;
   updateConfig: (config: Partial<RoomConfig>) => void;
   playAgain: () => void;
 }
@@ -187,8 +187,10 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
   }, [sendMessage]);
 
   const submitAnswer = useCallback(
-    (answer: string) => {
-      sendMessage({ type: "ANSWER", answer });
+    (answer: string, questionIndex?: number) => {
+      const msg: Record<string, unknown> = { type: "ANSWER", answer };
+      if (questionIndex !== undefined) msg.questionIndex = questionIndex;
+      sendMessage(msg);
     },
     [sendMessage]
   );

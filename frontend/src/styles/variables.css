@@ -19,7 +19,10 @@
   --color-accent-teal: rgb(45, 212, 191);
   --color-accent-teal-light: rgb(94, 234, 212);
   --color-accent-teal-dark: rgb(20, 184, 166);
+  /* Historical misnaming: --color-accent-red is actually amber/gold (rgb(251,191,36)).
+     Use --color-accent-gold for new code; --color-accent-red kept for existing consumers. */
   --color-accent-red: rgb(251, 191, 36);
+  --color-accent-gold: rgb(251, 191, 36);
   --color-accent-red-light: rgb(253, 216, 99);
 
   /* Semantic Colors */
