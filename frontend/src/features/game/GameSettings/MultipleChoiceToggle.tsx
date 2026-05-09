@@ -12,29 +12,29 @@ export function MultipleChoiceToggle({ isHost, enabled, forced = false, onToggle
   const isOn = forced ? true : enabled;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      {/* Label left · toggle right */}
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* Section label */}
+      <Box
+        component="span"
+        sx={{
+          fontFamily: "var(--font-display)",
+          fontSize: "11px",
+          color: "var(--color-text-muted)",
+          letterSpacing: "1px",
+        }}
+      >
+        Multiple Choice
+      </Box>
+
+      {/* Toggle row: pill + optional forced note */}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          gap: 2,
           opacity: isHost ? 1 : 0.5,
         }}
       >
-        <Box
-          component="span"
-          sx={{
-            fontFamily: "var(--font-display)",
-            fontSize: "11px",
-            color: "var(--color-text-muted)",
-            letterSpacing: "1px",
-          }}
-        >
-          Multiple Choice
-        </Box>
-
-        {/* Pill toggle */}
         <Box
           onClick={isDisabled ? undefined : () => onToggle(!isOn)}
           title={
@@ -69,21 +69,21 @@ export function MultipleChoiceToggle({ isHost, enabled, forced = false, onToggle
             }}
           />
         </Box>
-      </Box>
 
-      {forced && isHost && (
-        <Box
-          component="span"
-          sx={{
-            fontSize: "var(--font-size-xs)",
-            color: "var(--color-text-muted)",
-            fontFamily: "var(--font-display)",
-            letterSpacing: "0.5px",
-          }}
-        >
-          Required for Speed Battle
-        </Box>
-      )}
+        {forced && (
+          <Box
+            component="span"
+            sx={{
+              fontFamily: "var(--font-display)",
+              fontSize: "10px",
+              color: "var(--color-text-muted)",
+              letterSpacing: "0.5px",
+            }}
+          >
+            Required for Speed Battle
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 }
