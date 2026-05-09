@@ -223,10 +223,12 @@ export function HomePage() {
           <Box
             component="p"
             sx={{
+              fontFamily: "var(--font-display)",
               color: "var(--color-text-muted)",
               m: 0,
               mb: 5,
               fontSize: "var(--font-size-sm)",
+              letterSpacing: "0.8px",
             }}
           >
             Create a new room and invite your friends
@@ -291,10 +293,12 @@ export function HomePage() {
           <Box
             component="p"
             sx={{
+              fontFamily: "var(--font-display)",
               color: "var(--color-text-muted)",
               m: 0,
               mb: 5,
               fontSize: "var(--font-size-sm)",
+              letterSpacing: "0.8px",
             }}
           >
             Enter a room code to join an existing game

@@ -45,7 +45,13 @@ export function Navigation() {
         </Box>
         <Box>
           {isAboutPage ? (
-            <Button component={Link} to="/" startIcon={<HomeIcon />} className={styles.navButton}>
+            <Button
+              component={Link}
+              to="/"
+              startIcon={<HomeIcon />}
+              className={styles.navButton}
+              sx={{ fontFamily: "var(--font-display)", letterSpacing: "1.5px" }}
+            >
               Back to Game
             </Button>
           ) : (
@@ -54,6 +60,7 @@ export function Navigation() {
               to="/about"
               startIcon={<InfoIcon />}
               className={styles.navButton}
+              sx={{ fontFamily: "var(--font-display)", letterSpacing: "1.5px" }}
             >
               About
             </Button>
