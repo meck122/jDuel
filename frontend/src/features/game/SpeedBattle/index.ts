@@ -5,3 +5,4 @@ export { CooldownRing } from "./CooldownRing";
 export { MatchTimerBar } from "./MatchTimerBar";
 export { SBBadge } from "./SBBadge";
 export { LiveLeaderboard } from "./LiveLeaderboard";
+export { TimesUpOverlay } from "./TimesUpOverlay";
