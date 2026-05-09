@@ -4,40 +4,6 @@
   border-bottom: 1px solid rgba(139, 92, 246, 0.2);
 }
 
-.logoLink {
-  flex-grow: 1;
-  text-decoration: none;
-  font-family: "Bebas Neue", sans-serif;
-  font-size: 1.6rem;
-  font-weight: 400;
-  letter-spacing: 0.15em;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  padding-left: var(--spacing-sm);
-}
-
-.logoLink:hover {
-  text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
-}
-
-.logoJ {
-  color: rgb(139, 92, 246);
-  transition: color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.logoJ:hover {
-  color: rgb(167, 139, 250);
-}
-
-.logoDuel {
-  color: rgb(251, 191, 36);
-  transition: color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.logoDuel:hover {
-  color: rgb(253, 216, 99);
-}
-
 .navButton {
   color: rgb(235, 235, 235);
   font-family: var(--font-display);

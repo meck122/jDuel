@@ -169,7 +169,7 @@ export function SpeedBattleRound() {
           component="span"
           sx={{
             fontFamily: "var(--font-display)",
-            fontSize: { xs: "1.2rem", sm: "1.5rem" },
+            fontSize: "1.6rem",
             letterSpacing: "0.15em",
             flexShrink: 0,
             lineHeight: 1,

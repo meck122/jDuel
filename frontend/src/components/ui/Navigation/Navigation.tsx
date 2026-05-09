@@ -1,4 +1,4 @@
-import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
+import { AppBar, Toolbar, Button, Box } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
 import InfoIcon from "@mui/icons-material/Info";
 import HomeIcon from "@mui/icons-material/Home";
@@ -19,14 +19,30 @@ export function Navigation() {
   return (
     <AppBar position="fixed" className={styles.appBar}>
       <Toolbar>
-        <Typography variant="h5" component={Link} to="/" className={styles.logoLink}>
-          <Box component="span" className={styles.logoJ}>
+        <Box
+          component={Link}
+          to="/"
+          sx={{
+            flexGrow: 1,
+            textDecoration: "none",
+            fontFamily: "var(--font-display)",
+            fontSize: "1.6rem",
+            fontWeight: 400,
+            letterSpacing: "0.15em",
+            lineHeight: 1,
+            textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+            pl: "var(--spacing-sm)",
+            "&:hover": { textShadow: "0 0 20px rgba(139,92,246,0.5)" },
+          }}
+        >
+          <Box component="span" sx={{ color: "var(--color-accent-purple)" }}>
             j
           </Box>
-          <Box component="span" className={styles.logoDuel}>
+          <Box component="span" sx={{ color: "var(--color-accent-gold)" }}>
             Duel
           </Box>
-        </Typography>
+        </Box>
         <Box>
           {isAboutPage ? (
             <Button component={Link} to="/" startIcon={<HomeIcon />} className={styles.navButton}>
