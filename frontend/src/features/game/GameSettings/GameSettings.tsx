@@ -7,6 +7,8 @@ import { MultipleChoiceToggle } from "./MultipleChoiceToggle";
 export function GameSettings() {
   const { playerId, roomState, updateConfig } = useGame();
   const isHost = roomState?.hostId === playerId;
+  const currentMode = roomState?.config?.gameMode ?? "classic";
+  const mcForced = currentMode === "speed_battle";
 
   return (
     <Box
@@ -45,13 +47,25 @@ export function GameSettings() {
       />
       <MultipleChoiceToggle
         isHost={isHost}
-        enabled={roomState?.config?.multipleChoiceEnabled ?? false}
+        enabled={mcForced ? true : (roomState?.config?.multipleChoiceEnabled ?? false)}
+        forced={mcForced}
         onToggle={(enabled) => updateConfig({ multipleChoiceEnabled: enabled })}
       />
       <GameModeToggle
         isHost={isHost}
-        currentMode={roomState?.config?.gameMode ?? "classic"}
-        onSelect={(mode) => updateConfig({ gameMode: mode })}
+        currentMode={currentMode}
+        onSelect={(mode) => {
+          if (mode === "speed_battle") {
+            const mcCurrentlyOn = roomState?.config?.multipleChoiceEnabled ?? false;
+            if (mcCurrentlyOn) {
+              updateConfig({ gameMode: "speed_battle" });
+            } else {
+              updateConfig({ gameMode: "speed_battle", multipleChoiceEnabled: true });
+            }
+          } else {
+            updateConfig({ gameMode: mode });
+          }
+        }}
       />
     </Box>
   );
