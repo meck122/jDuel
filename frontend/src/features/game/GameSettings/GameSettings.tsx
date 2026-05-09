@@ -13,13 +13,13 @@ export function GameSettings() {
   return (
     <Box
       sx={{
-        width: { xs: "100%", md: 280 },
+        width: { xs: "100%", md: 300 },
         flexShrink: 0,
-        p: { xs: 0, md: 5 },
-        background: { xs: "transparent", md: "rgba(139, 92, 246, 0.06)" },
-        border: { xs: "none", md: "1px solid rgba(139, 92, 246, 0.3)" },
+        p: { xs: 0, md: 6 },
+        background: { xs: "transparent", md: "var(--color-bg-elevated)" },
+        border: { xs: "none", md: "2px solid var(--color-accent-purple)" },
         borderRadius: "var(--radius-lg)",
-        boxShadow: { xs: "none", md: "0 4px 16px rgba(139, 92, 246, 0.12)" },
+        boxShadow: { xs: "none", md: "var(--shadow-glow-purple)" },
         display: "flex",
         flexDirection: "column",
         gap: { xs: 4, md: 5 },

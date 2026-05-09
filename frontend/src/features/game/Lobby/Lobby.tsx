@@ -58,36 +58,50 @@ export function Lobby() {
         <Box
           sx={{
             textAlign: "center",
-            mb: 6,
+            mb: 5,
             pb: 5,
             borderBottom: "2px solid var(--color-accent-purple)",
           }}
         >
           <Box
-            component="h2"
+            component="p"
             sx={{
               fontFamily: "var(--font-display)",
-              fontSize: {
-                xs: "var(--font-size-xl)",
-                sm: "var(--font-size-2xl)",
-                md: "var(--font-size-5xl)",
-              },
-              fontWeight: 400,
-              color: "var(--color-accent-purple)",
+              fontSize: "var(--font-size-sm)",
+              color: "var(--color-text-muted)",
               m: 0,
-              mb: 2,
-              letterSpacing: { xs: "2px", md: "4px" },
-              textShadow: "0 2px 12px rgba(139, 92, 246, 0.4)",
+              mb: 1,
+              letterSpacing: "3px",
+              textTransform: "uppercase",
             }}
           >
-            Room {roomId}
+            Room Code
+          </Box>
+          <Box
+            component="h2"
+            sx={{
+              fontFamily: "var(--font-mono)",
+              fontSize: {
+                xs: "var(--font-size-2xl)",
+                sm: "var(--font-size-3xl)",
+                md: "var(--font-size-5xl)",
+              },
+              fontWeight: 700,
+              color: "var(--color-accent-gold)",
+              m: 0,
+              mb: 2,
+              letterSpacing: { xs: "6px", md: "10px" },
+              textShadow: "0 2px 16px rgba(251, 191, 36, 0.35)",
+            }}
+          >
+            {roomId}
           </Box>
           <Box
             component="span"
             sx={{
               fontFamily: "var(--font-display)",
-              color: "var(--color-text-primary)",
-              fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-xl)" },
+              color: "var(--color-text-secondary)",
+              fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-lg)" },
               letterSpacing: "1px",
             }}
           >
@@ -99,10 +113,10 @@ export function Lobby() {
         <Box
           sx={{
             background: "var(--color-bg-elevated)",
-            border: "2px solid var(--color-border-default)",
+            border: "1px solid var(--color-border-subtle)",
             borderRadius: "var(--radius-md)",
-            p: { xs: 4, sm: 5 },
-            mb: 6,
+            p: { xs: 3, sm: 4 },
+            mb: 5,
             textAlign: "center",
           }}
         >
@@ -176,9 +190,9 @@ export function Lobby() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
-            gap: { xs: 4, md: 5 },
-            my: 6,
+            gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+            gap: { xs: 3, md: 4 },
+            my: 5,
           }}
         >
           {Object.keys(players).map((player) => {
@@ -191,11 +205,11 @@ export function Lobby() {
                     ? "rgba(139, 92, 246, 0.1)"
                     : "var(--color-bg-elevated)",
                   border: isCurrentPlayer
-                    ? "3px solid var(--color-accent-purple)"
-                    : "2px solid var(--color-border-default)",
+                    ? "2px solid var(--color-accent-purple)"
+                    : "1px solid var(--color-border-subtle)",
                   borderRadius: "var(--radius-md)",
-                  py: 2,
-                  px: { xs: 2, sm: 4 },
+                  py: 3,
+                  px: { xs: 2, sm: 3 },
                   transition: "all var(--transition-base)",
                   display: "flex",
                   flexDirection: "column",
@@ -203,7 +217,8 @@ export function Lobby() {
                   gap: 1,
                   boxShadow: isCurrentPlayer ? "var(--shadow-glow-purple)" : "none",
                   "&:hover": {
-                    transform: "translateY(-4px)",
+                    background: "var(--color-bg-hover)",
+                    transform: "translateY(-2px)",
                     boxShadow: "var(--shadow-glow-purple)",
                     borderColor: "var(--color-accent-purple)",
                   },
@@ -211,15 +226,15 @@ export function Lobby() {
               >
                 <Box
                   sx={{
-                    fontSize: "1.25rem",
-                    width: 40,
-                    height: 40,
+                    fontSize: "1.1rem",
+                    width: 36,
+                    height: 36,
                     background: "var(--color-bg-hover)",
                     borderRadius: "50%",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    border: "2px solid var(--color-border-subtle)",
+                    border: "1px solid var(--color-border-subtle)",
                   }}
                 >
                   👤

@@ -12,7 +12,7 @@ import { Box } from "@mui/material";
 import { useGame } from "../../../contexts";
 import { Timer, PlayerName } from "../../../components";
 import { sortPlayersByScore } from "../../../utils";
-import { sxContentBox, sxScoreItem } from "../../../styles/sxPatterns";
+import { sxContentBox } from "../../../styles/sxPatterns";
 
 export function Results() {
   const { roomState } = useGame();
@@ -252,25 +252,60 @@ export function Results() {
             Scoreboard
           </Box>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {sortPlayersByScore(players).map(([player, score]) => (
-              <Box key={player} sx={{ ...sxScoreItem, minHeight: 52 }}>
+            {sortPlayersByScore(players).map(([player, score], index) => (
+              <Box
+                key={player}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  px: 4,
+                  py: 3,
+                  minHeight: 52,
+                  background:
+                    index === 0 ? "rgba(251, 191, 36, 0.08)" : "var(--color-bg-secondary)",
+                  border: "1px solid",
+                  borderColor:
+                    index === 0 ? "rgba(251, 191, 36, 0.3)" : "var(--color-border-subtle)",
+                  borderRadius: "var(--radius-md)",
+                  transition: "all var(--transition-base)",
+                  "&:hover": {
+                    background: "var(--color-bg-hover)",
+                    borderColor: "var(--color-border-default)",
+                    transform: "translateX(3px)",
+                  },
+                }}
+              >
                 <Box
                   component="span"
                   sx={{
                     fontWeight: 600,
-                    color: "var(--color-accent-purple)",
-                    fontSize: "var(--font-size-md)",
+                    color: index === 0 ? "var(--color-accent-gold)" : "var(--color-text-primary)",
+                    fontSize: "var(--font-size-base)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
                   }}
                 >
+                  {index === 0 && (
+                    <Box component="span" sx={{ fontSize: "var(--font-size-sm)" }}>
+                      🥇
+                    </Box>
+                  )}
                   <PlayerName playerId={player} />
                 </Box>
                 <Box
                   component="span"
                   sx={{
                     fontFamily: "var(--font-mono)",
-                    fontSize: "var(--font-size-xl)",
+                    fontSize: "var(--font-size-md)",
                     fontWeight: "bold",
                     color: "var(--color-accent-teal)",
+                    background: "rgba(45, 212, 191, 0.1)",
+                    border: "1px solid rgba(45, 212, 191, 0.25)",
+                    py: "3px",
+                    px: "10px",
+                    borderRadius: "var(--radius-sm)",
                   }}
                 >
                   {score}
