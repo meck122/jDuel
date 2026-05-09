@@ -111,8 +111,8 @@ export function GameModeToggle({ isHost, currentMode, onSelect }: Props) {
       {currentMode === "speed_battle" && (
         <Box
           sx={{
-            mt: 0.5,
-            py: 1.5,
+            mt: 2,
+            py: 2,
             px: 2,
             background: "rgba(251,191,36,0.06)",
             border: "1px solid rgba(251,191,36,0.25)",
@@ -124,10 +124,10 @@ export function GameModeToggle({ isHost, currentMode, onSelect }: Props) {
             component="p"
             sx={{
               fontFamily: "var(--font-display)",
-              fontSize: "10px",
-              color: "var(--color-text-muted)",
+              fontSize: "11px",
+              color: "var(--color-text-secondary)",
               letterSpacing: "0.5px",
-              lineHeight: 1.7,
+              lineHeight: 1.8,
               m: 0,
             }}
           >
