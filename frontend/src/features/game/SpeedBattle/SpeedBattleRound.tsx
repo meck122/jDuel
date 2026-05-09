@@ -23,7 +23,7 @@ import { CooldownRing } from "./CooldownRing";
 import { LiveLeaderboard } from "./LiveLeaderboard";
 
 export function SpeedBattleRound() {
-  const { roomState, playerId, submitAnswer } = useGame();
+  const { roomState, submitAnswer } = useGame();
 
   const speedBattle = roomState?.speedBattle;
   const playerState = speedBattle?.playerState;
@@ -175,7 +175,7 @@ export function SpeedBattleRound() {
       </Box>
 
       {/* ── Mobile leaderboard strip ─────────────────────────────────────── */}
-      <LiveLeaderboard panelMode={false} />
+      <LiveLeaderboard />
 
       {/* ── Main content area ────────────────────────────────────────────── */}
       <Box
@@ -465,110 +465,16 @@ export function SpeedBattleRound() {
           )}
         </Box>
 
-        {/* ── Right: Desktop leaderboard panel (U5 will extend this) ──────── */}
+        {/* ── Right: Desktop leaderboard panel ────────────────────────────── */}
         <Box
           sx={{
             display: { xs: "none", sm: "flex" },
             flexDirection: "column",
-            width: 220,
+            width: { sm: 220, md: 260 },
             flexShrink: 0,
-            gap: 2,
           }}
         >
-          <Box
-            sx={{
-              p: 4,
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border-subtle)",
-              borderRadius: "var(--radius-lg)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-            }}
-          >
-            <Box
-              sx={{
-                fontFamily: "var(--font-display)",
-                fontSize: "var(--font-size-base)",
-                color: "var(--color-text-muted)",
-                letterSpacing: "1px",
-                textAlign: "center",
-              }}
-            >
-              LEADERBOARD
-            </Box>
-            {Object.entries(roomState?.players ?? {})
-              .sort(([, a], [, b]) => b - a)
-              .map(([pid, score], i) => (
-                <Box
-                  key={pid}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 2,
-                    px: 2,
-                    py: 1,
-                    background: pid === playerId ? "rgba(45, 212, 191, 0.08)" : "transparent",
-                    borderRadius: "var(--radius-sm)",
-                    border:
-                      pid === playerId
-                        ? "1px solid rgba(45, 212, 191, 0.2)"
-                        : "1px solid transparent",
-                  }}
-                >
-                  <Box
-                    component="span"
-                    sx={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "var(--font-size-xs)",
-                      color: i === 0 ? "var(--color-accent-gold)" : "var(--color-text-muted)",
-                      fontWeight: i === 0 ? 700 : 400,
-                      minWidth: 16,
-                    }}
-                  >
-                    {i + 1}
-                  </Box>
-                  <Box
-                    component="span"
-                    sx={{
-                      flex: 1,
-                      fontSize: "var(--font-size-sm)",
-                      color:
-                        pid === playerId
-                          ? "var(--color-accent-teal)"
-                          : "var(--color-text-secondary)",
-                      fontWeight: pid === playerId ? 700 : 400,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {pid}
-                    {pid === playerId && (
-                      <Box
-                        component="span"
-                        sx={{ color: "var(--color-accent-teal)", fontSize: "0.85em" }}
-                      >
-                        {" "}
-                        (You)
-                      </Box>
-                    )}
-                  </Box>
-                  <Box
-                    component="span"
-                    sx={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "var(--font-size-sm)",
-                      fontWeight: 700,
-                      color: "var(--color-success-light)",
-                    }}
-                  >
-                    {score}
-                  </Box>
-                </Box>
-              ))}
-          </Box>
+          <LiveLeaderboard compact={false} />
         </Box>
       </Box>
     </Box>
