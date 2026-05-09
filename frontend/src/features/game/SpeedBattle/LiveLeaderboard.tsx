@@ -284,16 +284,17 @@ function LeaderboardPanel({ sorted, currentPlayerId, leaderScore }: LeaderboardP
       <Box
         sx={{
           px: 3,
-          py: 1.5,
+          pt: 1.5,
+          pb: 2,
           borderTop: "1px solid var(--color-border-subtle)",
-          fontSize: "var(--font-size-xs)",
+          fontSize: "10px",
           color: "var(--color-text-disabled)",
           textAlign: "center",
-          fontFamily: "var(--font-mono)",
-          letterSpacing: "0.3px",
+          fontFamily: "var(--font-display)",
+          letterSpacing: "1px",
         }}
       >
-        Correct answers only ✦
+        Correct answers only
       </Box>
     </Box>
   );

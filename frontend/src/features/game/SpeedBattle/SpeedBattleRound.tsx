@@ -156,8 +156,8 @@ export function SpeedBattleRound() {
           display: "flex",
           alignItems: "center",
           gap: { xs: 1.5, sm: 2 },
-          px: { xs: 3, sm: 5 },
-          py: 1.5,
+          px: { xs: 4, sm: 6 },
+          py: 2,
           background: "var(--color-bg-secondary)",
           borderBottom: "1px solid var(--color-border-subtle)",
           flexShrink: 0,
@@ -646,8 +646,8 @@ export function SpeedBattleRound() {
               {inCooldown && cooldownCorrectAnswer && (
                 <Box
                   sx={{
-                    px: 4,
-                    py: 2.5,
+                    px: 2,
+                    py: 1.5,
                     background: "rgba(239,68,68,0.07)",
                     border: "1px solid rgba(239,68,68,0.2)",
                     borderRadius: "var(--radius-md)",

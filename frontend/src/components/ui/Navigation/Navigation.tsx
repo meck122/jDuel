@@ -11,9 +11,10 @@ export function Navigation() {
   const isGamePage = location.pathname.startsWith("/game/");
   const { roomState } = useGame();
 
-  // Hide navbar on game pages EXCEPT when game is finished (GameOver screen)
+  // Hide navbar on game pages EXCEPT lobby (waiting) and GameOver (finished)
   const isGameFinished = roomState?.status === "finished";
-  if (isGamePage && !isGameFinished) return null;
+  const isLobby = roomState?.status === "waiting";
+  if (isGamePage && !isGameFinished && !isLobby) return null;
 
   return (
     <AppBar position="fixed" className={styles.appBar}>

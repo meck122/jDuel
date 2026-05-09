@@ -2,36 +2,13 @@ import { Box } from "@mui/material";
 
 type GameMode = "classic" | "speed_battle";
 
-const GAME_MODE_OPTIONS: { value: GameMode; label: string; description: string }[] = [
-  {
-    value: "classic",
-    label: "Classic",
-    description: "Take turns, discuss answers, and score together.",
-  },
-  {
-    value: "speed_battle",
-    label: "Speed Battle",
-    description: "Solo race — wrong answers lock you out for 5 s.",
-  },
+const GAME_MODE_OPTIONS: { value: GameMode; label: string; icon: string }[] = [
+  { value: "classic", label: "Classic", icon: "🎮" },
+  { value: "speed_battle", label: "Speed Battle", icon: "⚡" },
 ];
 
-const CARD_SELECTED_STYLES: Record<GameMode, object> = {
-  classic: {
-    background: "rgba(45, 212, 191, 0.1)",
-    borderColor: "var(--color-accent-teal)",
-    color: "var(--color-accent-teal)",
-    boxShadow: "0 0 10px rgba(45, 212, 191, 0.25)",
-  },
-  speed_battle: {
-    background: "rgba(251, 191, 36, 0.1)",
-    borderColor: "var(--color-accent-gold)",
-    color: "var(--color-accent-gold)",
-    boxShadow: "0 0 10px rgba(251, 191, 36, 0.25)",
-  },
-};
-
 const RULES_COPY =
-  "3-minute solo race — wrong answers lock you for 5 seconds and reveal the correct answer.";
+  "3-minute race — answer as many as you can. Wrong answers lock you for 5s and reveal the correct answer.";
 
 interface Props {
   isHost: boolean;
@@ -41,25 +18,20 @@ interface Props {
 
 export function GameModeToggle({ isHost, currentMode, onSelect }: Props) {
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "stretch",
-        gap: 3,
-      }}
-    >
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* Section label */}
       <Box
         component="span"
         sx={{
           fontFamily: "var(--font-display)",
-          fontSize: "var(--font-size-base)",
-          color: "var(--color-text-primary)",
-          letterSpacing: "0.5px",
+          fontSize: "11px",
+          color: "var(--color-text-muted)",
+          letterSpacing: "1px",
         }}
       >
         Game Mode
       </Box>
+
       <Box
         role="radiogroup"
         aria-label="Game Mode"
@@ -67,13 +39,14 @@ export function GameModeToggle({ isHost, currentMode, onSelect }: Props) {
         sx={{
           display: "flex",
           flexDirection: "column",
-          gap: 2,
+          gap: 1,
           opacity: isHost ? 1 : 0.5,
           cursor: isHost ? undefined : "not-allowed",
         }}
       >
         {GAME_MODE_OPTIONS.map((option) => {
           const isSelected = currentMode === option.value;
+          const isSpeed = option.value === "speed_battle";
           return (
             <Box
               key={option.value}
@@ -84,78 +57,84 @@ export function GameModeToggle({ isHost, currentMode, onSelect }: Props) {
               disabled={!isHost}
               onClick={() => onSelect(option.value)}
               sx={{
-                width: "100%",
-                py: 3,
-                px: 4,
-                fontFamily: "var(--font-display)",
-                letterSpacing: "0.5px",
-                background: "var(--color-bg-hover)",
-                border: "1px solid var(--color-border-subtle)",
-                borderRadius: "var(--radius-md)",
-                color: "var(--color-text-muted)",
-                cursor: "pointer",
-                transition: "all var(--transition-base)",
-                textAlign: "left",
                 display: "flex",
-                flexDirection: "column",
-                gap: 1,
+                alignItems: "center",
+                gap: 1.5,
+                py: "9px",
+                px: 2,
+                fontFamily: "var(--font-display)",
+                fontSize: "13px",
+                letterSpacing: "1px",
+                background: isSelected
+                  ? isSpeed
+                    ? "rgba(251,191,36,0.1)"
+                    : "rgba(139,92,246,0.12)"
+                  : "var(--color-bg-elevated)",
+                border: "2px solid",
+                borderColor: isSelected
+                  ? isSpeed
+                    ? "rgba(251,191,36,0.6)"
+                    : "var(--color-accent-purple)"
+                  : "var(--color-border-default)",
+                borderRadius: "var(--radius-md)",
+                color: isSelected
+                  ? isSpeed
+                    ? "var(--color-accent-gold)"
+                    : "var(--color-accent-purple)"
+                  : "var(--color-text-muted)",
+                cursor: isHost ? "pointer" : "not-allowed",
+                textAlign: "left",
+                transition: "all var(--transition-base)",
+                boxShadow: isSelected
+                  ? isSpeed
+                    ? "0 0 12px rgba(251,191,36,0.2)"
+                    : "var(--shadow-glow-purple)"
+                  : "none",
                 "&:hover:not(:disabled)": {
                   color: "var(--color-text-primary)",
-                  background: "var(--color-bg-elevated)",
-                  borderColor: "var(--color-border-default)",
+                  background: "var(--color-bg-hover)",
+                  borderColor: "var(--color-border-emphasis)",
                 },
-                "&:disabled": {
-                  cursor: "not-allowed",
-                },
-                "&:focus-visible": {
-                  outline: "2px solid var(--color-accent-purple)",
-                  outlineOffset: "2px",
-                },
-                ...(isSelected ? CARD_SELECTED_STYLES[option.value] : {}),
+                "&:disabled": { cursor: "not-allowed" },
               }}
             >
-              <Box
-                component="span"
-                sx={{
-                  fontSize: "var(--font-size-sm)",
-                  fontWeight: 700,
-                  letterSpacing: "0.5px",
-                }}
-              >
-                {option.label}
+              <Box component="span" sx={{ fontSize: "15px", lineHeight: 1 }}>
+                {option.icon}
               </Box>
-              <Box
-                component="span"
-                sx={{
-                  fontSize: "var(--font-size-xs)",
-                  color: isSelected ? "inherit" : "var(--color-text-dim)",
-                  fontFamily: "inherit",
-                  fontWeight: 400,
-                  lineHeight: 1.4,
-                  opacity: 0.85,
-                }}
-              >
-                {option.description}
-              </Box>
+              {option.label}
             </Box>
           );
         })}
       </Box>
-      <Box aria-live="polite">
-        {currentMode === "speed_battle" && (
+
+      {/* Speed Battle rules blurb */}
+      {currentMode === "speed_battle" && (
+        <Box
+          sx={{
+            mt: 0.5,
+            py: 1.5,
+            px: 2,
+            background: "rgba(251,191,36,0.06)",
+            border: "1px solid rgba(251,191,36,0.25)",
+            borderRadius: "var(--radius-md)",
+            animation: "formReveal 0.35s ease both",
+          }}
+        >
           <Box
             component="p"
             sx={{
+              fontFamily: "var(--font-display)",
+              fontSize: "10px",
+              color: "var(--color-text-muted)",
+              letterSpacing: "0.5px",
+              lineHeight: 1.7,
               m: 0,
-              fontSize: "var(--font-size-xs)",
-              color: "var(--color-text-dim)",
-              lineHeight: 1.5,
             }}
           >
             {RULES_COPY}
           </Box>
-        )}
-      </Box>
+        </Box>
+      )}
     </Box>
   );
 }

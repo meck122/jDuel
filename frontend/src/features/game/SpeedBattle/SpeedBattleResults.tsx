@@ -4,9 +4,11 @@
  * Shows:
  * - TimesUpOverlay on first mount (fades in/out over ~1.2s)
  * - Confetti animation
- * - Winner/champion card (sourced from leaderboard[0])
- * - Final standings table (rank, player, correct, wrong)
+ * - "Speed Battle Over!" title
+ * - Winner/champion card
+ * - Room closing timer
  * - Play Again button (host) or waiting message (guest)
+ * - 5-column standings table: medal | player | correct | wrong | rank
  */
 
 import { useState } from "react";
@@ -16,8 +18,16 @@ import { LinearTimer } from "../../../components";
 import { PlayerName } from "../../../components/common/PlayerName/PlayerName";
 import { SpeedBattleLeaderRow } from "../../../types";
 import { Confetti } from "../Confetti";
-import { FinalStandings, FinalRow } from "../FinalStandings";
 import { TimesUpOverlay } from "./TimesUpOverlay";
+
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+function ordinal(n: number): string {
+  if (n === 1) return "1st";
+  if (n === 2) return "2nd";
+  if (n === 3) return "3rd";
+  return `${n}th`;
+}
 
 export function SpeedBattleResults() {
   const { roomState, playerId, playAgain } = useGame();
@@ -27,19 +37,11 @@ export function SpeedBattleResults() {
   const timeRemainingMs = roomState?.timeRemainingMs;
 
   const leaderboard: SpeedBattleLeaderRow[] = roomState?.speedBattle?.leaderboard ?? [];
-
   const sorted = [...leaderboard].sort((a, b) => a.placement - b.placement);
   const winner = sorted[0] ?? null;
 
-  const rows: FinalRow[] = sorted.map((row) => ({
-    placement: row.placement,
-    playerId: row.playerId,
-    scoreDisplay: `${row.correctCount} correct · ${row.wrongCount} wrong`,
-  }));
-
   return (
     <>
-      {/* Times Up overlay — shown on first mount only */}
       {showTimesUp && <TimesUpOverlay onDone={() => setShowTimesUp(false)} />}
 
       <Box
@@ -56,7 +58,6 @@ export function SpeedBattleResults() {
           flexDirection: "column",
         }}
       >
-        {/* Confetti overlay */}
         <Confetti />
 
         {/* Title */}
@@ -67,16 +68,16 @@ export function SpeedBattleResults() {
             fontSize: { xs: "var(--font-size-2xl)", sm: "var(--font-size-6xl)" },
             fontWeight: 400,
             mt: 0,
-            mb: { xs: 1, sm: 7 },
-            textShadow: "0 4px 16px rgba(0, 0, 0, 0.6)",
+            mb: { xs: 2, sm: 6 },
             background: "var(--gradient-purple-teal)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
             letterSpacing: { xs: "2px", sm: "4px" },
+            animation: "cardSlideUp 0.5s ease both",
           }}
         >
-          Time&apos;s Up!
+          Speed Battle Over!
         </Box>
 
         {/* Winner card */}
@@ -92,10 +93,11 @@ export function SpeedBattleResults() {
               borderRadius: "var(--radius-lg)",
               py: { xs: 4, sm: 7 },
               px: { xs: 5, sm: 7 },
-              my: { xs: 2, sm: 7 },
+              my: { xs: 2, sm: 6 },
               mx: "auto",
               maxWidth: 500,
               boxShadow: "var(--shadow-glow-purple)",
+              animation: "cardSlideUp 0.5s 0.1s ease both",
             }}
           >
             <Box
@@ -147,7 +149,7 @@ export function SpeedBattleResults() {
 
         {/* Room closing timer */}
         {timeRemainingMs !== undefined && (
-          <Box sx={{ my: { xs: 2, sm: 7 } }}>
+          <Box sx={{ my: { xs: 2, sm: 6 } }}>
             <LinearTimer
               timeRemainingMs={timeRemainingMs}
               resetKey={winner?.playerId ?? ""}
@@ -158,7 +160,13 @@ export function SpeedBattleResults() {
         )}
 
         {/* Play again */}
-        <Box sx={{ my: { xs: 2, sm: 6 }, textAlign: "center" }}>
+        <Box
+          sx={{
+            my: { xs: 2, sm: 6 },
+            textAlign: "center",
+            animation: "cardSlideUp 0.5s 0.15s ease both",
+          }}
+        >
           {isHost ? (
             <Box
               component="button"
@@ -177,7 +185,7 @@ export function SpeedBattleResults() {
                 },
               }}
             >
-              Play Again
+              ⚡ Play Again
             </Box>
           ) : (
             <Box
@@ -195,11 +203,217 @@ export function SpeedBattleResults() {
           )}
         </Box>
 
-        <FinalStandings
-          rows={rows}
-          selfPlayerId={playerId}
-          tiebreakerText="Tiebreaker: fewer wrong answers wins"
-        />
+        {/* Final standings */}
+        <Box sx={{ mt: { xs: 2, sm: 8 }, animation: "cardSlideUp 0.5s 0.2s ease both" }}>
+          <Box
+            component="h3"
+            sx={{
+              fontFamily: "var(--font-display)",
+              fontSize: { xs: "var(--font-size-lg)", sm: "var(--font-size-2xl)" },
+              color: "var(--color-accent-purple)",
+              mb: { xs: 2, sm: 4 },
+              mt: 0,
+              fontWeight: 400,
+              letterSpacing: { xs: "2px", sm: "3px" },
+            }}
+          >
+            Final Standings
+          </Box>
+
+          {/* Column headers */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "36px 1fr 52px 44px 44px", sm: "44px 1fr 70px 60px 60px" },
+              gap: { xs: 1, sm: 1.5 },
+              px: { xs: 2, sm: "14px" },
+              mb: 1,
+            }}
+          >
+            <Box />
+            <Box
+              sx={{
+                fontFamily: "var(--font-display)",
+                fontSize: "10px",
+                color: "var(--color-text-disabled)",
+                letterSpacing: "1px",
+              }}
+            >
+              Player
+            </Box>
+            <Box
+              sx={{
+                fontFamily: "var(--font-display)",
+                fontSize: "10px",
+                color: "var(--color-accent-teal)",
+                letterSpacing: "1px",
+                textAlign: "right",
+              }}
+            >
+              Correct
+            </Box>
+            <Box
+              sx={{
+                fontFamily: "var(--font-display)",
+                fontSize: "10px",
+                color: "var(--color-error)",
+                letterSpacing: "1px",
+                textAlign: "right",
+              }}
+            >
+              Wrong
+            </Box>
+            <Box
+              sx={{
+                fontFamily: "var(--font-display)",
+                fontSize: "10px",
+                color: "var(--color-text-disabled)",
+                letterSpacing: "1px",
+                textAlign: "right",
+              }}
+            >
+              Rank
+            </Box>
+          </Box>
+
+          {/* Rows */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: { xs: 1.5, sm: 2 },
+              maxWidth: { xs: "100%", sm: 600 },
+            }}
+          >
+            {sorted.map((row, i) => {
+              const isSelf = row.playerId === playerId;
+              const isFirst = row.placement === 1;
+              return (
+                <Box
+                  key={row.playerId}
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "36px 1fr 52px 44px 44px",
+                      sm: "44px 1fr 70px 60px 60px",
+                    },
+                    gap: { xs: 1, sm: 1.5 },
+                    alignItems: "center",
+                    py: { xs: 2, sm: 3 },
+                    px: { xs: 2, sm: "14px" },
+                    borderRadius: "var(--radius-md)",
+                    border: "2px solid",
+                    borderColor: isFirst
+                      ? "var(--color-accent-purple)"
+                      : isSelf
+                        ? "rgba(139,92,246,0.4)"
+                        : "var(--color-border-default)",
+                    background: isFirst
+                      ? "linear-gradient(90deg, rgba(139,92,246,0.12), rgba(251,191,36,0.06))"
+                      : isSelf
+                        ? "rgba(139,92,246,0.06)"
+                        : "var(--color-bg-elevated)",
+                    boxShadow: isFirst ? "var(--shadow-glow-purple)" : "none",
+                    animation: `cardSlideUp 0.5s ${0.2 + i * 0.08}s ease both`,
+                  }}
+                >
+                  {/* Medal / rank */}
+                  <Box
+                    component="span"
+                    sx={{ fontSize: { xs: "1rem", sm: "1.25rem" }, textAlign: "center" }}
+                  >
+                    {MEDALS[i] ?? row.placement}
+                  </Box>
+
+                  {/* Player name */}
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: { xs: "var(--font-size-sm)", sm: "var(--font-size-base)" },
+                      fontWeight: 600,
+                      color: isSelf ? "var(--color-accent-purple)" : "var(--color-text-primary)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      minWidth: 0,
+                    }}
+                  >
+                    <PlayerName playerId={row.playerId} />
+                  </Box>
+
+                  {/* Correct count */}
+                  <Box
+                    component="span"
+                    sx={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: { xs: "var(--font-size-lg)", sm: "var(--font-size-xl)" },
+                      fontWeight: 700,
+                      color: "var(--color-accent-teal)",
+                      textAlign: "right",
+                    }}
+                  >
+                    {row.correctCount}
+                  </Box>
+
+                  {/* Wrong count */}
+                  <Box
+                    component="span"
+                    sx={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: { xs: "var(--font-size-sm)", sm: "var(--font-size-base)" },
+                      fontWeight: 400,
+                      color: "var(--color-error)",
+                      textAlign: "right",
+                      opacity: 0.8,
+                    }}
+                  >
+                    {row.wrongCount}
+                  </Box>
+
+                  {/* Rank ordinal */}
+                  <Box
+                    component="span"
+                    sx={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: { xs: "var(--font-size-sm)", sm: "var(--font-size-base)" },
+                      color: isFirst ? "var(--color-accent-gold)" : "var(--color-text-muted)",
+                      textAlign: "right",
+                    }}
+                  >
+                    {ordinal(row.placement)}
+                  </Box>
+                </Box>
+              );
+            })}
+
+            {sorted.length === 0 && (
+              <Box
+                sx={{
+                  textAlign: "center",
+                  color: "var(--color-text-muted)",
+                  fontSize: "var(--font-size-sm)",
+                  py: 4,
+                }}
+              >
+                No results available
+              </Box>
+            )}
+          </Box>
+
+          {/* Tiebreaker note */}
+          <Box
+            sx={{
+              mt: { xs: 3, sm: 5 },
+              textAlign: "center",
+              fontFamily: "var(--font-display)",
+              fontSize: "10px",
+              color: "var(--color-text-disabled)",
+              letterSpacing: "1px",
+            }}
+          >
+            Tiebreaker: fewer wrong answers wins
+          </Box>
+        </Box>
       </Box>
     </>
   );
