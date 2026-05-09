@@ -1,8 +1,10 @@
 /**
  * LiveLeaderboard - Live correct-count leaderboard for Speed Battle.
  *
- * compact={true} (default) → compact mobile strip: "You: N · Leader: M"
- * compact={false}          → full desktop side panel with ranked rows
+ * compact={true} (default) → top-3 mini-podium strip with 🥇🥈🥉 slots.
+ *   If you're outside the top 3, slot 3 shows your rank instead.
+ *   Center slot (1st) is elevated visually.
+ * compact={false} → full desktop side panel with ranked rows.
  *
  * Data source: roomState.players (Record<playerId, correctCount>), sorted descending.
  * Only correct counts are shown — wrong counts are never exposed (R14 privacy contract).
@@ -13,69 +15,138 @@ import { useGame } from "../../../contexts";
 import { PlayerName } from "../../../components/common/PlayerName/PlayerName";
 
 interface LiveLeaderboardProps {
-  /**
-   * When true (default), renders the compact mobile strip.
-   * When false, renders the full desktop side panel.
-   */
   compact?: boolean;
 }
+
+const MEDALS = ["🥇", "🥈", "🥉"];
 
 export function LiveLeaderboard({ compact = true }: LiveLeaderboardProps) {
   const { roomState, playerId } = useGame();
 
   if (!roomState) return null;
 
-  const players = roomState.players; // Record<playerId, correctCount>
-  const myScore = players[playerId] ?? 0;
-
-  // Sort players descending by correct count
+  const players = roomState.players;
   const sorted = Object.entries(players).sort(([, a], [, b]) => b - a);
   const leaderScore = sorted.length > 0 ? sorted[0][1] : 0;
 
-  // ── Compact mobile strip ─────────────────────────────────────────────────
+  // ── Compact mobile strip: top-3 mini-podium ──────────────────────────────
   if (compact) {
+    const myRank = sorted.findIndex(([pid]) => pid === playerId) + 1;
+    const meInTop3 = myRank >= 1 && myRank <= 3;
+
+    // Slots: [1st, 2nd, 3rd]. If I'm outside top 3, replace 3rd with me.
+    const slots = sorted.slice(0, 3);
+    while (slots.length < 3) slots.push(["", 0]);
+    const slotRanks = [1, 2, 3];
+
+    if (!meInTop3 && myRank > 0) {
+      const myEntry = sorted[myRank - 1] ?? [playerId, 0];
+      slots[2] = myEntry;
+      slotRanks[2] = myRank;
+    }
+
     return (
       <Box
         sx={{
-          display: { xs: "flex", sm: "none" },
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 3,
-          px: 4,
-          py: 1.5,
-          background: "var(--color-bg-elevated)",
+          display: { xs: "grid", sm: "none" },
+          gridTemplateColumns: "1fr 1fr 1fr",
+          gap: "6px",
+          px: 3,
+          py: 2,
+          background: "var(--color-bg-secondary)",
           borderBottom: "1px solid var(--color-border-subtle)",
-          fontSize: "var(--font-size-sm)",
-          color: "var(--color-text-secondary)",
-          fontFamily: "var(--font-mono)",
           flexShrink: 0,
         }}
       >
-        <Box component="span">
-          <Box component="span" sx={{ color: "var(--color-accent-teal)", fontWeight: 700 }}>
-            You:{" "}
-          </Box>
-          <Box component="span" sx={{ color: "var(--color-text-primary)", fontWeight: 700 }}>
-            {myScore}
-          </Box>
-        </Box>
-        <Box component="span" sx={{ color: "var(--color-border-emphasis)" }}>
-          ·
-        </Box>
-        <Box component="span">
-          <Box component="span" sx={{ color: "var(--color-accent-gold)", fontWeight: 700 }}>
-            Leader:{" "}
-          </Box>
-          <Box component="span" sx={{ color: "var(--color-text-primary)", fontWeight: 700 }}>
-            {leaderScore}
-          </Box>
-        </Box>
+        {slots.map(([pid, score], idx) => {
+          const rank = slotRanks[idx];
+          const isMe = pid === playerId;
+          const isFirst = rank === 1;
+          const elevated = idx === 0;
+
+          const accentColor =
+            rank === 1
+              ? "var(--color-accent-gold)"
+              : rank === 2
+                ? "rgba(220,220,235,0.85)"
+                : rank === 3
+                  ? "rgba(205,127,50,0.95)"
+                  : "var(--color-accent-purple)";
+
+          return (
+            <Box
+              key={`${pid}-${idx}`}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                py: elevated ? 1.5 : 1,
+                px: 1,
+                background: isMe
+                  ? "rgba(139,92,246,0.12)"
+                  : elevated
+                    ? "rgba(251,191,36,0.06)"
+                    : "var(--color-bg-elevated)",
+                border: "1px solid",
+                borderColor: isMe
+                  ? "var(--color-accent-purple)"
+                  : isFirst
+                    ? "rgba(251,191,36,0.35)"
+                    : "var(--color-border-subtle)",
+                borderRadius: "var(--radius-md)",
+                boxShadow: isMe ? "var(--shadow-glow-purple)" : "none",
+                gap: "2px",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "3px",
+                  fontSize: "var(--font-size-xs)",
+                  color: "var(--color-text-muted)",
+                }}
+              >
+                <Box component="span" sx={{ fontSize: "0.85rem", lineHeight: 1 }}>
+                  {MEDALS[rank - 1] ?? `#${rank}`}
+                </Box>
+                <Box
+                  component="span"
+                  sx={{
+                    color: isMe ? "var(--color-accent-purple)" : "var(--color-text-primary)",
+                    maxWidth: 56,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    fontFamily: "var(--font-display)",
+                    letterSpacing: "0.3px",
+                  }}
+                >
+                  {pid ? isMe ? "You" : <PlayerName playerId={pid} /> : "—"}
+                </Box>
+              </Box>
+              <Box
+                component="span"
+                sx={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: elevated ? "var(--font-size-xl)" : "var(--font-size-lg)",
+                  fontWeight: 700,
+                  color: accentColor,
+                  letterSpacing: 0,
+                  lineHeight: 1,
+                }}
+              >
+                {pid ? score : "—"}
+              </Box>
+            </Box>
+          );
+        })}
       </Box>
     );
   }
 
   // ── Desktop panel ────────────────────────────────────────────────────────
-  return <LeaderboardPanel sorted={sorted} currentPlayerId={playerId} />;
+  return <LeaderboardPanel sorted={sorted} currentPlayerId={playerId} leaderScore={leaderScore} />;
 }
 
 // ── Subcomponent: desktop panel ──────────────────────────────────────────────
@@ -83,11 +154,10 @@ export function LiveLeaderboard({ compact = true }: LiveLeaderboardProps) {
 interface LeaderboardPanelProps {
   sorted: [string, number][];
   currentPlayerId: string;
+  leaderScore: number;
 }
 
-function LeaderboardPanel({ sorted, currentPlayerId }: LeaderboardPanelProps) {
-  const leaderScore = sorted.length > 0 ? sorted[0][1] : 0;
-
+function LeaderboardPanel({ sorted, currentPlayerId, leaderScore }: LeaderboardPanelProps) {
   return (
     <Box
       sx={{
@@ -108,12 +178,12 @@ function LeaderboardPanel({ sorted, currentPlayerId }: LeaderboardPanelProps) {
           borderBottom: "1px solid var(--color-border-subtle)",
           fontFamily: "var(--font-display)",
           fontSize: "var(--font-size-sm)",
-          color: "var(--color-text-muted)",
+          color: "var(--color-accent-purple)",
           letterSpacing: "1.5px",
           textAlign: "center",
         }}
       >
-        LEADERBOARD
+        Live Leaderboard
       </Box>
 
       {/* Rows */}
@@ -143,12 +213,10 @@ function LeaderboardPanel({ sorted, currentPlayerId }: LeaderboardPanelProps) {
                   : isLeader
                     ? "rgba(251, 191, 36, 0.06)"
                     : "transparent",
-                boxShadow: isLeader && !isSelf ? "0 0 8px rgba(251, 191, 36, 0.15)" : "none",
                 transition:
                   "background var(--transition-base), border-color var(--transition-base)",
               }}
             >
-              {/* Rank icon */}
               <Box
                 component="span"
                 sx={{
@@ -163,8 +231,6 @@ function LeaderboardPanel({ sorted, currentPlayerId }: LeaderboardPanelProps) {
               >
                 {i === 0 ? "🥇" : i + 1}
               </Box>
-
-              {/* Player name */}
               <Box
                 component="span"
                 sx={{
@@ -184,8 +250,6 @@ function LeaderboardPanel({ sorted, currentPlayerId }: LeaderboardPanelProps) {
               >
                 <PlayerName playerId={pid} />
               </Box>
-
-              {/* Correct count badge */}
               <Box
                 component="span"
                 sx={{

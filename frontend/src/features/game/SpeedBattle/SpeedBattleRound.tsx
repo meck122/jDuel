@@ -3,12 +3,11 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Box } from "@mui/material";
+import { Box, useMediaQuery, useTheme } from "@mui/material";
 import { useGame } from "../../../contexts";
 import { SBBadge } from "./SBBadge";
 import { MatchTimerBar } from "./MatchTimerBar";
 import { CountdownOverlay } from "./CountdownOverlay";
-import { CooldownRing } from "./CooldownRing";
 import { LiveLeaderboard } from "./LiveLeaderboard";
 
 // Match is 3 minutes; countdown is ~3.2s.
@@ -19,6 +18,8 @@ const COUNTDOWN_DURATION_MS = 3_200;
 
 export function SpeedBattleRound() {
   const { roomState, submitAnswer } = useGame();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const speedBattle = roomState?.speedBattle;
   const playerState = speedBattle?.playerState;
@@ -27,8 +28,6 @@ export function SpeedBattleRound() {
   const serverCooldownMs = playerState?.cooldownRemainingMs ?? null;
 
   // ── Countdown gate ───────────────────────────────────────────────────────
-  // Skip countdown on reconnect (match already underway) by checking how much
-  // time has elapsed. Fresh starts have matchRemainingMs ≈ MATCH_TIME_MS.
   const [countdownDone, setCountdownDone] = useState<boolean>(() => {
     const remaining = roomState?.speedBattle?.matchRemainingMs ?? MATCH_TIME_MS;
     return remaining < MATCH_TIME_MS - COUNTDOWN_DURATION_MS;
@@ -37,10 +36,6 @@ export function SpeedBattleRound() {
   const handleCountdownDone = useCallback(() => setCountdownDone(true), []);
 
   // ── Match timer ──────────────────────────────────────────────────────────
-  // Re-seed from server on every broadcast, tick down 100ms between updates.
-  // The server broadcasts on each player answer, so drift is bounded to the
-  // inter-answer window. useEffect re-seed avoids calling impure time functions
-  // in the render/effect body (React Compiler purity rule).
   const [localMatchMs, setLocalMatchMs] = useState<number>(serverMatchMs);
   useEffect(() => {
     setLocalMatchMs(serverMatchMs);
@@ -66,40 +61,36 @@ export function SpeedBattleRound() {
   }, [serverCooldownMs]);
 
   // ── Correct-answer feedback ──────────────────────────────────────────────
-  // When the player submits a correct answer, snapshot their selection and the
-  // current options so we can show a green highlight for 600ms BEFORE the new
-  // question appears (the server advances questionIndex almost instantly).
   const [submittedFlash, setSubmittedFlash] = useState<{
     options: string[];
     selected: string;
   } | null>(null);
 
   const [hasSubmittedThisQuestion, setHasSubmittedThisQuestion] = useState(false);
+  // Captures the option the player chose when it turns out to be wrong.
+  // submittedFlash is cleared on cooldown start, so we snapshot before that.
+  const [wrongSelectedOption, setWrongSelectedOption] = useState<string | null>(null);
 
-  // Detect question advance. submittedFlash is in the dep array so the effect
-  // reads the current value without needing a render-time ref write.
   const prevQuestionIndexRef = useRef(questionIndex);
   useEffect(() => {
     if (questionIndex === prevQuestionIndexRef.current) return;
     prevQuestionIndexRef.current = questionIndex;
 
     if (submittedFlash) {
-      // Submitted + question advanced → correct answer. Hold the green flash
-      // for 600ms so the player sees confirmation before the next question loads.
       const t = setTimeout(() => {
         setSubmittedFlash(null);
         setHasSubmittedThisQuestion(false);
       }, 600);
       return () => clearTimeout(t);
     } else {
-      // Cooldown ended (or no answer) → just advance
       setHasSubmittedThisQuestion(false);
+      setWrongSelectedOption(null);
     }
   }, [questionIndex, submittedFlash]);
 
-  // Clear the flash immediately if a cooldown starts (wrong answer confirmed)
   useEffect(() => {
     if (serverCooldownMs !== null && submittedFlash) {
+      setWrongSelectedOption(submittedFlash.selected);
       setSubmittedFlash(null);
     }
   }, [serverCooldownMs, submittedFlash]);
@@ -126,10 +117,6 @@ export function SpeedBattleRound() {
   const { correctCount, wrongCount, cooldownCorrectAnswer, exhausted } = playerState;
   const currentQuestion = roomState?.currentQuestion;
   const inCooldown = serverCooldownMs !== null && serverCooldownMs > 0;
-  const cardBorderTopColor = inCooldown ? "var(--color-error)" : "var(--color-accent-purple)";
-
-  // During the correct-answer flash, show the snapshot options so the player
-  // sees their selection highlighted even after the server has advanced.
   const displayOptions = submittedFlash?.options ?? currentQuestion?.options;
   const showingCorrectFlash = submittedFlash !== null && !inCooldown;
 
@@ -141,6 +128,13 @@ export function SpeedBattleRound() {
       setSubmittedFlash({ options: currentQuestion.options, selected: option });
     }
   };
+
+  // Card state colors
+  const cardBorderTopColor = inCooldown
+    ? "var(--color-error)"
+    : showingCorrectFlash
+      ? "var(--color-success)"
+      : "var(--color-accent-purple)";
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
@@ -156,23 +150,50 @@ export function SpeedBattleRound() {
     >
       {!countdownDone && <CountdownOverlay onDone={handleCountdownDone} />}
 
-      {/* Top bar */}
+      {/* Top bar: jDuel · ⚡ Speed Battle · [spacer] · ⏱ Timer · [spacer] · Q{n} */}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
-          gap: 2,
+          gap: { xs: 1.5, sm: 2 },
           px: { xs: 3, sm: 5 },
-          py: 2,
+          py: 1.5,
           background: "var(--color-bg-secondary)",
           borderBottom: "1px solid var(--color-border-subtle)",
           flexShrink: 0,
           zIndex: 10,
         }}
       >
+        {/* jDuel logo */}
+        <Box
+          component="span"
+          sx={{
+            fontFamily: "var(--font-display)",
+            fontSize: { xs: "1.2rem", sm: "1.5rem" },
+            letterSpacing: "0.15em",
+            flexShrink: 0,
+            lineHeight: 1,
+          }}
+        >
+          <Box component="span" sx={{ color: "var(--color-accent-purple)" }}>
+            j
+          </Box>
+          <Box component="span" sx={{ color: "var(--color-accent-gold)" }}>
+            Duel
+          </Box>
+        </Box>
+
         <SBBadge />
-        <MatchTimerBar remainingMs={localMatchMs} />
+
+        {/* Spacer — centers the timer */}
+        <Box sx={{ flex: 1 }} />
+
+        <MatchTimerBar remainingMs={localMatchMs} totalMs={MATCH_TIME_MS} compact={isMobile} />
+
+        {/* Spacer */}
+        <Box sx={{ flex: 1 }} />
+
+        {/* Q counter */}
         <Box
           component="span"
           sx={{
@@ -187,30 +208,30 @@ export function SpeedBattleRound() {
         </Box>
       </Box>
 
-      {/* Mobile leaderboard strip */}
-      <LiveLeaderboard />
+      {/* Mobile leaderboard: top-3 mini-podium strip */}
+      <LiveLeaderboard compact={true} />
 
-      {/* Main content */}
+      {/* Body */}
       <Box
         sx={{
           flex: 1,
+          overflow: "hidden",
           display: "flex",
           flexDirection: { xs: "column", sm: "row" },
           gap: { xs: 0, sm: 4 },
           px: { xs: 3, sm: 5 },
           py: { xs: 3, sm: 4 },
-          overflow: "auto",
-          alignItems: { xs: "stretch", sm: "flex-start" },
         }}
       >
-        {/* Question area */}
+        {/* Question column — vertically centered */}
         <Box
           sx={{
-            flex: { xs: "none", sm: 1 },
+            flex: "1 1 0",
+            minWidth: 0,
             display: "flex",
             flexDirection: "column",
-            gap: 3,
-            minWidth: 0,
+            justifyContent: "center",
+            gap: { xs: 2, sm: 3 },
           }}
         >
           {exhausted ? (
@@ -263,44 +284,156 @@ export function SpeedBattleRound() {
             </Box>
           ) : currentQuestion || showingCorrectFlash ? (
             <>
-              {/* Category */}
-              {!showingCorrectFlash && (
+              {/* Question meta row: Q{n} · category · [locked/correct pill] */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  flexWrap: "nowrap",
+                }}
+              >
                 <Box
+                  component="span"
+                  sx={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--color-accent-teal)",
+                    fontWeight: 700,
+                    flexShrink: 0,
+                  }}
+                >
+                  Q{questionIndex + 1}
+                </Box>
+                <Box component="span" sx={{ color: "var(--color-border-emphasis)", flexShrink: 0 }}>
+                  ·
+                </Box>
+                <Box
+                  component="span"
                   sx={{
                     fontSize: "var(--font-size-sm)",
                     color: "var(--color-text-muted)",
-                    textAlign: "left",
-                    textTransform: "uppercase",
-                    letterSpacing: "1px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {currentQuestion?.category}
                 </Box>
-              )}
 
-              {/* Question card */}
+                {/* Locked pill with countdown */}
+                {inCooldown && (
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: "auto",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 1,
+                      fontFamily: "var(--font-display)",
+                      fontSize: "var(--font-size-xs)",
+                      letterSpacing: "1px",
+                      color: "var(--color-error)",
+                      background: "rgba(239,68,68,0.1)",
+                      border: "1px solid rgba(239,68,68,0.3)",
+                      px: 2,
+                      py: 0.5,
+                      borderRadius: "var(--radius-full)",
+                      animation: "timerPulse 0.8s ease infinite",
+                      flexShrink: 0,
+                    }}
+                  >
+                    🔒 Locked
+                    <Box component="span" sx={{ color: "var(--color-border-emphasis)" }}>
+                      ·
+                    </Box>
+                    <Box
+                      component="span"
+                      sx={{
+                        fontFamily: "var(--font-mono)",
+                        fontWeight: 700,
+                        minWidth: 14,
+                        textAlign: "center",
+                      }}
+                    >
+                      {Math.ceil(localCooldownMs / 1000)}s
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Correct pill */}
+                {showingCorrectFlash && (
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: "auto",
+                      fontFamily: "var(--font-display)",
+                      fontSize: "var(--font-size-xs)",
+                      letterSpacing: "1px",
+                      color: "var(--color-success)",
+                      background: "rgba(34,197,94,0.1)",
+                      border: "1px solid rgba(34,197,94,0.3)",
+                      px: 2,
+                      py: 0.5,
+                      borderRadius: "var(--radius-full)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    ✓ Correct!
+                  </Box>
+                )}
+              </Box>
+
+              {/* Question card — visual anchor. Cooldown bar on top edge. */}
               <Box
                 sx={{
                   position: "relative",
-                  p: { xs: 4, sm: 5 },
-                  background: showingCorrectFlash
-                    ? "rgba(34, 197, 94, 0.06)"
-                    : "var(--color-bg-elevated)",
-                  border: "2px solid var(--color-border-default)",
+                  p: { xs: "22px 22px", sm: "28px 32px" },
+                  background: inCooldown
+                    ? "var(--color-bg-elevated)"
+                    : showingCorrectFlash
+                      ? "rgba(34,197,94,0.06)"
+                      : "var(--color-bg-elevated)",
+                  border: "2px solid",
+                  borderColor: inCooldown
+                    ? "rgba(239,68,68,0.4)"
+                    : showingCorrectFlash
+                      ? "rgba(34,197,94,0.4)"
+                      : "var(--color-border-default)",
+                  borderTopColor: cardBorderTopColor,
+                  borderTopWidth: 3,
                   borderRadius: "var(--radius-lg)",
-                  borderTopWidth: "3px",
-                  borderTopColor: showingCorrectFlash ? "var(--color-success)" : cardBorderTopColor,
-                  boxShadow: showingCorrectFlash
-                    ? "0 -3px 12px rgba(34, 197, 94, 0.25)"
-                    : inCooldown
-                      ? "0 -3px 12px rgba(239, 68, 68, 0.2)"
-                      : "0 -3px 12px rgba(139, 92, 246, 0.15)",
-                  transition: "border-top-color 0.3s, box-shadow 0.3s, background 0.3s",
+                  boxShadow: inCooldown
+                    ? "0 0 12px rgba(239,68,68,0.15)"
+                    : showingCorrectFlash
+                      ? "0 0 12px rgba(34,197,94,0.15)"
+                      : "var(--shadow-lg)",
+                  transition: "border-color 0.3s, box-shadow 0.3s, background 0.3s",
+                  overflow: "hidden",
+                  flexShrink: 0,
                 }}
               >
+                {/* Cooldown progress bar — drains across the top edge during 5s lockout */}
                 {inCooldown && (
-                  <Box sx={{ position: "absolute", top: 12, right: 12 }}>
-                    <CooldownRing remainingMs={localCooldownMs} totalMs={5000} size={48} />
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 4,
+                      background: "rgba(239,68,68,0.15)",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        height: "100%",
+                        width: `${(localCooldownMs / 5000) * 100}%`,
+                        background: "var(--color-error)",
+                        transition: "width 0.1s linear",
+                        boxShadow: "0 0 8px rgba(239,68,68,0.5)",
+                      }}
+                    />
                   </Box>
                 )}
 
@@ -320,12 +453,14 @@ export function SpeedBattleRound() {
                   <Box
                     component="p"
                     sx={{
-                      fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-xl)" },
-                      fontWeight: 500,
+                      fontSize: {
+                        xs: "clamp(1.1rem, 4.5vw, 1.5rem)",
+                        sm: "clamp(1.25rem, 2.8vw, 2rem)",
+                      },
+                      fontWeight: 600,
                       color: "var(--color-text-primary)",
                       m: 0,
-                      lineHeight: 1.4,
-                      pr: inCooldown ? 7 : 0,
+                      lineHeight: 1.35,
                     }}
                   >
                     {currentQuestion?.text}
@@ -333,58 +468,73 @@ export function SpeedBattleRound() {
                 )}
               </Box>
 
-              {/* Cooldown strip */}
-              {inCooldown && cooldownCorrectAnswer && (
-                <Box
-                  sx={{
-                    px: 4,
-                    py: 2,
-                    background: "rgba(239, 68, 68, 0.08)",
-                    border: "1px solid rgba(239, 68, 68, 0.3)",
-                    borderRadius: "var(--radius-md)",
-                    fontSize: "var(--font-size-sm)",
-                    color: "var(--color-error-light)",
-                    textAlign: "center",
-                    animation: "slideInRight 0.3s ease forwards",
-                  }}
-                >
-                  Wrong Answer — Locked for {Math.ceil(localCooldownMs / 1000)}s · Moving to next
-                  question automatically
-                </Box>
-              )}
-
-              {/* Score strip */}
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 3,
-                  fontSize: "var(--font-size-sm)",
-                  color: "var(--color-text-muted)",
-                  fontFamily: "var(--font-mono)",
-                }}
-              >
-                <Box component="span" sx={{ color: "var(--color-success-light)", fontWeight: 700 }}>
-                  ✓ {correctCount}
-                </Box>
-                <Box component="span" sx={{ color: "var(--color-error-light)", fontWeight: 700 }}>
-                  ✗ {wrongCount}
-                </Box>
-              </Box>
-
-              {/* Answer options */}
+              {/* Answer options — 2 columns on all sizes */}
               {displayOptions ? (
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                    gridTemplateColumns: "1fr 1fr",
                     gap: { xs: 2, sm: 3 },
+                    gridAutoRows: { xs: "minmax(64px, auto)", sm: "minmax(72px, auto)" },
                   }}
                 >
                   {displayOptions.map((option, index) => {
+                    const letter = String.fromCharCode(65 + index);
                     const isCorrectReveal = inCooldown && cooldownCorrectAnswer === option;
+                    const isWrongSelected =
+                      inCooldown &&
+                      wrongSelectedOption === option &&
+                      cooldownCorrectAnswer !== option;
                     const isSelectedCorrect =
                       showingCorrectFlash && submittedFlash?.selected === option;
                     const disabled = hasSubmittedThisQuestion || inCooldown;
+
+                    const dimmed =
+                      disabled && !isCorrectReveal && !isWrongSelected && !isSelectedCorrect;
+
+                    const cardBg =
+                      isCorrectReveal || isSelectedCorrect
+                        ? "rgba(34,197,94,0.12)"
+                        : isWrongSelected
+                          ? "rgba(239,68,68,0.1)"
+                          : "var(--color-bg-elevated)";
+
+                    const cardBorder =
+                      isCorrectReveal || isSelectedCorrect
+                        ? "2px solid var(--color-success)"
+                        : isWrongSelected
+                          ? "2px solid var(--color-error)"
+                          : "2px solid var(--color-border-default)";
+
+                    const chipBg =
+                      isCorrectReveal || isSelectedCorrect
+                        ? "rgba(34,197,94,0.2)"
+                        : isWrongSelected
+                          ? "rgba(239,68,68,0.2)"
+                          : "var(--color-bg-hover)";
+
+                    const chipColor =
+                      isCorrectReveal || isSelectedCorrect
+                        ? "var(--color-success)"
+                        : isWrongSelected
+                          ? "var(--color-error)"
+                          : "var(--color-accent-teal)";
+
+                    const cardGlow =
+                      isCorrectReveal || isSelectedCorrect
+                        ? "0 0 12px rgba(34,197,94,0.25)"
+                        : isWrongSelected
+                          ? "0 0 10px rgba(239,68,68,0.2)"
+                          : "none";
+
+                    const resultIcon =
+                      isCorrectReveal || isSelectedCorrect ? "✓" : isWrongSelected ? "✗" : "";
+                    const resultColor =
+                      isCorrectReveal || isSelectedCorrect
+                        ? "var(--color-success)"
+                        : isWrongSelected
+                          ? "var(--color-error)"
+                          : "transparent";
 
                     return (
                       <Box
@@ -393,64 +543,84 @@ export function SpeedBattleRound() {
                         onClick={() => handleOptionClick(option)}
                         disabled={disabled}
                         sx={{
-                          display: "flex",
+                          display: "grid",
+                          gridTemplateColumns: "auto 1fr auto",
                           alignItems: "center",
-                          gap: 3,
-                          p: { xs: "12px 20px", sm: 4 },
-                          minHeight: 52,
-                          background: isSelectedCorrect
-                            ? "rgba(34, 197, 94, 0.12)"
-                            : "var(--color-bg-elevated)",
-                          border: isCorrectReveal
-                            ? "2px solid var(--color-success)"
-                            : isSelectedCorrect
-                              ? "2px solid var(--color-success)"
-                              : "2px solid var(--color-border-default)",
+                          gap: { xs: 1.5, sm: 2 },
+                          p: { xs: "10px 12px", sm: "12px 16px" },
+                          background: cardBg,
+                          border: cardBorder,
                           borderRadius: "var(--radius-md)",
                           cursor: disabled ? "not-allowed" : "pointer",
-                          textAlign: "left",
-                          transition: "all var(--transition-base)",
                           width: "100%",
-                          opacity: disabled && !isCorrectReveal && !isSelectedCorrect ? 0.55 : 1,
-                          boxShadow:
-                            isCorrectReveal || isSelectedCorrect
-                              ? "0 0 12px rgba(34, 197, 94, 0.3)"
-                              : "none",
+                          textAlign: "center",
+                          boxShadow: cardGlow,
+                          transition: "all var(--transition-fast)",
+                          opacity: dimmed ? 0.45 : 1,
                           "&:hover:not(:disabled)": {
                             borderColor: "var(--color-accent-purple)",
-                            background: "rgba(139, 92, 246, 0.08)",
+                            background: "rgba(139,92,246,0.08)",
                             transform: "translateY(-2px)",
                             boxShadow: "var(--shadow-glow-purple)",
                           },
                         }}
                       >
+                        {/* Circular letter chip */}
+                        <Box
+                          component="span"
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            background: chipBg,
+                            color: chipColor,
+                            fontFamily: "var(--font-display)",
+                            fontSize: "var(--font-size-base)",
+                            fontWeight: 700,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {letter}
+                        </Box>
+
+                        {/* Answer text */}
                         <Box
                           component="span"
                           sx={{
                             fontFamily: "var(--font-display)",
-                            fontSize: "var(--font-size-xl)",
-                            fontWeight: 400,
+                            fontSize: { xs: "var(--font-size-sm)", sm: "var(--font-size-base)" },
+                            letterSpacing: "0.5px",
                             color:
                               isCorrectReveal || isSelectedCorrect
                                 ? "var(--color-success)"
-                                : "var(--color-accent-teal)",
-                            minWidth: 24,
-                            flexShrink: 0,
-                            letterSpacing: "1px",
-                          }}
-                        >
-                          {String.fromCharCode(65 + index)}
-                        </Box>
-                        <Box
-                          component="span"
-                          sx={{
-                            color: "var(--color-text-primary)",
-                            fontSize: "var(--font-size-base)",
-                            fontWeight: 500,
-                            lineHeight: 1.4,
+                                : isWrongSelected
+                                  ? "var(--color-error)"
+                                  : "var(--color-text-primary)",
+                            overflowWrap: "anywhere",
+                            lineHeight: 1.25,
+                            textAlign: "center",
                           }}
                         >
                           {option}
+                        </Box>
+
+                        {/* Result icon — invisible spacer when no state */}
+                        <Box
+                          component="span"
+                          sx={{
+                            width: 18,
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            color: resultColor,
+                            fontSize: "var(--font-size-base)",
+                            fontWeight: 700,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {resultIcon}
                         </Box>
                       </Box>
                     );
@@ -469,6 +639,43 @@ export function SpeedBattleRound() {
                   }}
                 >
                   Answer options loading...
+                </Box>
+              )}
+
+              {/* Wrong answer explanation banner */}
+              {inCooldown && cooldownCorrectAnswer && (
+                <Box
+                  sx={{
+                    px: 4,
+                    py: 2.5,
+                    background: "rgba(239,68,68,0.07)",
+                    border: "1px solid rgba(239,68,68,0.2)",
+                    borderRadius: "var(--radius-md)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 3,
+                    animation: "formReveal 0.3s ease both",
+                  }}
+                >
+                  <Box component="span" sx={{ fontSize: "1.25rem" }}>
+                    ⏸
+                  </Box>
+                  <Box>
+                    <Box
+                      sx={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: "var(--font-size-sm)",
+                        color: "var(--color-error)",
+                        letterSpacing: "1px",
+                        mb: 0.5,
+                      }}
+                    >
+                      Wrong Answer — Locked for {Math.ceil(localCooldownMs / 1000)}s
+                    </Box>
+                    <Box sx={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)" }}>
+                      Moving to next question automatically.
+                    </Box>
+                  </Box>
                 </Box>
               )}
             </>

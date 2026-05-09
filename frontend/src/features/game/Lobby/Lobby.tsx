@@ -19,6 +19,7 @@ import { sxCard } from "../../../styles/sxPatterns";
 export function Lobby() {
   const { roomId, playerId, roomState, startGame } = useGame();
   const [copied, setCopied] = useState(false);
+  const isSpeedBattle = roomState?.config?.gameMode === "speed_battle";
 
   const players = roomState?.players ?? {};
   const playerCount = Object.keys(players).length;
@@ -251,20 +252,20 @@ export function Lobby() {
                   }}
                 >
                   <PlayerName playerId={player} />
-                  {player === hostId && (
-                    <Box
-                      component="span"
-                      sx={{
-                        color: "var(--color-accent-gold)",
-                        fontSize: "var(--font-size-xs)",
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                        letterSpacing: "1px",
-                      }}
-                    >
-                      Host
-                    </Box>
-                  )}
+                  {/* Reserve badge height on every card so rows align */}
+                  <Box
+                    component="span"
+                    sx={{
+                      color: "var(--color-accent-gold)",
+                      fontSize: "var(--font-size-xs)",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "1px",
+                      visibility: player === hostId ? "visible" : "hidden",
+                    }}
+                  >
+                    Host
+                  </Box>
                 </Box>
               </Box>
             );
@@ -313,7 +314,7 @@ export function Lobby() {
                 },
               }}
             >
-              Start Game
+              {isSpeedBattle ? "⚡ Start Speed Battle" : "Start Game"}
             </Box>
           )}
         </Box>
