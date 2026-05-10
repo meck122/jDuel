@@ -18,6 +18,10 @@ from app.config.game import (
 )
 from app.models import GameStatus
 from app.models.state import SpeedBattleLeaderRow
+from app.services.metrics import (
+    speed_battle_cooldowns_total,
+    speed_battle_match_duration_seconds,
+)
 
 if TYPE_CHECKING:
     from app.models import Room
@@ -176,6 +180,7 @@ class SpeedBattleHandler:
                     )
             else:
                 progress.wrong_count += 1
+                speed_battle_cooldowns_total.inc()
                 progress.cooldown_expires_at_monotonic = (
                     now_mono + SPEED_BATTLE_WRONG_COOLDOWN_MS / 1000
                 )
@@ -259,6 +264,9 @@ class SpeedBattleHandler:
                 return
 
             round_state.ended = True
+            speed_battle_match_duration_seconds.observe(
+                time.monotonic() - round_state.match_start_monotonic
+            )
             # Cancel all in-flight per-player cooldowns (R11b).
             # NOTE: We deliberately do not call cancel_all_timers_for_room here —
             # that would cancel the match timer task we are currently running on,

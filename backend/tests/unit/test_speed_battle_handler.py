@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from prometheus_client import REGISTRY
 
 import app.config.game as game_config
 import app.services.orchestration.speed_battle_handler as sbh_module
@@ -1030,3 +1031,85 @@ class TestMatchEndFallbackUnderLock:
 
         mock_room_closer.close_room.assert_called_once()
         assert lock_held_during_close == [True]
+
+
+# ---------------------------------------------------------------------------
+# Metrics
+# ---------------------------------------------------------------------------
+
+
+def _counter_value(name: str) -> float:
+    """Return current value of a prometheus counter (0.0 if never incremented)."""
+    return REGISTRY.get_sample_value(name + "_total") or 0.0
+
+
+def _histogram_count(name: str) -> float:
+    """Return current observation count of a prometheus histogram."""
+    return REGISTRY.get_sample_value(name + "_count") or 0.0
+
+
+class TestMetrics:
+    async def test_cooldown_counter_increments_on_wrong_answer(
+        self,
+        speed_battle_handler: SpeedBattleHandler,
+        room_manager: RoomManager,
+        monkeypatch,
+    ):
+        """Wrong answer in handle_answer increments speed_battle_cooldowns_total."""
+        _patch(monkeypatch, "SPEED_BATTLE_QUESTION_POOL_SIZE", 5)
+        _patch(monkeypatch, "SPEED_BATTLE_MATCH_TIME_MS", 60_000)
+        _patch(monkeypatch, "SPEED_BATTLE_WRONG_COOLDOWN_MS", 60_000)
+        room = _setup_room(room_manager, ["Alice"])
+        _attach_mock_ws(room_manager, room, "Alice")
+        async with room.lock:
+            await speed_battle_handler.start_match(room)
+        room.status = GameStatus.PLAYING
+
+        before = _counter_value("jduel_speed_battle_cooldowns")
+        await speed_battle_handler.handle_answer(room, "Alice", "wrong_answer", 0)
+        after = _counter_value("jduel_speed_battle_cooldowns")
+
+        assert after - before == 1.0
+
+    async def test_cooldown_counter_not_incremented_on_correct_answer(
+        self,
+        speed_battle_handler: SpeedBattleHandler,
+        room_manager: RoomManager,
+        monkeypatch,
+    ):
+        """Correct answer does not increment speed_battle_cooldowns_total."""
+        _patch(monkeypatch, "SPEED_BATTLE_QUESTION_POOL_SIZE", 5)
+        _patch(monkeypatch, "SPEED_BATTLE_MATCH_TIME_MS", 60_000)
+        room = _setup_room(room_manager, ["Alice"])
+        _attach_mock_ws(room_manager, room, "Alice")
+        async with room.lock:
+            await speed_battle_handler.start_match(room)
+        room.status = GameStatus.PLAYING
+
+        correct = room.questions[0].answer
+        before = _counter_value("jduel_speed_battle_cooldowns")
+        await speed_battle_handler.handle_answer(room, "Alice", correct, 0)
+        after = _counter_value("jduel_speed_battle_cooldowns")
+
+        assert after == before
+
+    async def test_match_duration_histogram_observed_on_match_end(
+        self,
+        speed_battle_handler: SpeedBattleHandler,
+        room_manager: RoomManager,
+        monkeypatch,
+    ):
+        """_on_match_end observes a sample in speed_battle_match_duration_seconds."""
+        _patch(monkeypatch, "SPEED_BATTLE_QUESTION_POOL_SIZE", 5)
+        _patch(monkeypatch, "SPEED_BATTLE_MATCH_TIME_MS", 60_000)
+        room = _setup_room(room_manager, ["Alice"])
+        _attach_mock_ws(room_manager, room, "Alice")
+        async with room.lock:
+            await speed_battle_handler.start_match(room)
+        room.status = GameStatus.PLAYING
+
+        before = _histogram_count("jduel_speed_battle_match_duration_seconds")
+        await speed_battle_handler._on_match_end(room.room_id)
+        after = _histogram_count("jduel_speed_battle_match_duration_seconds")
+
+        assert after - before == 1.0

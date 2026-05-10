@@ -3,6 +3,8 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
+from prometheus_client import REGISTRY
+
 from app.models import GameStatus
 from app.services.orchestration.orchestrator import GameOrchestrator
 
@@ -524,6 +526,50 @@ class TestOrchestratorSpeedBattleDelegation:
 
         mock_handler.handle_answer.assert_awaited_once_with(room, "Alice", "Paris", 0)
         assert "Alice" not in room.answered_players  # Classic path not entered
+
+    async def test_handle_start_game_speed_battle_increments_sb_counter(
+        self, orchestrator: GameOrchestrator, room_manager, monkeypatch
+    ):
+        """handle_start_game for Speed Battle increments speed_battle_matches_started_total."""
+        import app.services.orchestration.orchestrator as orch_mod
+
+        monkeypatch.setattr(orch_mod, "SPEED_BATTLE_QUESTION_POOL_SIZE", 5)
+
+        mock_handler = self._make_mock_handler()
+        orchestrator._speed_battle_handler = mock_handler
+
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room.config.game_mode = "speed_battle"
+        room.config.multiple_choice_enabled = True
+
+        before = (
+            REGISTRY.get_sample_value("jduel_speed_battle_matches_started_total") or 0.0
+        )
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+        after = (
+            REGISTRY.get_sample_value("jduel_speed_battle_matches_started_total") or 0.0
+        )
+
+        assert after - before == 1.0
+
+    async def test_handle_start_game_classic_does_not_increment_sb_counter(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """handle_start_game for Classic mode does not increment the SB-specific counter."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        # default game_mode is "classic"
+
+        before = (
+            REGISTRY.get_sample_value("jduel_speed_battle_matches_started_total") or 0.0
+        )
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+        after = (
+            REGISTRY.get_sample_value("jduel_speed_battle_matches_started_total") or 0.0
+        )
+
+        assert after == before
 
     async def test_handle_answer_classic_mode_not_delegated(
         self, orchestrator: GameOrchestrator, room_manager
