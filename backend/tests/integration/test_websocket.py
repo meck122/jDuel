@@ -189,6 +189,18 @@ class TestWebSocketGameFlow:
 
             assert msg["roomState"]["config"]["difficulty"] == "beast"
 
+    def test_config_update_difficulty_baby(self, client: TestClient):
+        """Host can set difficulty to 'baby'; broadcasted state reflects it."""
+        room_id, tokens = _setup_room(client, ["Alice"])
+
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
+            ws.receive_json()  # initial state
+
+            ws.send_json({"type": "UPDATE_CONFIG", "config": {"difficulty": "baby"}})
+            msg = ws.receive_json()
+
+            assert msg["roomState"]["config"]["difficulty"] == "baby"
+
     def test_config_update_ignored_after_game_start(
         self, client: TestClient, test_container
     ):

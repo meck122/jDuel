@@ -151,6 +151,19 @@ class TestOrchestrator:
 
         assert room.config.game_mode == "classic"
 
+    async def test_handle_config_update_difficulty_baby(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Host can set difficulty to 'baby'; config updated."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+
+        await orchestrator.handle_config_update(
+            room.room_id, "Alice", {"difficulty": "baby"}
+        )
+
+        assert room.config.difficulty == "baby"
+
     async def test_handle_config_update_other_field_does_not_affect_game_mode(
         self, orchestrator: GameOrchestrator, room_manager
     ):
