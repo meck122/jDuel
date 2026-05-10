@@ -646,8 +646,9 @@ export function SpeedBattleRound() {
               {inCooldown && cooldownCorrectAnswer && (
                 <Box
                   sx={{
-                    px: 2,
-                    py: 1.5,
+                    px: 4,
+                    py: 3,
+                    mx: { xs: 1, sm: 2 },
                     background: "rgba(239,68,68,0.07)",
                     border: "1px solid rgba(239,68,68,0.2)",
                     borderRadius: "var(--radius-md)",
