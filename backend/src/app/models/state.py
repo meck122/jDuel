@@ -16,7 +16,7 @@ class RoomConfigData(BaseModel):
     """Room configuration sent to clients."""
 
     multipleChoiceEnabled: bool = False
-    difficulty: str = "enjoyer"
+    difficulty: str = "baby"
     gameMode: Literal["classic", "speed_battle"] = "speed_battle"
 
 

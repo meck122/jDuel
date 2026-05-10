@@ -225,7 +225,7 @@ class TestWebSocketGameFlow:
 
             # Verify via container that config is unchanged
             room = test_container.room_manager.get_room(room_id)
-            assert room.config.difficulty == "enjoyer"
+            assert room.config.difficulty == "baby"
 
     def test_config_update_game_mode_speed_battle_broadcasts(self, client: TestClient):
         """Host sending gameMode='speed_battle' is reflected in broadcasted ROOM_STATE."""

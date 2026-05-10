@@ -42,7 +42,7 @@ export function GameSettings() {
       </Box>
       <DifficultySelector
         isHost={isHost}
-        currentDifficulty={roomState?.config?.difficulty ?? "enjoyer"}
+        currentDifficulty={roomState?.config?.difficulty ?? "baby"}
         onSelect={(difficulty) => updateConfig({ difficulty })}
       />
       <MultipleChoiceToggle

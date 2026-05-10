@@ -14,5 +14,5 @@ class RoomConfig:
     """
 
     multiple_choice_enabled: bool = True
-    difficulty: str = "enjoyer"
+    difficulty: str = "baby"
     game_mode: str = "speed_battle"

@@ -112,7 +112,7 @@ class TestOrchestrator:
             room.room_id, "Bob", {"difficulty": "beast"}
         )
 
-        assert room.config.difficulty == "enjoyer"  # default, unchanged
+        assert room.config.difficulty == "baby"  # default, unchanged
 
     async def test_handle_config_update_game_mode_speed_battle(
         self, orchestrator: GameOrchestrator, room_manager
