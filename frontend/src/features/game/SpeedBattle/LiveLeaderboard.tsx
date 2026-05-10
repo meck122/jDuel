@@ -53,6 +53,7 @@ export function LiveLeaderboard({ compact = true }: LiveLeaderboardProps) {
           gap: "6px",
           px: 3,
           py: 2,
+          mt: { xs: "6px", sm: 0 },
           background: "var(--color-bg-secondary)",
           borderBottom: "1px solid var(--color-border-subtle)",
           flexShrink: 0,
@@ -284,7 +285,7 @@ function LeaderboardPanel({ sorted, currentPlayerId, leaderScore }: LeaderboardP
       <Box
         sx={{
           px: 3,
-          pt: 1.5,
+          pt: 3,
           pb: 2,
           borderTop: "1px solid var(--color-border-subtle)",
           fontSize: "10px",

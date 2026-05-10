@@ -220,7 +220,7 @@ export function SpeedBattleRound() {
           flexDirection: { xs: "column", sm: "row" },
           gap: { xs: 0, sm: 4 },
           px: { xs: 3, sm: 5 },
-          py: { xs: 3, sm: 4 },
+          py: { xs: 1.5, sm: 4 },
         }}
       >
         {/* Question column — vertically centered */}
@@ -230,7 +230,7 @@ export function SpeedBattleRound() {
             minWidth: 0,
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center",
+            justifyContent: { xs: "flex-start", sm: "center" },
             gap: { xs: 2, sm: 3 },
           }}
         >
