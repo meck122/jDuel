@@ -153,7 +153,7 @@ export function Question() {
                   transition: "all var(--transition-base)",
                   width: "100%",
                   flex: { xs: 1, sm: "initial" },
-                  "@media (hover: hover)": {
+                  "@media (hover: hover) and (pointer: fine)": {
                     "&:hover": {
                       borderColor: "var(--color-accent-purple)",
                       background: "rgba(139, 92, 246, 0.08)",

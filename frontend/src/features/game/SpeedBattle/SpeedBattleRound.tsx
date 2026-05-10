@@ -547,11 +547,13 @@ export function SpeedBattleRound() {
                           boxShadow: cardGlow,
                           transition: "all var(--transition-fast)",
                           opacity: dimmed ? 0.45 : 1,
-                          "&:hover:not(:disabled)": {
-                            borderColor: "var(--color-accent-purple)",
-                            background: "rgba(139,92,246,0.08)",
-                            transform: "translateY(-2px)",
-                            boxShadow: "var(--shadow-glow-purple)",
+                          "@media (hover: hover) and (pointer: fine)": {
+                            "&:hover:not(:disabled)": {
+                              borderColor: "var(--color-accent-purple)",
+                              background: "rgba(139,92,246,0.08)",
+                              transform: "translateY(-2px)",
+                              boxShadow: "var(--shadow-glow-purple)",
+                            },
                           },
                         }}
                       >
