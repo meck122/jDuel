@@ -30,7 +30,7 @@ export function GameView() {
     return null;
   }
 
-  const gameMode = roomState.config?.gameMode ?? "classic";
+  const gameMode = roomState.config?.gameMode ?? "speed_battle";
   const { status } = roomState;
 
   return (

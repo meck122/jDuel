@@ -114,6 +114,8 @@ class TestWebSocketGameFlow:
 
         with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # initial ROOM_STATE (waiting)
+            ws.send_json({"type": "UPDATE_CONFIG", "config": {"gameMode": "classic"}})
+            ws.receive_json()  # config updated
             ws.send_json({"type": "START_GAME"})
             msg = ws.receive_json()
 
@@ -151,6 +153,8 @@ class TestWebSocketGameFlow:
 
         with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # waiting state
+            ws.send_json({"type": "UPDATE_CONFIG", "config": {"gameMode": "classic"}})
+            ws.receive_json()  # config updated
             ws.send_json({"type": "START_GAME"})
             ws.receive_json()  # playing state
 
@@ -169,6 +173,8 @@ class TestWebSocketGameFlow:
 
         with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # waiting
+            ws.send_json({"type": "UPDATE_CONFIG", "config": {"gameMode": "classic"}})
+            ws.receive_json()  # config updated
             ws.send_json({"type": "START_GAME"})
             ws.receive_json()  # playing
 
@@ -189,6 +195,18 @@ class TestWebSocketGameFlow:
 
             assert msg["roomState"]["config"]["difficulty"] == "beast"
 
+    def test_config_update_difficulty_baby(self, client: TestClient):
+        """Host can set difficulty to 'baby'; broadcasted state reflects it."""
+        room_id, tokens = _setup_room(client, ["Alice"])
+
+        with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
+            ws.receive_json()  # initial state
+
+            ws.send_json({"type": "UPDATE_CONFIG", "config": {"difficulty": "baby"}})
+            msg = ws.receive_json()
+
+            assert msg["roomState"]["config"]["difficulty"] == "baby"
+
     def test_config_update_ignored_after_game_start(
         self, client: TestClient, test_container
     ):
@@ -197,6 +215,8 @@ class TestWebSocketGameFlow:
 
         with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # waiting
+            ws.send_json({"type": "UPDATE_CONFIG", "config": {"gameMode": "classic"}})
+            ws.receive_json()  # config updated
             ws.send_json({"type": "START_GAME"})
             ws.receive_json()  # playing
 
@@ -205,7 +225,7 @@ class TestWebSocketGameFlow:
 
             # Verify via container that config is unchanged
             room = test_container.room_manager.get_room(room_id)
-            assert room.config.difficulty == "enjoyer"
+            assert room.config.difficulty == "baby"
 
     def test_config_update_game_mode_speed_battle_broadcasts(self, client: TestClient):
         """Host sending gameMode='speed_battle' is reflected in broadcasted ROOM_STATE."""
@@ -254,6 +274,8 @@ class TestPlayAgain:
 
     def _play_to_finished(self, ws, test_container, room_id: str):
         """Helper: play a single-player game to FINISHED state via WS."""
+        ws.send_json({"type": "UPDATE_CONFIG", "config": {"gameMode": "classic"}})
+        ws.receive_json()  # config updated
         ws.send_json({"type": "START_GAME"})
         ws.receive_json()  # playing state
 

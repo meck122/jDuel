@@ -7,7 +7,7 @@ import { MultipleChoiceToggle } from "./MultipleChoiceToggle";
 export function GameSettings() {
   const { playerId, roomState, updateConfig } = useGame();
   const isHost = roomState?.hostId === playerId;
-  const currentMode = roomState?.config?.gameMode ?? "classic";
+  const currentMode = roomState?.config?.gameMode ?? "speed_battle";
   const mcForced = currentMode === "speed_battle";
 
   return (
@@ -42,7 +42,7 @@ export function GameSettings() {
       </Box>
       <DifficultySelector
         isHost={isHost}
-        currentDifficulty={roomState?.config?.difficulty ?? "enjoyer"}
+        currentDifficulty={roomState?.config?.difficulty ?? "baby"}
         onSelect={(difficulty) => updateConfig({ difficulty })}
       />
       <MultipleChoiceToggle

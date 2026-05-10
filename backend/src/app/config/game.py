@@ -10,6 +10,7 @@ MAX_SCORE_PER_QUESTION = 1000
 
 # Difficulty tier ranges (min, max) - inclusive
 DIFFICULTY_RANGES: dict[str, tuple[int, int]] = {
+    "baby": (1, 1),
     "enjoyer": (1, 2),
     "master": (2, 4),
     "beast": (4, 5),
