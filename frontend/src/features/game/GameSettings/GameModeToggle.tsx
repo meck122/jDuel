@@ -18,7 +18,7 @@ interface Props {
 
 export function GameModeToggle({ isHost, currentMode, onSelect }: Props) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* Section label */}
       <Box
         component="span"
