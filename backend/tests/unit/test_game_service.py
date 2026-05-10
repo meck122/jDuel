@@ -1,5 +1,7 @@
 """Tests for GameService."""
 
+from prometheus_client import REGISTRY
+
 from app.models import GameStatus, Room
 
 
@@ -239,3 +241,63 @@ class TestGameService:
 
         assert room.config.difficulty == "beast"
         assert room.config.multiple_choice_enabled is True
+
+
+class TestAnswerVerificationMetrics:
+    """Verify answer_verification_duration_seconds is observed in non-MC mode only."""
+
+    def _hist_count(self) -> float:
+        return (
+            REGISTRY.get_sample_value(
+                "jduel_answer_verification_duration_seconds_count"
+            )
+            or 0.0
+        )
+
+    async def test_histogram_observed_on_non_mc_correct_answer(
+        self, game_service, sample_questions
+    ):
+        """process_answer with MC disabled records a verification duration sample."""
+        room = Room("METC1", sample_questions)
+        room.players = {"p1"}
+        room.scores = {"p1": 0}
+        room.config.multiple_choice_enabled = False
+        game_service.start_game(room)
+
+        before = self._hist_count()
+        await game_service.process_answer(room, "p1", "4")  # correct
+        after = self._hist_count()
+
+        assert after - before == 1.0
+
+    async def test_histogram_observed_on_non_mc_wrong_answer(
+        self, game_service, sample_questions
+    ):
+        """process_answer with MC disabled records a sample even for wrong answers."""
+        room = Room("METW1", sample_questions)
+        room.players = {"p1"}
+        room.scores = {"p1": 0}
+        room.config.multiple_choice_enabled = False
+        game_service.start_game(room)
+
+        before = self._hist_count()
+        await game_service.process_answer(room, "p1", "definitely_wrong")
+        after = self._hist_count()
+
+        assert after - before == 1.0
+
+    async def test_histogram_not_observed_when_mc_enabled(
+        self, game_service, sample_questions
+    ):
+        """process_answer with MC enabled does not invoke NLP, so no sample recorded."""
+        room = Room("METMC", sample_questions)
+        room.players = {"p1"}
+        room.scores = {"p1": 0}
+        room.config.multiple_choice_enabled = True
+        game_service.start_game(room)
+
+        before = self._hist_count()
+        await game_service.process_answer(room, "p1", "4")
+        after = self._hist_count()
+
+        assert after == before
