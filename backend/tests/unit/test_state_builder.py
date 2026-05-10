@@ -229,10 +229,10 @@ class TestStateBuilder:
 class TestRoomConfigDataGameMode:
     """Tests for RoomConfigData.gameMode field and state_builder wiring."""
 
-    def test_default_constructs_with_classic(self):
-        """RoomConfigData() default-constructs with gameMode='classic'."""
+    def test_default_constructs_with_speed_battle(self):
+        """RoomConfigData() default-constructs with gameMode='speed_battle'."""
         config = RoomConfigData()
-        assert config.gameMode == "classic"
+        assert config.gameMode == "speed_battle"
 
     def test_explicit_speed_battle(self):
         """RoomConfigData(gameMode='speed_battle') round-trips correctly."""
@@ -258,17 +258,17 @@ class TestRoomConfigDataGameMode:
         msg = state_builder.build_room_state(room)
         assert msg.roomState.config.gameMode == "speed_battle"
 
-    def test_state_builder_default_game_mode_is_classic(
+    def test_state_builder_default_game_mode_is_speed_battle(
         self, state_builder: StateBuilder, sample_questions
     ):
-        """Fresh room produces ROOM_STATE with config.gameMode=='classic'."""
+        """Fresh room produces ROOM_STATE with config.gameMode=='speed_battle'."""
         room = Room("TEST1", sample_questions)
         room.players = {"Alice"}
         room.scores = {"Alice": 0}
         room.host_id = "Alice"
 
         msg = state_builder.build_room_state(room)
-        assert msg.roomState.config.gameMode == "classic"
+        assert msg.roomState.config.gameMode == "speed_battle"
 
 
 class TestBuildSpeedBattleStateForPlayer:

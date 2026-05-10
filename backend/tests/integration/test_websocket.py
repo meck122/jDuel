@@ -114,6 +114,8 @@ class TestWebSocketGameFlow:
 
         with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # initial ROOM_STATE (waiting)
+            ws.send_json({"type": "UPDATE_CONFIG", "config": {"gameMode": "classic"}})
+            ws.receive_json()  # config updated
             ws.send_json({"type": "START_GAME"})
             msg = ws.receive_json()
 
@@ -151,6 +153,8 @@ class TestWebSocketGameFlow:
 
         with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # waiting state
+            ws.send_json({"type": "UPDATE_CONFIG", "config": {"gameMode": "classic"}})
+            ws.receive_json()  # config updated
             ws.send_json({"type": "START_GAME"})
             ws.receive_json()  # playing state
 
@@ -169,6 +173,8 @@ class TestWebSocketGameFlow:
 
         with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # waiting
+            ws.send_json({"type": "UPDATE_CONFIG", "config": {"gameMode": "classic"}})
+            ws.receive_json()  # config updated
             ws.send_json({"type": "START_GAME"})
             ws.receive_json()  # playing
 
@@ -209,6 +215,8 @@ class TestWebSocketGameFlow:
 
         with client.websocket_connect(_ws_url(room_id, "Alice", tokens["Alice"])) as ws:
             ws.receive_json()  # waiting
+            ws.send_json({"type": "UPDATE_CONFIG", "config": {"gameMode": "classic"}})
+            ws.receive_json()  # config updated
             ws.send_json({"type": "START_GAME"})
             ws.receive_json()  # playing
 
@@ -266,6 +274,8 @@ class TestPlayAgain:
 
     def _play_to_finished(self, ws, test_container, room_id: str):
         """Helper: play a single-player game to FINISHED state via WS."""
+        ws.send_json({"type": "UPDATE_CONFIG", "config": {"gameMode": "classic"}})
+        ws.receive_json()  # config updated
         ws.send_json({"type": "START_GAME"})
         ws.receive_json()  # playing state
 

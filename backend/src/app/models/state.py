@@ -17,7 +17,7 @@ class RoomConfigData(BaseModel):
 
     multipleChoiceEnabled: bool = False
     difficulty: str = "enjoyer"
-    gameMode: Literal["classic", "speed_battle"] = "classic"
+    gameMode: Literal["classic", "speed_battle"] = "speed_battle"
 
 
 class CurrentQuestion(BaseModel):

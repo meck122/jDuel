@@ -62,6 +62,7 @@ class TestOrchestrator:
         """Host starting the game loads questions and transitions to PLAYING."""
         room = room_manager.create_room()
         room_manager.register_player(room.room_id, "Alice")  # host
+        room.config.game_mode = "classic"
         assert len(room.questions) == 0
 
         await orchestrator.handle_start_game(room.room_id, "Alice")
@@ -78,6 +79,7 @@ class TestOrchestrator:
         room_manager.register_player(
             room.room_id, "Bob"
         )  # 2 players so single answer won't trigger results
+        room.config.game_mode = "classic"
 
         await orchestrator.handle_start_game(room.room_id, "Alice")
         await orchestrator.handle_answer(room.room_id, "Alice", "4")
@@ -91,6 +93,7 @@ class TestOrchestrator:
         """Single player answering triggers transition to RESULTS (all_answered)."""
         room = room_manager.create_room()
         room_manager.register_player(room.room_id, "Alice")
+        room.config.game_mode = "classic"
 
         await orchestrator.handle_start_game(room.room_id, "Alice")
         await orchestrator.handle_answer(room.room_id, "Alice", "4")
@@ -149,7 +152,7 @@ class TestOrchestrator:
             room.room_id, "Alice", {"gameMode": "garbage"}
         )
 
-        assert room.config.game_mode == "classic"
+        assert room.config.game_mode == "speed_battle"
 
     async def test_handle_config_update_difficulty_baby(
         self, orchestrator: GameOrchestrator, room_manager
@@ -191,7 +194,7 @@ class TestOrchestrator:
             room.room_id, "Bob", {"gameMode": "speed_battle"}
         )
 
-        assert room.config.game_mode == "classic"
+        assert room.config.game_mode == "speed_battle"
 
     async def test_handle_config_update_game_mode_after_game_start_rejected(
         self, orchestrator: GameOrchestrator, room_manager
@@ -199,6 +202,7 @@ class TestOrchestrator:
         """Host cannot change game_mode after game has started."""
         room = room_manager.create_room()
         room_manager.register_player(room.room_id, "Alice")
+        room.config.game_mode = "classic"
         await orchestrator.handle_start_game(room.room_id, "Alice")
 
         await orchestrator.handle_config_update(
@@ -233,6 +237,7 @@ class TestOrchestrator:
         await orchestrator.handle_connect(room.room_id, "Alice", mock_ws)
 
         # Start and complete the game
+        room.config.game_mode = "classic"
         await orchestrator.handle_start_game(room.room_id, "Alice")
         for i in range(len(room.questions)):
             await orchestrator.handle_answer(
@@ -273,6 +278,7 @@ class TestOrchestrator:
         await orchestrator.handle_connect(room.room_id, "Bob", mock_ws_bob)
 
         # Play to finished
+        room.config.game_mode = "classic"
         await orchestrator.handle_start_game(room.room_id, "Alice")
         for i in range(len(room.questions)):
             await orchestrator.handle_answer(
@@ -322,6 +328,7 @@ class TestOrchestrator:
         await orchestrator.handle_connect(room.room_id, "Bob", mock_ws_bob)
 
         # Play to finished
+        room.config.game_mode = "classic"
         await orchestrator.handle_start_game(room.room_id, "Alice")
         for i in range(len(room.questions)):
             await orchestrator.handle_answer(
@@ -371,6 +378,7 @@ class TestOrchestrator:
         room = room_manager.create_room()
         room_manager.register_player(room.room_id, "Alice")
         room_manager.register_player(room.room_id, "Bob")
+        room.config.game_mode = "classic"
 
         await orchestrator.handle_start_game(room.room_id, "Alice")
         correct_answer = room.questions[0].answer
@@ -398,6 +406,7 @@ class TestOrchestrator:
         room = room_manager.create_room()
         room_manager.register_player(room.room_id, "Alice")
         room_manager.register_player(room.room_id, "Bob")
+        room.config.game_mode = "classic"
 
         await orchestrator.handle_start_game(room.room_id, "Alice")
 
@@ -572,7 +581,7 @@ class TestOrchestratorSpeedBattleDelegation:
         """handle_start_game for Classic mode does not increment the SB-specific counter."""
         room = room_manager.create_room()
         room_manager.register_player(room.room_id, "Alice")
-        # default game_mode is "classic"
+        room.config.game_mode = "classic"
 
         before = (
             REGISTRY.get_sample_value("jduel_speed_battle_matches_started_total") or 0.0
@@ -594,7 +603,7 @@ class TestOrchestratorSpeedBattleDelegation:
         room = room_manager.create_room()
         room_manager.register_player(room.room_id, "Alice")
         room_manager.register_player(room.room_id, "Bob")
-        # room.config.game_mode defaults to "classic"
+        room.config.game_mode = "classic"
 
         await orchestrator.handle_start_game(room.room_id, "Alice")
         await orchestrator.handle_answer(room.room_id, "Alice", "Paris")
