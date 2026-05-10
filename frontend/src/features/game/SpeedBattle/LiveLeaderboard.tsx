@@ -53,7 +53,7 @@ export function LiveLeaderboard({ compact = true }: LiveLeaderboardProps) {
           gap: "6px",
           px: 3,
           py: 2,
-          mt: { xs: 2, sm: 0 },
+          mt: { xs: 3, sm: 0 },
           background: "var(--color-bg-secondary)",
           borderBottom: "1px solid var(--color-border-subtle)",
           flexShrink: 0,
@@ -81,6 +81,7 @@ export function LiveLeaderboard({ compact = true }: LiveLeaderboardProps) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                justifyContent: "center",
                 py: elevated ? 1.5 : 1,
                 px: 1,
                 background: isMe
@@ -102,13 +103,13 @@ export function LiveLeaderboard({ compact = true }: LiveLeaderboardProps) {
               <Box
                 sx={{
                   display: "flex",
-                  alignItems: "center",
+                  alignItems: "baseline",
                   gap: "3px",
                   fontSize: "var(--font-size-xs)",
                   color: "var(--color-text-muted)",
                 }}
               >
-                <Box component="span" sx={{ fontSize: "0.85rem", lineHeight: 1 }}>
+                <Box component="span" sx={{ fontSize: "0.8rem" }}>
                   {MEDALS[rank - 1] ?? `#${rank}`}
                 </Box>
                 <Box

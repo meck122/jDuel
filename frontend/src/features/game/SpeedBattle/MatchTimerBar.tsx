@@ -47,7 +47,7 @@ export function MatchTimerBar({
       sx={{
         display: "inline-flex",
         alignItems: "center",
-        gap: compact ? 1.5 : 2,
+        gap: compact ? 2.5 : 2,
         px: compact ? 2 : 3,
         py: 1,
         background: "var(--color-bg-elevated)",

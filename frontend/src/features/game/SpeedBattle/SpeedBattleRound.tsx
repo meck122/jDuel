@@ -220,7 +220,7 @@ export function SpeedBattleRound() {
           flexDirection: { xs: "column", sm: "row" },
           gap: { xs: 0, sm: 4 },
           px: { xs: 3, sm: 5 },
-          pt: { xs: 3, sm: 4 },
+          pt: { xs: 4, sm: 4 },
           pb: { xs: 1.5, sm: 4 },
         }}
       >
