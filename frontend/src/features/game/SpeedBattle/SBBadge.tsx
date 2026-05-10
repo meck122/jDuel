@@ -12,7 +12,7 @@ export function SBBadge() {
         display: "inline-flex",
         alignItems: "center",
         gap: 1,
-        ml: { xs: 1.5, sm: 0 },
+        ml: { xs: 3, sm: 0 },
         px: 3,
         py: 1,
         background: "linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(251,191,36,0.08) 100%)",
