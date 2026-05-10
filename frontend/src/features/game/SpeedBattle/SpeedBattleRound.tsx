@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Box, useMediaQuery, useTheme } from "@mui/material";
+import { Box } from "@mui/material";
 import { useGame } from "../../../contexts";
 import { SBBadge } from "./SBBadge";
 import { MatchTimerBar } from "./MatchTimerBar";
@@ -18,8 +18,6 @@ const COUNTDOWN_DURATION_MS = 3_200;
 
 export function SpeedBattleRound() {
   const { roomState, submitAnswer } = useGame();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const speedBattle = roomState?.speedBattle;
   const playerState = speedBattle?.playerState;
@@ -185,12 +183,7 @@ export function SpeedBattleRound() {
 
         <SBBadge />
 
-        {/* Spacer — centers the timer */}
-        <Box sx={{ flex: 1 }} />
-
-        <MatchTimerBar remainingMs={localMatchMs} totalMs={MATCH_TIME_MS} compact={isMobile} />
-
-        {/* Spacer */}
+        {/* Spacer — pushes Q# to the right */}
         <Box sx={{ flex: 1 }} />
 
         {/* Q counter */}
@@ -210,6 +203,20 @@ export function SpeedBattleRound() {
 
       {/* Mobile leaderboard: top-3 mini-podium strip */}
       <LiveLeaderboard compact={true} />
+
+      {/* Mobile timer strip — between leaderboard and question */}
+      <Box
+        sx={{
+          display: { xs: "flex", sm: "none" },
+          justifyContent: "center",
+          py: 1.5,
+          background: "var(--color-bg-secondary)",
+          borderBottom: "1px solid var(--color-border-subtle)",
+          flexShrink: 0,
+        }}
+      >
+        <MatchTimerBar remainingMs={localMatchMs} totalMs={MATCH_TIME_MS} compact={true} />
+      </Box>
 
       {/* Body */}
       <Box
@@ -683,15 +690,19 @@ export function SpeedBattleRound() {
           )}
         </Box>
 
-        {/* Desktop leaderboard panel */}
+        {/* Desktop sidebar: timer + leaderboard panel */}
         <Box
           sx={{
             display: { xs: "none", sm: "flex" },
             flexDirection: "column",
+            gap: 2,
             width: { sm: 220, md: 260 },
             flexShrink: 0,
           }}
         >
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <MatchTimerBar remainingMs={localMatchMs} totalMs={MATCH_TIME_MS} compact={false} />
+          </Box>
           <LiveLeaderboard compact={false} />
         </Box>
       </Box>
