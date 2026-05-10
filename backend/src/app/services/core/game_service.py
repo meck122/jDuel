@@ -1,12 +1,14 @@
 """Game logic service for handling game rules and scoring."""
 
 import asyncio
+import time
 from datetime import UTC, datetime
 
 from app.config import MAX_SCORE_PER_QUESTION, QUESTION_TIME_MS
 from app.models import GameStatus, Room
 from app.models.round_state import RoundState
 from app.services.answer import AnswerService
+from app.services.metrics import answer_verification_duration_seconds
 
 
 class GameService:
@@ -69,9 +71,11 @@ class GameService:
             correct = answer == current_question.answer
         else:
             # Offload blocking NLP to thread pool so the event loop stays free
+            _t0 = time.perf_counter()
             correct = await asyncio.to_thread(
                 self.answer_service.is_correct, answer, current_question.answer
             )
+            answer_verification_duration_seconds.observe(time.perf_counter() - _t0)
 
         if correct:
             room.correct_players.add(player_id)

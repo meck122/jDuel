@@ -23,6 +23,7 @@ from app.services.metrics import (
     games_completed_total,
     games_started_total,
     players_per_game,
+    speed_battle_matches_started_total,
 )
 from app.services.orchestration.protocols import RoomCloser
 from app.services.orchestration.state_builder import StateBuilder
@@ -196,6 +197,7 @@ class GameOrchestrator:
 
                 self._game_service.start_game(room)
                 games_started_total.inc()
+                speed_battle_matches_started_total.inc()
                 players_per_game.observe(len(room.players))
                 logger.info(
                     f"Speed Battle started: room_id={room_id}, "
