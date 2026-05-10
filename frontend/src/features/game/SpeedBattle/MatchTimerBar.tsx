@@ -2,7 +2,10 @@
  * MatchTimerBar - Pill-shaped MM:SS match timer.
  * Color-shifts: green (>60s) → amber (30-60s) → red (<30s).
  * Pulses via timerPulse keyframe when critical (<30s).
- * compact=true hides the progress bar (used on mobile to save horizontal space).
+ *
+ * compact=true  — small pill, no progress bar (desktop top bar / sidebar)
+ * fullWidth=true — full-width pill with large font and expanding progress bar
+ *                  (mobile bottom anchor)
  */
 
 import { Box } from "@mui/material";
@@ -11,6 +14,7 @@ interface MatchTimerBarProps {
   remainingMs: number;
   totalMs?: number;
   compact?: boolean;
+  fullWidth?: boolean;
 }
 
 function formatMmSs(ms: number): string {
@@ -24,6 +28,7 @@ export function MatchTimerBar({
   remainingMs,
   totalMs = 180_000,
   compact = false,
+  fullWidth = false,
 }: MatchTimerBarProps) {
   const isCritical = remainingMs < 30_000;
   const isWarning = remainingMs < 60_000 && !isCritical;
@@ -45,11 +50,12 @@ export function MatchTimerBar({
   return (
     <Box
       sx={{
-        display: "inline-flex",
+        display: fullWidth ? "flex" : "inline-flex",
+        width: fullWidth ? "100%" : undefined,
         alignItems: "center",
-        gap: compact ? 3 : 2,
-        px: compact ? 2 : 3,
-        py: 1,
+        gap: fullWidth ? 3 : compact ? 3 : 2,
+        px: fullWidth ? 4 : compact ? 2 : 3,
+        py: fullWidth ? 2.5 : 1,
         background: "var(--color-bg-elevated)",
         border: `1px solid ${borderColor}`,
         borderRadius: "var(--radius-full)",
@@ -63,30 +69,40 @@ export function MatchTimerBar({
         transition: "border-color 0.5s, box-shadow 0.5s",
       }}
     >
-      <Box component="span" sx={{ fontSize: "0.9rem", lineHeight: 1 }}>
+      <Box
+        component="span"
+        sx={{ fontSize: fullWidth ? "1.4rem" : "0.9rem", lineHeight: 1, flexShrink: 0 }}
+      >
         ⏱
       </Box>
       <Box
         component="span"
         sx={{
           fontFamily: "var(--font-mono)",
-          fontSize: compact ? "var(--font-size-lg)" : "var(--font-size-xl)",
+          fontSize: fullWidth
+            ? "var(--font-size-2xl)"
+            : compact
+              ? "var(--font-size-lg)"
+              : "var(--font-size-xl)",
           fontWeight: 700,
           color,
           letterSpacing: "2px",
-          minWidth: compact ? 52 : 60,
+          minWidth: fullWidth ? undefined : compact ? 52 : 60,
           textAlign: "center",
+          flexShrink: 0,
           transition: "color 0.5s",
         }}
       >
         {formatMmSs(remainingMs)}
       </Box>
-      {/* Progress bar — hidden on compact (mobile) */}
-      {!compact && (
+
+      {/* Progress bar — fullWidth stretches to fill, standard has fixed width, compact omits */}
+      {(fullWidth || !compact) && (
         <Box
           sx={{
-            width: 72,
-            height: 4,
+            flex: fullWidth ? 1 : undefined,
+            width: fullWidth ? undefined : 72,
+            height: fullWidth ? 6 : 4,
             background: "var(--color-bg-hover)",
             borderRadius: 2,
             overflow: "hidden",

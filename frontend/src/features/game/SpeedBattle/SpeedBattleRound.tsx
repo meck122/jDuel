@@ -204,18 +204,6 @@ export function SpeedBattleRound() {
       {/* Mobile leaderboard: top-3 mini-podium strip */}
       <LiveLeaderboard compact={true} />
 
-      {/* Mobile timer — pill only, no background bar */}
-      <Box
-        sx={{
-          display: { xs: "flex", sm: "none" },
-          justifyContent: "center",
-          py: 2,
-          flexShrink: 0,
-        }}
-      >
-        <MatchTimerBar remainingMs={localMatchMs} totalMs={MATCH_TIME_MS} compact={true} />
-      </Box>
-
       {/* Body */}
       <Box
         sx={{
@@ -686,6 +674,11 @@ export function SpeedBattleRound() {
               Loading next question...
             </Box>
           )}
+
+          {/* Mobile: full-width timer below answers */}
+          <Box sx={{ display: { xs: "block", sm: "none" }, pt: 2 }}>
+            <MatchTimerBar remainingMs={localMatchMs} totalMs={MATCH_TIME_MS} fullWidth />
+          </Box>
         </Box>
 
         {/* Desktop sidebar: timer + leaderboard panel */}
