@@ -68,6 +68,9 @@ export function SpeedBattleRound() {
   // Captures the option the player chose when it turns out to be wrong.
   // submittedFlash is cleared on cooldown start, so we snapshot before that.
   const [wrongSelectedOption, setWrongSelectedOption] = useState<string | null>(null);
+  // Only true after the server confirms the answer was correct (questionIndex advanced).
+  // submittedFlash alone is not enough — it's set optimistically on every tap.
+  const [confirmedCorrect, setConfirmedCorrect] = useState(false);
 
   const prevQuestionIndexRef = useRef(questionIndex);
   useEffect(() => {
@@ -75,12 +78,16 @@ export function SpeedBattleRound() {
     prevQuestionIndexRef.current = questionIndex;
 
     if (submittedFlash) {
+      // Server advanced the question → our answer was correct
+      setConfirmedCorrect(true);
       const t = setTimeout(() => {
         setSubmittedFlash(null);
+        setConfirmedCorrect(false);
         setHasSubmittedThisQuestion(false);
       }, 600);
       return () => clearTimeout(t);
     } else {
+      setConfirmedCorrect(false);
       setHasSubmittedThisQuestion(false);
       setWrongSelectedOption(null);
     }
@@ -90,6 +97,7 @@ export function SpeedBattleRound() {
     if (serverCooldownMs !== null && submittedFlash) {
       setWrongSelectedOption(submittedFlash.selected);
       setSubmittedFlash(null);
+      setConfirmedCorrect(false);
     }
   }, [serverCooldownMs, submittedFlash]);
 
@@ -116,7 +124,7 @@ export function SpeedBattleRound() {
   const currentQuestion = roomState?.currentQuestion;
   const inCooldown = serverCooldownMs !== null && serverCooldownMs > 0;
   const displayOptions = submittedFlash?.options ?? currentQuestion?.options;
-  const showingCorrectFlash = submittedFlash !== null && !inCooldown;
+  const showingCorrectFlash = confirmedCorrect && !inCooldown;
 
   const handleOptionClick = (option: string) => {
     if (hasSubmittedThisQuestion || inCooldown) return;
