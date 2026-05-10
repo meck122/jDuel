@@ -482,6 +482,7 @@ class GameOrchestrator:
         if not room:
             return
 
+        build_state = None
         state_snapshot = None
         async with room.lock:
             # Detach WebSocket but keep player registered (allows reconnection)
@@ -498,9 +499,24 @@ class GameOrchestrator:
                 self._room_manager.delete_room(room_id)
                 return
 
-            state_snapshot = self._state_builder.build_room_state(room)
+            # Speed Battle state is per-recipient (each player sees their own
+            # question/progress/leaderboard), so we must use the handler's
+            # per-recipient closure rather than the generic build_room_state,
+            # which omits the speedBattle field entirely for FINISHED rooms.
+            if (
+                room.config.game_mode == "speed_battle"
+                and self._speed_battle_handler is not None
+            ):
+                build_state = (
+                    self._speed_battle_handler.try_build_per_recipient_closure(room)
+                )
 
-        if state_snapshot:
+            if build_state is None:
+                state_snapshot = self._state_builder.build_room_state(room)
+
+        if build_state is not None:
+            await self._room_manager.broadcast_state_per_recipient(room_id, build_state)
+        elif state_snapshot is not None:
             await self._room_manager.broadcast_state(room_id, state_snapshot.to_dict())
 
     def _start_question_timer(self, room_id: str) -> None:
