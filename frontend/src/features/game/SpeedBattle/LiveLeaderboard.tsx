@@ -53,7 +53,7 @@ export function LiveLeaderboard({ compact = true }: LiveLeaderboardProps) {
           gap: "6px",
           px: 3,
           py: 2,
-          mt: { xs: "6px", sm: 0 },
+          mt: { xs: 2, sm: 0 },
           background: "var(--color-bg-secondary)",
           borderBottom: "1px solid var(--color-border-subtle)",
           flexShrink: 0,
@@ -230,7 +230,7 @@ function LeaderboardPanel({ sorted, currentPlayerId, leaderScore }: LeaderboardP
                   flexShrink: 0,
                 }}
               >
-                {i === 0 ? "🥇" : i + 1}
+                {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
               </Box>
               <Box
                 component="span"

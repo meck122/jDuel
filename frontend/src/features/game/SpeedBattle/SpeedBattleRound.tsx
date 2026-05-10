@@ -220,7 +220,8 @@ export function SpeedBattleRound() {
           flexDirection: { xs: "column", sm: "row" },
           gap: { xs: 0, sm: 4 },
           px: { xs: 3, sm: 5 },
-          py: { xs: 1.5, sm: 4 },
+          pt: { xs: 3, sm: 4 },
+          pb: { xs: 1.5, sm: 4 },
         }}
       >
         {/* Question column — vertically centered */}
@@ -296,7 +297,9 @@ export function SpeedBattleRound() {
                 <Box
                   component="span"
                   sx={{
+                    fontFamily: "var(--font-display)",
                     fontSize: "var(--font-size-sm)",
+                    letterSpacing: "1px",
                     color: "var(--color-text-muted)",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -438,14 +441,15 @@ export function SpeedBattleRound() {
                   <Box
                     component="p"
                     sx={{
+                      fontFamily: "var(--font-display)",
                       fontSize: {
-                        xs: "clamp(1.1rem, 4.5vw, 1.5rem)",
-                        sm: "clamp(1.25rem, 2.8vw, 2rem)",
+                        xs: "clamp(1.2rem, 4.5vw, 1.6rem)",
+                        sm: "clamp(1.35rem, 2.8vw, 2rem)",
                       },
-                      fontWeight: 600,
+                      letterSpacing: "0.5px",
                       color: "var(--color-text-primary)",
                       m: 0,
-                      lineHeight: 1.35,
+                      lineHeight: 1.3,
                     }}
                   >
                     {currentQuestion?.text}
