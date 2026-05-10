@@ -9,7 +9,7 @@
  * Player names are persisted in localStorage for convenience.
  */
 
-import { ChangeEvent, FormEvent, useState, useEffect } from "react";
+import { ChangeEvent, FormEvent, useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Box } from "@mui/material";
 import { createRoom, joinRoom, ApiError } from "../../services/api";
@@ -101,6 +101,24 @@ export function HomePage() {
       setIsLoading(false);
     }
   };
+
+  const hostCardRef = useRef<HTMLDivElement>(null);
+  const joinCardRef = useRef<HTMLDivElement>(null);
+  const isFirstRender = useRef(true);
+
+  // On mobile, snap the tapped card into view after its form expands.
+  // useEffect fires post-render so the card already has its final height.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (activeCard === "host") {
+      hostCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (activeCard === "join") {
+      joinCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [activeCard]);
 
   const isHostActive = activeCard === "host";
   const isJoinActive = activeCard === "join";
@@ -207,7 +225,7 @@ export function HomePage() {
         }}
       >
         {/* Host a Game */}
-        <Box onClick={() => setActiveCard("host")} sx={cardSx(isHostActive)}>
+        <Box ref={hostCardRef} onClick={() => setActiveCard("host")} sx={cardSx(isHostActive)}>
           <Box
             component="h2"
             sx={{
@@ -277,7 +295,11 @@ export function HomePage() {
         </Box>
 
         {/* Join a Game */}
-        <Box onClick={() => setActiveCard("join")} sx={cardSx(isJoinActive, true)}>
+        <Box
+          ref={joinCardRef}
+          onClick={() => setActiveCard("join")}
+          sx={cardSx(isJoinActive, true)}
+        >
           <Box
             component="h2"
             sx={{
