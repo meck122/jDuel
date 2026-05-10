@@ -204,14 +204,12 @@ export function SpeedBattleRound() {
       {/* Mobile leaderboard: top-3 mini-podium strip */}
       <LiveLeaderboard compact={true} />
 
-      {/* Mobile timer strip — between leaderboard and question */}
+      {/* Mobile timer — pill only, no background bar */}
       <Box
         sx={{
           display: { xs: "flex", sm: "none" },
           justifyContent: "center",
-          py: 1.5,
-          background: "var(--color-bg-secondary)",
-          borderBottom: "1px solid var(--color-border-subtle)",
+          py: 2,
           flexShrink: 0,
         }}
       >
