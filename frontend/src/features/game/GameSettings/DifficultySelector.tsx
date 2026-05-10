@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 
 const DIFFICULTY_OPTIONS = [
-  { value: "baby", label: "Googoo-Gaga" },
+  { value: "baby", label: "Baby" },
   { value: "enjoyer", label: "Enjoyer" },
   { value: "master", label: "Master" },
   { value: "beast", label: "Beast" },
