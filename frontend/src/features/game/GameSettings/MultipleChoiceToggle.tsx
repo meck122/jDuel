@@ -17,6 +17,8 @@ export function MultipleChoiceToggle({ isHost, enabled, forced = false, onToggle
       <Box
         component="span"
         sx={{
+          display: "block",
+          textAlign: "left",
           fontFamily: "var(--font-display)",
           fontSize: "11px",
           color: "var(--color-text-muted)",
