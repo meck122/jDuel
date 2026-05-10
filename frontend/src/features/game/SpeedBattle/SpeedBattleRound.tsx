@@ -296,21 +296,6 @@ export function SpeedBattleRound() {
                 <Box
                   component="span"
                   sx={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "var(--font-size-sm)",
-                    color: "var(--color-accent-teal)",
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
-                >
-                  Q{questionIndex + 1}
-                </Box>
-                <Box component="span" sx={{ color: "var(--color-border-emphasis)", flexShrink: 0 }}>
-                  ·
-                </Box>
-                <Box
-                  component="span"
-                  sx={{
                     fontSize: "var(--font-size-sm)",
                     color: "var(--color-text-muted)",
                     overflow: "hidden",
