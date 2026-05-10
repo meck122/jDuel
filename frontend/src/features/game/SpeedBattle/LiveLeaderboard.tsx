@@ -237,8 +237,9 @@ function LeaderboardPanel({ sorted, currentPlayerId, leaderScore }: LeaderboardP
                 component="span"
                 sx={{
                   flex: 1,
+                  fontFamily: "var(--font-display)",
                   fontSize: "var(--font-size-sm)",
-                  fontWeight: isSelf ? 700 : 400,
+                  letterSpacing: "0.5px",
                   color: isSelf
                     ? "var(--color-accent-purple)"
                     : isLeader
@@ -272,6 +273,8 @@ function LeaderboardPanel({ sorted, currentPlayerId, leaderScore }: LeaderboardP
           <Box
             sx={{
               textAlign: "center",
+              fontFamily: "var(--font-display)",
+              letterSpacing: "1px",
               color: "var(--color-text-muted)",
               fontSize: "var(--font-size-xs)",
               py: 2,
