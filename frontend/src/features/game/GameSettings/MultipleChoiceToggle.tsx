@@ -85,6 +85,30 @@ export function MultipleChoiceToggle({ isHost, enabled, forced = false, onToggle
             Required for Speed Battle
           </Box>
         )}
+
+        {!forced && (
+          <Box
+            component="span"
+            sx={{
+              fontFamily: "var(--font-display)",
+              fontSize: "9px",
+              letterSpacing: "1px",
+              color: "var(--color-accent-teal)",
+              background: "rgba(20, 184, 166, 0.12)",
+              border: "1px solid rgba(20, 184, 166, 0.35)",
+              borderRadius: "4px",
+              px: "5px",
+              py: "2px",
+              lineHeight: 1,
+              opacity: isOn ? 0 : 1,
+              transition: "opacity 200ms var(--transition-base)",
+              transitionDelay: isOn ? "0ms" : "150ms",
+              pointerEvents: "none",
+            }}
+          >
+            BETA
+          </Box>
+        )}
       </Box>
     </Box>
   );

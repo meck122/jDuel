@@ -246,6 +246,19 @@ class SpeedBattleHandler:
         round_state = self._round_states[room.room_id]
         return self._make_per_recipient_closure(room, round_state)
 
+    def try_build_per_recipient_closure(
+        self, room: Room
+    ) -> Callable[[str], dict] | None:
+        """Return a per-recipient state closure, or None if no round state exists.
+
+        Safe variant for use in handle_disconnect where the round state may not
+        exist (e.g. race with last-player cleanup). Caller MUST hold room.lock.
+        """
+        round_state = self._round_states.get(room.room_id)
+        if round_state is None:
+            return None
+        return self._make_per_recipient_closure(room, round_state)
+
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------

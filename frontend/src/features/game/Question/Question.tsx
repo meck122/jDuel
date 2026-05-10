@@ -153,12 +153,14 @@ export function Question() {
                   transition: "all var(--transition-base)",
                   width: "100%",
                   flex: { xs: 1, sm: "initial" },
-                  "&:hover": {
-                    borderColor: "var(--color-accent-purple)",
-                    background: "rgba(139, 92, 246, 0.08)",
-                    transform: "translateY(-2px)",
-                    boxShadow: "var(--shadow-glow-purple)",
-                    filter: "none",
+                  "@media (hover: hover)": {
+                    "&:hover": {
+                      borderColor: "var(--color-accent-purple)",
+                      background: "rgba(139, 92, 246, 0.08)",
+                      transform: "translateY(-2px)",
+                      boxShadow: "var(--shadow-glow-purple)",
+                      filter: "none",
+                    },
                   },
                 }}
               >
@@ -193,41 +195,81 @@ export function Question() {
         ) : (
           /* Free-text answer form */
           <Box
-            component="form"
-            onSubmit={handleSubmit}
             sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              gap: { xs: 2, sm: 4 },
               maxWidth: { xs: "100%", sm: 500 },
               mx: "auto",
               mt: 5,
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
             }}
           >
+            {/* Beta label */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box
+                component="span"
+                sx={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: "10px",
+                  letterSpacing: "1.5px",
+                  color: "var(--color-text-muted)",
+                  textTransform: "uppercase",
+                }}
+              >
+                NLP Checking
+              </Box>
+              <Box
+                component="span"
+                sx={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: "9px",
+                  letterSpacing: "1px",
+                  color: "var(--color-accent-teal)",
+                  background: "rgba(20, 184, 166, 0.12)",
+                  border: "1px solid rgba(20, 184, 166, 0.35)",
+                  borderRadius: "4px",
+                  px: "5px",
+                  py: "2px",
+                  lineHeight: 1,
+                }}
+              >
+                BETA
+              </Box>
+            </Box>
             <Box
-              component="input"
-              type="text"
-              placeholder="Your answer"
-              value={answer}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setAnswer(e.target.value)}
-              autoFocus
+              component="form"
+              onSubmit={handleSubmit}
               sx={{
-                flex: 1,
-                width: { xs: "100%", sm: "auto" },
-                fontSize: { xs: "1rem", sm: undefined },
-                p: { xs: "16px", sm: undefined },
-              }}
-            />
-            <Box
-              component="button"
-              type="submit"
-              sx={{
-                width: { xs: "100%", sm: "auto" },
-                p: { xs: "16px 32px", sm: undefined },
-                fontSize: { xs: "var(--font-size-lg)", sm: undefined },
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                gap: { xs: 2, sm: 4 },
               }}
             >
-              Submit
+              <Box
+                component="input"
+                type="text"
+                placeholder="Your answer"
+                value={answer}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setAnswer(e.target.value)}
+                autoFocus
+                sx={{
+                  flex: 1,
+                  width: { xs: "100%", sm: "auto" },
+                  fontSize: { xs: "1rem", sm: undefined },
+                  p: { xs: "16px", sm: undefined },
+                }}
+              />
+              <Box
+                component="button"
+                type="submit"
+                sx={{
+                  width: { xs: "100%", sm: "auto" },
+                  p: { xs: "16px 32px", sm: undefined },
+                  fontSize: { xs: "var(--font-size-lg)", sm: undefined },
+                }}
+              >
+                Submit
+              </Box>
             </Box>
           </Box>
         )
