@@ -12,7 +12,7 @@ export function MultipleChoiceToggle({ isHost, enabled, forced = false, onToggle
   const isOn = forced ? true : enabled;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* Section label */}
       <Box
         component="span"
