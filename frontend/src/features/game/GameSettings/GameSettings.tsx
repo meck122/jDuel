@@ -13,27 +13,27 @@ export function GameSettings() {
   return (
     <Box
       sx={{
-        width: { xs: "100%", md: 300 },
+        width: { xs: "100%", md: 280 },
         flexShrink: 0,
-        p: { xs: 0, md: 6 },
+        p: { xs: 0, md: "22px" },
         background: { xs: "transparent", md: "var(--color-bg-elevated)" },
-        border: { xs: "none", md: "2px solid var(--color-accent-purple)" },
+        border: { xs: "none", md: "2px solid var(--color-border-default)" },
         borderRadius: "var(--radius-lg)",
-        boxShadow: { xs: "none", md: "var(--shadow-glow-purple)" },
+        boxShadow: { xs: "none", md: "var(--shadow-lg)" },
         display: "flex",
         flexDirection: "column",
-        gap: { xs: 4, md: 5 },
+        gap: { xs: 4, md: 4 },
       }}
     >
       <Box
         component="h3"
         sx={{
           fontFamily: "var(--font-display)",
-          fontSize: "var(--font-size-lg)",
+          fontSize: "var(--font-size-md)",
           color: "var(--color-accent-purple)",
           letterSpacing: "1px",
           m: 0,
-          mb: 2,
+          mb: 1,
           pb: 2,
           borderBottom: "1px solid var(--color-border-subtle)",
         }}
@@ -51,6 +51,8 @@ export function GameSettings() {
         forced={mcForced}
         onToggle={(enabled) => updateConfig({ multipleChoiceEnabled: enabled })}
       />
+      {/* Divider between settings and game mode — matches design */}
+      <Box sx={{ height: "1px", background: "var(--color-border-subtle)", mx: "-4px" }} />
       <GameModeToggle
         isHost={isHost}
         currentMode={currentMode}
