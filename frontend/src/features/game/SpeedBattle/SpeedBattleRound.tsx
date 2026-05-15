@@ -5,7 +5,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Box } from "@mui/material";
 import { useGame } from "../../../contexts";
-import { SBBadge } from "./SBBadge";
 import { MatchTimerBar } from "./MatchTimerBar";
 import { CountdownOverlay } from "./CountdownOverlay";
 import { LiveLeaderboard } from "./LiveLeaderboard";
@@ -147,7 +146,10 @@ export function SpeedBattleRound() {
     <Box
       sx={{
         position: "fixed",
-        inset: 0,
+        top: "var(--navbar-height)",
+        left: 0,
+        right: 0,
+        bottom: 0,
         display: "flex",
         flexDirection: "column",
         background: "var(--color-bg-primary)",
@@ -155,59 +157,6 @@ export function SpeedBattleRound() {
       }}
     >
       {!countdownDone && <CountdownOverlay onDone={handleCountdownDone} />}
-
-      {/* Top bar: jDuel · ⚡ Speed Battle · [spacer] · ⏱ Timer · [spacer] · Q{n} */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: { xs: 1.5, sm: 2 },
-          px: { xs: 4, sm: 6 },
-          py: 2,
-          background: "var(--color-bg-secondary)",
-          borderBottom: "1px solid var(--color-border-subtle)",
-          flexShrink: 0,
-          zIndex: 10,
-        }}
-      >
-        {/* jDuel logo */}
-        <Box
-          component="span"
-          sx={{
-            fontFamily: "var(--font-display)",
-            fontSize: "1.6rem",
-            letterSpacing: "0.15em",
-            flexShrink: 0,
-            lineHeight: 1,
-          }}
-        >
-          <Box component="span" sx={{ color: "var(--color-accent-purple)" }}>
-            j
-          </Box>
-          <Box component="span" sx={{ color: "var(--color-accent-gold)" }}>
-            Duel
-          </Box>
-        </Box>
-
-        <SBBadge />
-
-        {/* Spacer — pushes Q# to the right */}
-        <Box sx={{ flex: 1 }} />
-
-        {/* Q counter */}
-        <Box
-          component="span"
-          sx={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "var(--font-size-sm)",
-            color: "var(--color-text-muted)",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
-          }}
-        >
-          Q{questionIndex + 1}
-        </Box>
-      </Box>
 
       {/* Mobile leaderboard: top-3 mini-podium strip */}
       <LiveLeaderboard compact={true} />

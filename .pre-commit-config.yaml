@@ -17,6 +17,7 @@ repos:
         exclude: ^frontend/tsconfig\.json$ # TSConfig allows comments
       - id: check-added-large-files
         args: ['--maxkb=1000']
+        exclude: ^frontend/src/assets/music/.*\.mp3$
       - id: check-merge-conflict
       - id: check-case-conflict
       - id: mixed-line-ending

@@ -4,7 +4,7 @@ import { CssBaseline } from "@mui/material";
 import { appTheme } from "./theme";
 import { Navigation } from "./components";
 import { HomePage, GamePage, AboutPage } from "./pages";
-import { GameProvider } from "./contexts";
+import { GameProvider, MusicProvider } from "./contexts";
 
 /**
  * Redirect component for deep links.
@@ -20,19 +20,21 @@ function App() {
     <ThemeProvider theme={appTheme}>
       <CssBaseline />
       <GameProvider>
-        <Router>
-          <div className="app-layout">
-            <Navigation />
-            <main className="app-main">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/room/:roomId" element={<RoomRedirect />} />
-                <Route path="/game/:roomId" element={<GamePage />} />
-                <Route path="/about" element={<AboutPage />} />
-              </Routes>
-            </main>
-          </div>
-        </Router>
+        <MusicProvider>
+          <Router>
+            <div className="app-layout">
+              <Navigation />
+              <main className="app-main">
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/room/:roomId" element={<RoomRedirect />} />
+                  <Route path="/game/:roomId" element={<GamePage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                </Routes>
+              </main>
+            </div>
+          </Router>
+        </MusicProvider>
       </GameProvider>
     </ThemeProvider>
   );
