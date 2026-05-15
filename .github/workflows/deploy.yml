@@ -1,0 +1,126 @@
+name: CI + Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: pre-commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cache HuggingFace and Torch model downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/torch
+          key: models-${{ runner.os }}-${{ hashFiles('backend/uv.lock') }}
+          restore-keys: |
+            models-${{ runner.os }}-
+
+      - name: Cache pre-commit hook envs
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+        env:
+          # Match the production invariant from CLAUDE.md.
+          CUDA_VISIBLE_DEVICES: ""
+        with:
+          extra_args: --all-files --show-diff-on-failure
+
+  changes:
+    name: detect deploy paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      should_deploy: ${{ steps.filter.outputs.deploy }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # paths-filter compares against the previous commit
+
+      - name: Filter changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            deploy:
+              - 'frontend/**'
+              - 'backend/**'
+              - 'deploy/**'
+              - 'deploy.sh'
+              - 'scripts/**'
+              - '.github/workflows/deploy.yml'
+
+  deploy:
+    name: deploy to oracle
+    needs: [ci, changes]
+    if: |
+      (github.event_name == 'push' &&
+       github.ref == 'refs/heads/main' &&
+       needs.changes.outputs.should_deploy == 'true')
+      || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: SSH to Oracle and run deploy.sh
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            cd /home/ubuntu/dev/jDuel
+            git fetch origin main
+            git reset --hard origin/main
+            ./deploy.sh

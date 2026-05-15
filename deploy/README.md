@@ -11,6 +11,11 @@ deploy/
 ├── jduel-backend.service    # systemd unit file for the FastAPI backend
 ├── nginx/
 │   └── jduel               # Nginx reverse proxy config
+├── sudoers.d/
+│   └── jduel-deploy        # Scoped sudoers entries for auto-deploy (see AUTO_DEPLOY_SETUP.md)
+├── alloy/
+│   └── config.alloy        # Grafana Alloy config (see metrics plan)
+├── AUTO_DEPLOY_SETUP.md    # One-time setup for GitHub Actions auto-deploy
 └── README.md               # This file
 ```
 
@@ -89,11 +94,21 @@ The frontend `config.ts` derives API/WebSocket URLs dynamically from
 
 ## Deploying Updates
 
-After initial setup, use the deploy script for all future updates:
+**Default path (auto-deploy on merge to `main`):** see [AUTO_DEPLOY_SETUP.md](AUTO_DEPLOY_SETUP.md)
+for the one-time setup. After that, merging a PR to `main` deploys automatically
+via GitHub Actions; no SSH needed.
+
+**Emergency / manual fallback:** if GitHub Actions is unavailable or you need
+to deploy out-of-band:
 
 ```bash
 cd ~/dev/jDuel && git pull && ./deploy.sh
 ```
+
+`deploy.sh` is unchanged in behavior on the happy path; it now also supports
+`--dry-run` (validates auth + sudoers without touching production) and
+`--force-dirty` (allows deploys when the working tree has uncommitted edits —
+for genuine emergencies only).
 
 ## Troubleshooting
 

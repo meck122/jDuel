@@ -1,0 +1,33 @@
+# jDuel deploy sudoers entries.
+#
+# This file is the template committed to the repo. To install on the VPS:
+#
+#   sudo visudo -cf deploy/sudoers.d/jduel-deploy     # validate syntax
+#   sudo install -m 0440 -o root -g root \
+#     deploy/sudoers.d/jduel-deploy /etc/sudoers.d/jduel-deploy
+#
+# Every entry below corresponds to a `sudo -n <cmd>` invocation in deploy.sh.
+# When deploy.sh changes, this file must change with it (verified by U3 cross-check).
+#
+# Path convention: /usr/bin/* on Ubuntu 22.04+ (where /bin is a symlink). If the
+# box ever runs a different distro, re-derive paths with `readlink -f` and update
+# this file.
+
+# Service lifecycle (deploy.sh steps 1, 5, 6, 7, 8 failure-branch)
+ubuntu ALL=(root) NOPASSWD: /usr/bin/systemctl stop jduel-backend
+ubuntu ALL=(root) NOPASSWD: /usr/bin/systemctl start jduel-backend
+ubuntu ALL=(root) NOPASSWD: /usr/bin/systemctl status jduel-backend
+ubuntu ALL=(root) NOPASSWD: /usr/bin/systemctl status nginx
+ubuntu ALL=(root) NOPASSWD: /usr/bin/systemctl reload nginx
+ubuntu ALL=(root) NOPASSWD: /usr/bin/systemctl daemon-reload
+
+# Frontend deploy (deploy.sh step 4)
+ubuntu ALL=(root) NOPASSWD: /usr/bin/rm -rf /var/www/jduel-frontend/dist
+ubuntu ALL=(root) NOPASSWD: /usr/bin/cp -r /home/ubuntu/dev/jDuel/frontend/dist /var/www/jduel-frontend/
+ubuntu ALL=(root) NOPASSWD: /usr/bin/chown -R www-data\:www-data /var/www/jduel-frontend
+ubuntu ALL=(root) NOPASSWD: /usr/bin/chmod -R 755 /var/www/jduel-frontend
+
+# Grafana Alloy (deploy.sh step 6b, conditional on alloy being installed).
+# Uncomment ONLY after the metrics plan ships and grafana-alloy is enabled.
+# ubuntu ALL=(root) NOPASSWD: /usr/bin/systemctl restart grafana-alloy
+# ubuntu ALL=(root) NOPASSWD: /usr/bin/cp /home/ubuntu/dev/jDuel/deploy/alloy/config.alloy /etc/alloy/config.alloy
