@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from "rea
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import { appTheme } from "./theme";
-import { Navigation, FloatingMuteButton } from "./components";
+import { Navigation } from "./components";
 import { HomePage, GamePage, AboutPage } from "./pages";
 import { GameProvider, MusicProvider } from "./contexts";
 
@@ -24,7 +24,6 @@ function App() {
           <Router>
             <div className="app-layout">
               <Navigation />
-              <FloatingMuteButton />
               <main className="app-main">
                 <Routes>
                   <Route path="/" element={<HomePage />} />

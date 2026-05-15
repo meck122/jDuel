@@ -24,6 +24,7 @@ const VOLUME = 0.4;
 export interface MusicContextValue {
   preference: MusicPreference;
   toggle: () => void;
+  skip: () => void;
 }
 
 // Context must be exported for useMusic hook in separate file
@@ -126,6 +127,16 @@ export function MusicProvider({ children }: MusicProviderProps) {
     }
   }, [detachGestureListener]);
 
+  const skip = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || preference !== "on") return;
+    const next = pickNextTrack(playingRef.current);
+    if (!next) return;
+    playingRef.current = next;
+    audio.src = next.href;
+    void audio.play().catch(() => {});
+  }, [preference]);
+
   const toggle = useCallback(() => {
     if (preference === "on") {
       setPreference("off");
@@ -156,7 +167,7 @@ export function MusicProvider({ children }: MusicProviderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const value: MusicContextValue = { preference, toggle };
+  const value: MusicContextValue = { preference, toggle, skip };
 
   return <MusicContext.Provider value={value}>{children}</MusicContext.Provider>;
 }

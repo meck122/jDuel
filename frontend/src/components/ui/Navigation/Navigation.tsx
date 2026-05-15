@@ -1,9 +1,11 @@
-import { AppBar, Toolbar, Button, Box } from "@mui/material";
+import { AppBar, Toolbar, Button, Box, IconButton } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
 import InfoIcon from "@mui/icons-material/Info";
 import HomeIcon from "@mui/icons-material/Home";
-import { useGame } from "../../../contexts";
+import SkipNextIcon from "@mui/icons-material/SkipNext";
+import { useGame, useMusic } from "../../../contexts";
 import { ToolbarMuteButton } from "../MuteButton/ToolbarMuteButton";
+import { SBBadge } from "../../../features/game/SpeedBattle/SBBadge";
 import styles from "./Navigation.module.css";
 
 export function Navigation() {
@@ -11,11 +13,12 @@ export function Navigation() {
   const isAboutPage = location.pathname === "/about";
   const isGamePage = location.pathname.startsWith("/game/");
   const { roomState } = useGame();
+  const { preference, skip } = useMusic();
 
-  // Hide navbar on game pages EXCEPT lobby (waiting) and GameOver (finished)
-  const isGameFinished = roomState?.status === "finished";
-  const isLobby = roomState?.status === "waiting";
-  if (isGamePage && !isGameFinished && !isLobby) return null;
+  const isActiveGameplay =
+    isGamePage && roomState?.status !== "finished" && roomState?.status !== "waiting";
+  const sbQuestionIndex = roomState?.speedBattle?.playerState?.questionIndex;
+  const showQCounter = isActiveGameplay && sbQuestionIndex !== undefined;
 
   return (
     <AppBar position="fixed" className={styles.appBar}>
@@ -24,7 +27,6 @@ export function Navigation() {
           component={Link}
           to="/"
           sx={{
-            flexGrow: 1,
             textDecoration: "none",
             fontFamily: "var(--font-display)",
             fontSize: "1.6rem",
@@ -44,29 +46,59 @@ export function Navigation() {
             Duel
           </Box>
         </Box>
+        {showQCounter && (
+          <Box sx={{ ml: 3 }}>
+            <SBBadge />
+          </Box>
+        )}
+        <Box sx={{ flex: 1 }} />
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           <ToolbarMuteButton />
-          {isAboutPage ? (
-            <Button
-              component={Link}
-              to="/"
-              startIcon={<HomeIcon />}
-              className={styles.navButton}
-              sx={{ fontFamily: "var(--font-display)", letterSpacing: "1.5px" }}
+          <IconButton
+            aria-label="Skip to next track"
+            onClick={skip}
+            size="small"
+            color="inherit"
+            disabled={preference !== "on"}
+          >
+            <SkipNextIcon fontSize="small" />
+          </IconButton>
+          {showQCounter && (
+            <Box
+              component="span"
+              sx={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "var(--font-size-sm)",
+                color: "var(--color-text-muted)",
+                ml: 1,
+                pr: "var(--spacing-sm)",
+              }}
             >
-              Back to Game
-            </Button>
-          ) : (
-            <Button
-              component={Link}
-              to="/about"
-              startIcon={<InfoIcon />}
-              className={styles.navButton}
-              sx={{ fontFamily: "var(--font-display)", letterSpacing: "1.5px" }}
-            >
-              About
-            </Button>
+              Q{sbQuestionIndex + 1}
+            </Box>
           )}
+          {!isActiveGameplay &&
+            (isAboutPage ? (
+              <Button
+                component={Link}
+                to="/"
+                startIcon={<HomeIcon />}
+                className={styles.navButton}
+                sx={{ fontFamily: "var(--font-display)", letterSpacing: "1.5px" }}
+              >
+                Back to Game
+              </Button>
+            ) : (
+              <Button
+                component={Link}
+                to="/about"
+                startIcon={<InfoIcon />}
+                className={styles.navButton}
+                sx={{ fontFamily: "var(--font-display)", letterSpacing: "1.5px" }}
+              >
+                About
+              </Button>
+            ))}
         </Box>
       </Toolbar>
     </AppBar>
