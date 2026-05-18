@@ -186,9 +186,19 @@ read -p "    Run certbot now? [y/N] " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     sudo certbot --nginx -d "${DOMAIN}" -d "www.${DOMAIN}"
+
+    # Certbot adds `listen 443 ssl;` but not http2. Patch it in.
+    if sudo grep -q 'listen 443 ssl;' /etc/nginx/sites-available/jduel; then
+        sudo sed -i 's/listen 443 ssl;/listen 443 ssl http2;/g' /etc/nginx/sites-available/jduel
+        sudo nginx -t && sudo systemctl reload nginx
+        echo "    [OK] HTTP/2 enabled on 443"
+    fi
 else
     echo "    Skipping certbot. Run manually when DNS is ready:"
     echo "      sudo certbot --nginx -d ${DOMAIN} -d www.${DOMAIN}"
+    echo "    Then enable HTTP/2:"
+    echo "      sudo sed -i 's/listen 443 ssl;/listen 443 ssl http2;/g' /etc/nginx/sites-available/jduel"
+    echo "      sudo nginx -t && sudo systemctl reload nginx"
 fi
 
 # --------------------------------------------------------------------------
