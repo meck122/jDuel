@@ -66,3 +66,6 @@ backend/src/scripts/
 
 # Claude
 .playwright-mcp/
+
+# Music assets — kept outside git; see scripts/upload-music.sh for VPS uploads
+frontend/src/assets/music/*.mp3
