@@ -13,11 +13,17 @@
  *
  * Track rotation: shuffle with no-repeat-in-a-row when N >= 2; loop when
  * N = 1; no-op when the manifest is empty.
+ *
+ * When MUSIC_ENABLED is false, MusicProvider renders a stub context so
+ * useMusic() callers never throw, but creates no Audio element and attaches
+ * no listeners. This is implemented via a two-component split to respect
+ * the Rules of Hooks (no hooks after a conditional return).
  */
 
 import { createContext, useCallback, useEffect, useRef, ReactNode } from "react";
 import { TRACKS } from "../assets/music/tracks";
 import { MusicPreference, useMusicPreference } from "../hooks/useMusicPreference";
+import { MUSIC_ENABLED } from "../config/features";
 
 const VOLUME = 0.4;
 
@@ -31,24 +37,27 @@ export interface MusicContextValue {
 // eslint-disable-next-line react-refresh/only-export-components
 export const MusicContext = createContext<MusicContextValue | null>(null);
 
+const STUB_VALUE: MusicContextValue = { preference: "off", toggle: () => {}, skip: () => {} };
+
 interface MusicProviderProps {
   children: ReactNode;
 }
 
-function pickNextTrack(current: URL | null): URL | null {
+function pickNextTrack(current: string | null): string | null {
   if (TRACKS.length === 0) return null;
   if (TRACKS.length === 1) return TRACKS[0];
   // Choose uniformly from tracks that are not the current one.
-  const candidates = current ? TRACKS.filter((t) => t.href !== current.href) : TRACKS;
+  const candidates = current ? TRACKS.filter((t) => t !== current) : TRACKS;
   const pool = candidates.length > 0 ? candidates : TRACKS;
   const index = Math.floor(Math.random() * pool.length);
   return pool[index];
 }
 
-export function MusicProvider({ children }: MusicProviderProps) {
+/** Inner provider — only rendered when MUSIC_ENABLED is true. Contains all hooks. */
+function ActiveMusicProvider({ children }: MusicProviderProps) {
   const { preference, setPreference } = useMusicPreference();
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const playingRef = useRef<URL | null>(null);
+  const playingRef = useRef<string | null>(null);
   const gestureCleanupRef = useRef<(() => void) | null>(null);
 
   // Ensure a single audio element exists and is configured. Returns it.
@@ -62,7 +71,7 @@ export function MusicProvider({ children }: MusicProviderProps) {
         const next = pickNextTrack(playingRef.current);
         if (!next || !audioRef.current) return;
         playingRef.current = next;
-        audioRef.current.src = next.href;
+        audioRef.current.src = next;
         void audioRef.current.play().catch(() => {
           // Autoplay after an 'ended' event only fails if the tab loses
           // audio permission mid-session (rare). No recovery needed; next
@@ -112,7 +121,7 @@ export function MusicProvider({ children }: MusicProviderProps) {
       const next = pickNextTrack(null);
       if (!next) return;
       playingRef.current = next;
-      audio.src = next.href;
+      audio.src = next;
     }
     audio.play().catch(() => {
       // Autoplay blocked — wait for the next user gesture.
@@ -133,7 +142,7 @@ export function MusicProvider({ children }: MusicProviderProps) {
     const next = pickNextTrack(playingRef.current);
     if (!next) return;
     playingRef.current = next;
-    audio.src = next.href;
+    audio.src = next;
     void audio.play().catch(() => {});
   }, [preference]);
 
@@ -170,4 +179,11 @@ export function MusicProvider({ children }: MusicProviderProps) {
   const value: MusicContextValue = { preference, toggle, skip };
 
   return <MusicContext.Provider value={value}>{children}</MusicContext.Provider>;
+}
+
+export function MusicProvider({ children }: MusicProviderProps) {
+  if (!MUSIC_ENABLED) {
+    return <MusicContext.Provider value={STUB_VALUE}>{children}</MusicContext.Provider>;
+  }
+  return <ActiveMusicProvider>{children}</ActiveMusicProvider>;
 }

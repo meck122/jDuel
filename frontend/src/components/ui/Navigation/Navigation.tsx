@@ -6,6 +6,7 @@ import SkipNextIcon from "@mui/icons-material/SkipNext";
 import { useGame, useMusic } from "../../../contexts";
 import { ToolbarMuteButton } from "../MuteButton/ToolbarMuteButton";
 import { SBBadge } from "../../../features/game/SpeedBattle/SBBadge";
+import { MUSIC_ENABLED } from "../../../config/features";
 import styles from "./Navigation.module.css";
 
 export function Navigation() {
@@ -53,16 +54,18 @@ export function Navigation() {
         )}
         <Box sx={{ flex: 1 }} />
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-          <ToolbarMuteButton />
-          <IconButton
-            aria-label="Skip to next track"
-            onClick={skip}
-            size="small"
-            color="inherit"
-            disabled={preference !== "on"}
-          >
-            <SkipNextIcon fontSize="small" />
-          </IconButton>
+          {MUSIC_ENABLED && <ToolbarMuteButton />}
+          {MUSIC_ENABLED && (
+            <IconButton
+              aria-label="Skip to next track"
+              onClick={skip}
+              size="small"
+              color="inherit"
+              disabled={preference !== "on"}
+            >
+              <SkipNextIcon fontSize="small" />
+            </IconButton>
+          )}
           {showQCounter && (
             <Box
               component="span"
