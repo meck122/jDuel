@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   AppBar,
   Toolbar,
-  Button,
   Box,
   IconButton,
   Dialog,
@@ -179,28 +178,48 @@ export function Navigation({ onAboutOpen }: { onAboutOpen: () => void }) {
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-          <Button
+          <Box
+            component="button"
             onClick={() => setLeaveOpen(false)}
-            className={styles.navButton}
             sx={{
-              fontFamily: "var(--font-display)",
-              letterSpacing: "1px",
               flex: 1,
+              background: "none",
+              border: "1px solid rgba(139,92,246,0.4)",
+              borderRadius: "var(--radius-sm)",
+              cursor: "pointer",
+              color: "var(--color-accent-purple)",
+              fontFamily: "var(--font-display)",
+              fontSize: "var(--font-size-sm)",
+              letterSpacing: "1px",
+              textTransform: "uppercase",
+              py: 1,
+              transition: "opacity 0.2s",
+              "&:hover": { opacity: 0.75 },
             }}
           >
             Stay
-          </Button>
-          <Button
+          </Box>
+          <Box
+            component="button"
             onClick={handleLeaveConfirm}
             sx={{
-              fontFamily: "var(--font-display)",
-              letterSpacing: "1px",
-              color: "var(--color-text-muted)",
               flex: 1,
+              background: "none",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "var(--radius-sm)",
+              cursor: "pointer",
+              color: "var(--color-text-muted)",
+              fontFamily: "var(--font-display)",
+              fontSize: "var(--font-size-sm)",
+              letterSpacing: "1px",
+              textTransform: "uppercase",
+              py: 1,
+              transition: "opacity 0.2s",
+              "&:hover": { opacity: 0.75 },
             }}
           >
             Leave
-          </Button>
+          </Box>
         </DialogActions>
       </Dialog>
     </>
