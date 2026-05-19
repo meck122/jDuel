@@ -65,6 +65,66 @@ class TestJoinRoom:
         assert resp.status_code == 409
         assert resp.json()["detail"]["code"] == "NAME_TAKEN"
 
+    def test_join_same_token_rejoin_detaches_stale_connection(
+        self, client: TestClient, test_container
+    ):
+        """Same-player rejoin with matching session token detaches a stale WS.
+
+        On mobile Safari, the server may still see the old WebSocket in
+        room.connections after the user has navigated away (the FIN never
+        arrived). The same player should still be able to rejoin by
+        presenting the matching session token.
+        """
+        room_id = self._create_room(client)
+        first_resp = client.post(
+            f"/api/rooms/{room_id}/join", json={"playerId": "Alice"}
+        )
+        session_token = first_resp.json()["sessionToken"]
+
+        # Simulate a stale WS still attached server-side.
+        room = test_container.room_manager.get_room(room_id)
+        from unittest.mock import MagicMock
+
+        stale_ws = MagicMock()
+        room.connections["Alice"] = stale_ws
+
+        # Same player rejoins with their session token.
+        resp = client.post(
+            f"/api/rooms/{room_id}/join",
+            json={"playerId": "Alice", "sessionToken": session_token},
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["playerId"] == "Alice"
+        # Same token returned (idempotent reconnection).
+        assert resp.json()["sessionToken"] == session_token
+        # Stale WS detached so a new WS connection can attach cleanly.
+        assert "Alice" not in room.connections
+
+    def test_join_409_when_connected_and_no_token(
+        self, client: TestClient, test_container
+    ):
+        """A would-be impersonator with no session token still gets NAME_TAKEN."""
+        room_id = self._create_room(client)
+        client.post(f"/api/rooms/{room_id}/join", json={"playerId": "Alice"})
+
+        # Stale or active connection from someone else.
+        room = test_container.room_manager.get_room(room_id)
+        from unittest.mock import MagicMock
+
+        room.connections["Alice"] = MagicMock()
+
+        # Different requester sends no token (or a wrong one). They must not
+        # be able to detach Alice or claim her name.
+        resp = client.post(
+            f"/api/rooms/{room_id}/join",
+            json={"playerId": "Alice", "sessionToken": "wrong-token"},
+        )
+        assert resp.status_code == 409
+        assert resp.json()["detail"]["code"] == "NAME_TAKEN"
+        # Stale connection NOT detached — anti-hijack invariant preserved.
+        assert "Alice" in room.connections
+
     def test_join_allows_reconnect_when_disconnected(self, client: TestClient):
         """A registered but disconnected player can rejoin (reconnect path)."""
         room_id = self._create_room(client)

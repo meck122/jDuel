@@ -165,13 +165,31 @@ async def handle_websocket(
 
     except WebSocketDisconnect:
         rate_limiter.reset(connection_key)
-        await orchestrator.handle_disconnect(room_id, player_id)
+        if _is_active_connection(room_manager, room_id, player_id, ws):
+            await orchestrator.handle_disconnect(room_id, player_id)
     except Exception as e:
         logger.error(
             f"WebSocket error: room_id={room_id}, player_id={player_id}, error={e!s}",
             exc_info=True,
         )
         rate_limiter.reset(connection_key)
-        await orchestrator.handle_disconnect(room_id, player_id)
+        if _is_active_connection(room_manager, room_id, player_id, ws):
+            await orchestrator.handle_disconnect(room_id, player_id)
     finally:
         ws_connections_active.dec()
+
+
+def _is_active_connection(
+    room_manager: object, room_id: str, player_id: str, ws: WebSocket
+) -> bool:
+    """True iff `ws` is still the WebSocket bound to (room_id, player_id).
+
+    A same-token rejoin (or HTTP-driven detach) may replace this connection
+    with a fresh WS for the same player. When the displaced WS finally
+    raises WebSocketDisconnect, we must not call handle_disconnect — that
+    would detach the new WS by player_id and clobber it.
+    """
+    room = room_manager.get_room(room_id)  # type: ignore[attr-defined]
+    if room is None:
+        return False
+    return room.connections.get(player_id) is ws

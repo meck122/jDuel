@@ -184,19 +184,34 @@ def join_room(
     if request.playerId in room.players:
         # Check if player is currently connected (has active WebSocket)
         if request.playerId in room.connections:
-            # Player is actively connected - reject to prevent hijacking
-            logger.warning(
-                f"NAME_TAKEN: player_id={request.playerId}, "
-                f"all_connections={list(room.connections.keys())}, "
-                f"all_players={list(room.players)}"
-            )
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "error": f"Name '{request.playerId}' is already taken",
-                    "code": "NAME_TAKEN",
-                },
-            )
+            # The player slot still has a WebSocket attached. Two cases:
+            # (a) Genuinely active player — reject to prevent name hijacking.
+            # (b) Same player rejoining via a fresh tab/navigation: the old
+            #     WS is dead but the server hasn't seen its FIN yet (common
+            #     on mobile Safari when the user navigates to home). The
+            #     requester proves they are the same player by sending the
+            #     matching session token; we detach the stale WS and fall
+            #     through to the reconnection path.
+            stored_token = room.session_tokens.get(request.playerId)
+            if stored_token and request.sessionToken == stored_token:
+                logger.info(
+                    f"Same-token rejoin: detaching stale WS for "
+                    f"room_id={room_id_upper}, player_id={request.playerId}"
+                )
+                services.room_manager.detach_connection(room_id_upper, request.playerId)
+            else:
+                logger.warning(
+                    f"NAME_TAKEN: player_id={request.playerId}, "
+                    f"all_connections={list(room.connections.keys())}, "
+                    f"all_players={list(room.players)}"
+                )
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "error": f"Name '{request.playerId}' is already taken",
+                        "code": "NAME_TAKEN",
+                    },
+                )
 
         # Player exists but disconnected - verify session token for reconnection
         stored_token = room.session_tokens.get(request.playerId)
