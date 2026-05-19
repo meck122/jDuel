@@ -3,6 +3,7 @@
 from app.config.environment import CORS_ORIGINS
 from app.config.game import (
     DIFFICULTY_RANGES,
+    EMPTY_ROOM_GRACE_MS,
     GAME_MODES,
     GAME_OVER_TIME_MS,
     MAX_ANSWER_LENGTH,
@@ -27,6 +28,7 @@ from app.config.logging import setup_logging
 __all__ = [
     "CORS_ORIGINS",
     "DIFFICULTY_RANGES",
+    "EMPTY_ROOM_GRACE_MS",
     "GAME_MODES",
     "GAME_OVER_TIME_MS",
     "MAX_ANSWER_LENGTH",

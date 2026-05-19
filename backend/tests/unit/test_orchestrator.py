@@ -1,6 +1,7 @@
 """Tests for GameOrchestrator."""
 
 import asyncio
+import contextlib
 from unittest.mock import AsyncMock, MagicMock
 
 from prometheus_client import REGISTRY
@@ -211,10 +212,12 @@ class TestOrchestrator:
 
         assert room.config.game_mode == "classic"
 
-    async def test_handle_disconnect_last_player_deletes_room(
+    # --- Disconnect / empty-room grace tests ---
+
+    async def test_handle_disconnect_lobby_schedules_grace(
         self, orchestrator: GameOrchestrator, room_manager
     ):
-        """Last player disconnecting deletes the room."""
+        """Solo disconnect from WAITING lobby keeps the room and schedules grace."""
         room = room_manager.create_room()
         room_manager.register_player(room.room_id, "Alice")
         mock_ws = MagicMock()
@@ -224,7 +227,145 @@ class TestOrchestrator:
 
         await orchestrator.handle_disconnect(room_id, "Alice")
 
+        # Room survives; a grace task is pending.
+        assert room_manager.get_room(room_id) is not None
+        assert room_id in orchestrator._pending_deletions
+        assert not orchestrator._pending_deletions[room_id].done()
+
+        # Cleanup so the pending task doesn't leak into the event loop.
+        orchestrator._pending_deletions[room_id].cancel()
+
+    async def test_handle_disconnect_finished_schedules_grace(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Solo disconnect from FINISHED phase also gets the grace window."""
+        room = await self._setup_finished_game(orchestrator, room_manager)
+        room_id = room.room_id
+
+        await orchestrator.handle_disconnect(room_id, "Alice")
+
+        assert room_manager.get_room(room_id) is not None
+        assert room_id in orchestrator._pending_deletions
+
+        orchestrator._pending_deletions[room_id].cancel()
+
+    async def test_handle_disconnect_mid_game_deletes_immediately(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Empty-disconnect mid-game (PLAYING) hard-closes the room, no grace."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        mock_ws = MagicMock()
+        mock_ws.send_json = MagicMock(return_value=None)
+        await orchestrator.handle_connect(room.room_id, "Alice", mock_ws)
+        room.config.game_mode = "classic"
+        await orchestrator.handle_start_game(room.room_id, "Alice")
+        assert room.status == GameStatus.PLAYING
+        room_id = room.room_id
+
+        await orchestrator.handle_disconnect(room_id, "Alice")
+
         assert room_manager.get_room(room_id) is None
+        assert room_id not in orchestrator._pending_deletions
+
+    async def test_handle_disconnect_multiple_players_does_not_schedule_grace(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """When other players remain connected, no grace task is scheduled."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room_manager.register_player(room.room_id, "Bob")
+        ws_alice = MagicMock()
+        ws_alice.send_json = MagicMock(return_value=None)
+        ws_bob = MagicMock()
+        ws_bob.send_json = MagicMock(return_value=None)
+        await orchestrator.handle_connect(room.room_id, "Alice", ws_alice)
+        await orchestrator.handle_connect(room.room_id, "Bob", ws_bob)
+        room_id = room.room_id
+
+        await orchestrator.handle_disconnect(room_id, "Alice")
+
+        assert room_manager.get_room(room_id) is not None
+        assert room_id not in orchestrator._pending_deletions
+
+    async def test_reconnect_within_grace_cancels_deletion(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """Reconnecting within the grace window cancels the pending deletion."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        ws1 = MagicMock()
+        ws1.send_json = MagicMock(return_value=None)
+        await orchestrator.handle_connect(room.room_id, "Alice", ws1)
+        room_id = room.room_id
+
+        await orchestrator.handle_disconnect(room_id, "Alice")
+        pending = orchestrator._pending_deletions[room_id]
+
+        # Reconnect (same player, fresh socket).
+        ws2 = MagicMock()
+        ws2.send_json = MagicMock(return_value=None)
+        result = await orchestrator.handle_connect(room_id, "Alice", ws2)
+
+        assert result is True
+        assert room_manager.get_room(room_id) is not None
+        assert room_id not in orchestrator._pending_deletions
+
+        # Drain the cancellation so the task transitions out of "cancelling".
+        with contextlib.suppress(asyncio.CancelledError):
+            await pending
+        assert pending.cancelled()
+
+    async def test_other_player_join_within_grace_cancels_deletion(
+        self, orchestrator: GameOrchestrator, room_manager
+    ):
+        """A different player attaching also cancels the grace task."""
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        room_manager.register_player(room.room_id, "Bob")
+        ws_alice = MagicMock()
+        ws_alice.send_json = MagicMock(return_value=None)
+        await orchestrator.handle_connect(room.room_id, "Alice", ws_alice)
+        room_id = room.room_id
+
+        await orchestrator.handle_disconnect(room_id, "Alice")
+        assert room_id in orchestrator._pending_deletions
+
+        ws_bob = MagicMock()
+        ws_bob.send_json = MagicMock(return_value=None)
+        result = await orchestrator.handle_connect(room_id, "Bob", ws_bob)
+
+        assert result is True
+        assert room_manager.get_room(room_id) is not None
+        assert room_id not in orchestrator._pending_deletions
+
+    async def test_grace_expires_deletes_room(
+        self,
+        orchestrator: GameOrchestrator,
+        room_manager,
+        monkeypatch,
+    ):
+        """When the grace window elapses with no reconnect, the room is deleted."""
+        # Shrink the grace window so the test runs fast.
+        import app.services.orchestration.orchestrator as orch_module
+
+        monkeypatch.setattr(orch_module, "EMPTY_ROOM_GRACE_MS", 10)
+
+        room = room_manager.create_room()
+        room_manager.register_player(room.room_id, "Alice")
+        mock_ws = MagicMock()
+        mock_ws.send_json = MagicMock(return_value=None)
+        await orchestrator.handle_connect(room.room_id, "Alice", mock_ws)
+        room_id = room.room_id
+
+        await orchestrator.handle_disconnect(room_id, "Alice")
+        pending = orchestrator._pending_deletions[room_id]
+
+        # Let the grace task run to completion.
+        await pending
+
+        assert room_manager.get_room(room_id) is None
+        assert room_id not in orchestrator._pending_deletions
 
     # --- Play Again tests ---
 
@@ -653,7 +794,12 @@ class TestOrchestratorSpeedBattleDelegation:
     async def test_handle_disconnect_last_player_calls_cleanup_room(
         self, orchestrator: GameOrchestrator, room_manager
     ):
-        """handle_disconnect (last player) calls handler.cleanup_room regardless of mode."""
+        """handle_disconnect (last player, mid-game) calls handler.cleanup_room.
+
+        Lobby and finished phases hold the room for EMPTY_ROOM_GRACE_MS before
+        cleanup; mid-game (PLAYING/RESULTS) is the path that deletes
+        immediately, so we drive the room there to verify cleanup_room fires.
+        """
         mock_handler = self._make_mock_handler()
         orchestrator._speed_battle_handler = mock_handler
 
@@ -662,6 +808,7 @@ class TestOrchestratorSpeedBattleDelegation:
         mock_ws = MagicMock()
         mock_ws.send_json = AsyncMock()
         await orchestrator.handle_connect(room.room_id, "Alice", mock_ws)
+        room.status = GameStatus.PLAYING
         room_id = room.room_id
 
         await orchestrator.handle_disconnect(room_id, "Alice")
