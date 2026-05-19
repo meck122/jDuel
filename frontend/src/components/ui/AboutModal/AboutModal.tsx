@@ -149,7 +149,9 @@ function Body({ children }: { children: ReactNode }) {
       component="p"
       sx={{
         m: 0,
+        fontFamily: "var(--font-display)",
         fontSize: { xs: "var(--font-size-sm)", sm: "var(--font-size-base)" },
+        letterSpacing: "0.5px",
         color: "var(--color-text-secondary)",
         lineHeight: 1.8,
       }}
@@ -200,7 +202,9 @@ function ModeCard({
           component="p"
           sx={{
             m: 0,
+            fontFamily: "var(--font-display)",
             fontSize: { xs: "var(--font-size-xs)", sm: "var(--font-size-sm)" },
+            letterSpacing: "0.5px",
             color: "var(--color-text-secondary)",
             lineHeight: 1.75,
           }}
@@ -230,7 +234,9 @@ function FaqItem({ q, children }: { q: string; children: ReactNode }) {
         component="dd"
         sx={{
           m: 0,
+          fontFamily: "var(--font-display)",
           fontSize: { xs: "var(--font-size-xs)", sm: "var(--font-size-sm)" },
+          letterSpacing: "0.5px",
           color: "var(--color-text-secondary)",
           lineHeight: 1.8,
         }}

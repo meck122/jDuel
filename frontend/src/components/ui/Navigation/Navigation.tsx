@@ -153,23 +153,26 @@ export function Navigation({ onAboutOpen }: { onAboutOpen: () => void }) {
           },
         }}
       >
-        <DialogTitle
-          sx={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--font-size-lg)",
-            letterSpacing: "1.5px",
-            color: "var(--color-text-primary)",
-            pb: 1,
-          }}
-        >
-          Leave the game?
+        <DialogTitle>
+          <Box
+            sx={{
+              fontFamily: "var(--font-display)",
+              fontSize: "var(--font-size-lg)",
+              letterSpacing: "1.5px",
+              color: "var(--color-text-primary)",
+            }}
+          >
+            Leave the game?
+          </Box>
         </DialogTitle>
         <DialogContent>
           <Box
             component="p"
             sx={{
               m: 0,
+              fontFamily: "var(--font-display)",
               fontSize: "var(--font-size-sm)",
+              letterSpacing: "0.5px",
               color: "var(--color-text-secondary)",
               lineHeight: 1.7,
             }}
