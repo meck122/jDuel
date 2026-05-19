@@ -82,7 +82,7 @@ export function LiveLeaderboard({ compact = true }: LiveLeaderboardProps) {
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                py: elevated ? 1.5 : 1,
+                py: elevated ? "6px" : 1,
                 px: 1,
                 background: isMe
                   ? "rgba(139,92,246,0.12)"

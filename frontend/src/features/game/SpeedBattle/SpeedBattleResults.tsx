@@ -229,7 +229,7 @@ export function SpeedBattleResults() {
                   xs: "36px 1fr 52px 44px 44px",
                   sm: "44px 1fr 70px 60px 60px",
                 },
-                gap: { xs: 1, sm: 1.5 },
+                gap: { xs: 1, sm: "6px" },
                 px: { xs: 2, sm: "14px" },
                 mb: 1,
               }}
@@ -285,7 +285,7 @@ export function SpeedBattleResults() {
               sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: { xs: 1.5, sm: 2 },
+                gap: { xs: "6px", sm: 2 },
               }}
             >
               {sorted.map((row, i) => {
@@ -300,7 +300,7 @@ export function SpeedBattleResults() {
                         xs: "36px 1fr 52px 44px 44px",
                         sm: "44px 1fr 70px 60px 60px",
                       },
-                      gap: { xs: 1, sm: 1.5 },
+                      gap: { xs: 1, sm: "6px" },
                       alignItems: "center",
                       py: { xs: 2, sm: 3 },
                       px: { xs: 2, sm: "14px" },

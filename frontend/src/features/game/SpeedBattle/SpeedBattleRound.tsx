@@ -171,7 +171,7 @@ export function SpeedBattleRound() {
           gap: { xs: 0, sm: 4 },
           px: { xs: 3, sm: 5 },
           pt: { xs: 4, sm: 4 },
-          pb: { xs: 1.5, sm: 4 },
+          pb: { xs: "6px", sm: 4 },
         }}
       >
         {/* Question column — vertically centered */}
@@ -485,7 +485,7 @@ export function SpeedBattleRound() {
                           display: "grid",
                           gridTemplateColumns: "auto 1fr auto",
                           alignItems: "center",
-                          gap: { xs: 1.5, sm: 2 },
+                          gap: { xs: "6px", sm: 2 },
                           p: { xs: "10px 12px", sm: "12px 16px" },
                           background: cardBg,
                           border: cardBorder,
