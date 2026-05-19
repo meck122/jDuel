@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import {
   AppBar,
   Toolbar,
@@ -113,7 +113,10 @@ export function Navigation({ onAboutOpen }: { onAboutOpen: () => void }) {
             {!isActiveGameplay && !isAboutPage && (
               <Box
                 component="button"
-                onClick={onAboutOpen}
+                onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                  e.currentTarget.blur();
+                  onAboutOpen();
+                }}
                 sx={{
                   display: "flex",
                   alignItems: "center",
