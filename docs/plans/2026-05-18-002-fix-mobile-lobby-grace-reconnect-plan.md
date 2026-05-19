@@ -1,7 +1,7 @@
 ---
 title: "fix: Mobile lobby grace period + visibility-based reconnect"
 type: fix
-status: active
+status: completed
 date: 2026-05-18
 origin: docs/brainstorms/2026-05-18-mobile-lobby-grace-reconnect-requirements.md
 ---
