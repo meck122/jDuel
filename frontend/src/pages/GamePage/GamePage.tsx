@@ -221,6 +221,17 @@ function GamePageContent() {
     };
   }, [roomState?.status]);
 
+  // Warn on refresh/close-tab while the game is in progress
+  const roomStatus = roomState?.status;
+  useEffect(() => {
+    if (!roomStatus || roomStatus === "finished") return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [roomStatus]);
+
   // Retrying state — auto-retry with countdown
   if (isRetrying && nextRetryIn !== null) {
     return (
