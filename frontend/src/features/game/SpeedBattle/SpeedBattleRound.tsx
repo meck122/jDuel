@@ -240,7 +240,7 @@ export function SpeedBattleRound() {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 1.5,
+                  gap: 2,
                   flexWrap: "nowrap",
                 }}
               >
@@ -275,7 +275,7 @@ export function SpeedBattleRound() {
                       background: "rgba(239,68,68,0.1)",
                       border: "1px solid rgba(239,68,68,0.3)",
                       px: 2,
-                      py: 0.5,
+                      py: "2px",
                       borderRadius: "var(--radius-full)",
                       animation: "timerPulse 0.8s ease infinite",
                       flexShrink: 0,
@@ -312,7 +312,7 @@ export function SpeedBattleRound() {
                       background: "rgba(34,197,94,0.1)",
                       border: "1px solid rgba(34,197,94,0.3)",
                       px: 2,
-                      py: 0.5,
+                      py: "2px",
                       borderRadius: "var(--radius-full)",
                       flexShrink: 0,
                     }}
@@ -609,7 +609,7 @@ export function SpeedBattleRound() {
                         fontSize: "var(--font-size-sm)",
                         color: "var(--color-error)",
                         letterSpacing: "1px",
-                        mb: 0.5,
+                        mb: "2px",
                       }}
                     >
                       Wrong Answer — Locked for {Math.ceil(localCooldownMs / 1000)}s

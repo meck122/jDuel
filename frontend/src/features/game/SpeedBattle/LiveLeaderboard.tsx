@@ -189,7 +189,7 @@ function LeaderboardPanel({ sorted, currentPlayerId, leaderScore }: LeaderboardP
       </Box>
 
       {/* Rows */}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, px: 2, py: 2 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: "2px", px: 2, py: 2 }}>
         {sorted.map(([pid, score], i) => {
           const isLeader = i === 0 && score === leaderScore && score > 0;
           const isSelf = pid === currentPlayerId;
@@ -200,7 +200,7 @@ function LeaderboardPanel({ sorted, currentPlayerId, leaderScore }: LeaderboardP
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1.5,
+                gap: 2,
                 px: 2,
                 py: 1,
                 borderRadius: "var(--radius-sm)",

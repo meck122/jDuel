@@ -1,47 +1,42 @@
-import { ReactNode, useEffect } from "react";
-import { Box } from "@mui/material";
+import { ReactNode } from "react";
+import { Dialog, DialogContent, DialogTitle, IconButton, Box } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 
-export function AboutPage() {
-  useEffect(() => {
-    document.title = "About — jDuel";
-    return () => {
-      document.title = "jDuel";
-    };
-  }, []);
-
+export function AboutModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
-    <Box
-      sx={{
-        minHeight: "calc(100dvh - var(--navbar-height))",
-        width: "100%",
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "center",
-        py: { xs: 8, sm: 12 },
-        px: { xs: 5, sm: 6 },
+    <Dialog
+      open={open}
+      onClose={onClose}
+      scroll="paper"
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          background: "var(--color-bg-primary)",
+          border: "1px solid rgba(139,92,246,0.25)",
+          borderRadius: "var(--radius-lg)",
+          boxShadow: "0 24px 48px rgba(0,0,0,0.6)",
+        },
       }}
     >
-      <Box
+      <DialogTitle
         sx={{
-          maxWidth: 640,
-          width: "100%",
           display: "flex",
-          flexDirection: "column",
-          gap: { xs: 8, sm: 10 },
+          alignItems: "center",
+          justifyContent: "space-between",
+          pb: 0,
+          pt: 3,
+          px: 4,
         }}
       >
-        {/* Logo */}
         <Box
-          component="h1"
           sx={{
             fontFamily: "var(--font-display)",
-            fontSize: { xs: "var(--font-size-4xl)", sm: "var(--font-size-5xl)" },
+            fontSize: "var(--font-size-2xl)",
             fontWeight: 400,
             letterSpacing: "4px",
-            textAlign: "center",
-            m: 0,
             lineHeight: 1,
-            textShadow: "0 4px 20px rgba(139, 92, 246, 0.3)",
+            textShadow: "0 4px 20px rgba(139,92,246,0.3)",
           }}
         >
           <Box component="span" sx={{ color: "var(--color-accent-purple)" }}>
@@ -51,8 +46,17 @@ export function AboutPage() {
             Duel
           </Box>
         </Box>
+        <IconButton
+          onClick={onClose}
+          size="small"
+          aria-label="Close"
+          sx={{ color: "var(--color-text-muted)" }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
 
-        {/* What is jDuel? */}
+      <DialogContent sx={{ px: 4, pt: 4, pb: 5, display: "flex", flexDirection: "column", gap: 6 }}>
         <Section title="What is jDuel?">
           <Body>
             A free, real-time multiplayer trivia game — no account required. Create a room, share
@@ -60,9 +64,8 @@ export function AboutPage() {
           </Body>
         </Section>
 
-        {/* Game Modes */}
         <Section title="Game Modes">
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <ModeCard
               icon="🎮"
               name="Classic"
@@ -77,9 +80,8 @@ export function AboutPage() {
           </Box>
         </Section>
 
-        {/* FAQ */}
         <Section title="FAQ">
-          <Box component="dl" sx={{ m: 0, display: "flex", flexDirection: "column", gap: 5 }}>
+          <Box component="dl" sx={{ m: 0, display: "flex", flexDirection: "column", gap: 4 }}>
             <FaqItem q="How does answer checking work?">
               jDuel uses NLP-powered verification that accepts paraphrased answers and tolerates
               typos — you don't need the exact wording. Numeric answers (dates, counts) require an
@@ -94,7 +96,6 @@ export function AboutPage() {
           </Box>
         </Section>
 
-        {/* Made by */}
         <Box
           component="p"
           sx={{
@@ -116,8 +117,8 @@ export function AboutPage() {
           </Box>
           .
         </Box>
-      </Box>
-    </Box>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -128,7 +129,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
         component="h2"
         sx={{
           fontFamily: "var(--font-display)",
-          fontSize: { xs: "var(--font-size-xl)", sm: "var(--font-size-2xl)" },
+          fontSize: { xs: "var(--font-size-lg)", sm: "var(--font-size-xl)" },
           fontWeight: 400,
           color: "var(--color-accent-purple)",
           letterSpacing: "2px",
@@ -148,7 +149,9 @@ function Body({ children }: { children: ReactNode }) {
       component="p"
       sx={{
         m: 0,
-        fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-lg)" },
+        fontFamily: "var(--font-display)",
+        fontSize: { xs: "var(--font-size-sm)", sm: "var(--font-size-base)" },
+        letterSpacing: "0.5px",
         color: "var(--color-text-secondary)",
         lineHeight: 1.8,
       }}
@@ -175,20 +178,20 @@ function ModeCard({
         display: "flex",
         gap: 3,
         alignItems: "flex-start",
-        p: { xs: 4, sm: 5 },
+        p: { xs: 3, sm: 4 },
         background: gold ? "rgba(251,191,36,0.05)" : "rgba(139,92,246,0.06)",
         border: "1px solid",
         borderColor: gold ? "rgba(251,191,36,0.25)" : "rgba(139,92,246,0.25)",
         borderRadius: "var(--radius-md)",
       }}
     >
-      <Box sx={{ fontSize: "1.4rem", flexShrink: 0, lineHeight: 1.4 }}>{icon}</Box>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      <Box sx={{ fontSize: "1.25rem", flexShrink: 0, lineHeight: 1.4 }}>{icon}</Box>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
         <Box
           component="span"
           sx={{
             fontFamily: "var(--font-display)",
-            fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-lg)" },
+            fontSize: { xs: "var(--font-size-sm)", sm: "var(--font-size-base)" },
             letterSpacing: "1.5px",
             color: gold ? "var(--color-accent-gold)" : "var(--color-accent-purple)",
           }}
@@ -199,7 +202,9 @@ function ModeCard({
           component="p"
           sx={{
             m: 0,
-            fontSize: { xs: "var(--font-size-sm)", sm: "var(--font-size-base)" },
+            fontFamily: "var(--font-display)",
+            fontSize: { xs: "var(--font-size-xs)", sm: "var(--font-size-sm)" },
+            letterSpacing: "0.5px",
             color: "var(--color-text-secondary)",
             lineHeight: 1.75,
           }}
@@ -218,7 +223,7 @@ function FaqItem({ q, children }: { q: string; children: ReactNode }) {
         component="dt"
         sx={{
           fontFamily: "var(--font-display)",
-          fontSize: { xs: "var(--font-size-base)", sm: "var(--font-size-lg)" },
+          fontSize: { xs: "var(--font-size-sm)", sm: "var(--font-size-base)" },
           color: "var(--color-text-primary)",
           letterSpacing: "1px",
         }}
@@ -229,7 +234,9 @@ function FaqItem({ q, children }: { q: string; children: ReactNode }) {
         component="dd"
         sx={{
           m: 0,
-          fontSize: { xs: "var(--font-size-sm)", sm: "var(--font-size-base)" },
+          fontFamily: "var(--font-display)",
+          fontSize: { xs: "var(--font-size-xs)", sm: "var(--font-size-sm)" },
+          letterSpacing: "0.5px",
           color: "var(--color-text-secondary)",
           lineHeight: 1.8,
         }}
