@@ -30,7 +30,9 @@ export function Navigation({ onAboutOpen }: { onAboutOpen: () => void }) {
 
   const isActiveGameplay =
     isGamePage && roomState?.status !== "finished" && roomState?.status !== "waiting";
-  const isInRoom = isGamePage && !!roomState && roomState.status !== "finished";
+  // Guard fires whenever the user is in a room — including the results lobby
+  // (`finished`), where other players may still be deciding to Play Again.
+  const isInRoom = isGamePage && !!roomState;
 
   const sbQuestionIndex = roomState?.speedBattle?.playerState?.questionIndex;
   const showQCounter = isActiveGameplay && sbQuestionIndex !== undefined;
