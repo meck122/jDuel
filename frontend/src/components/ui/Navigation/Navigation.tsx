@@ -113,6 +113,7 @@ export function Navigation({ onAboutOpen }: { onAboutOpen: () => void }) {
               <Button
                 onClick={onAboutOpen}
                 startIcon={<InfoIcon />}
+                color="inherit"
                 className={styles.navButton}
                 sx={{ fontFamily: "var(--font-display)", letterSpacing: "1.5px" }}
               >
