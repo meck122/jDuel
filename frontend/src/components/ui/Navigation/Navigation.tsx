@@ -110,15 +110,31 @@ export function Navigation({ onAboutOpen }: { onAboutOpen: () => void }) {
               </Box>
             )}
             {!isActiveGameplay && !isAboutPage && (
-              <Button
+              <Box
+                component="button"
                 onClick={onAboutOpen}
-                startIcon={<InfoIcon />}
-                color="inherit"
-                className={styles.navButton}
-                sx={{ fontFamily: "var(--font-display)", letterSpacing: "1.5px" }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--color-accent-purple)",
+                  fontFamily: "var(--font-display)",
+                  fontSize: "var(--font-size-sm)",
+                  letterSpacing: "1.5px",
+                  textTransform: "uppercase",
+                  px: 1,
+                  py: "2px",
+                  borderRadius: "var(--radius-sm)",
+                  transition: "opacity 0.2s",
+                  "&:hover": { opacity: 0.75 },
+                }}
               >
+                <InfoIcon fontSize="small" />
                 About
-              </Button>
+              </Box>
             )}
           </Box>
         </Toolbar>
