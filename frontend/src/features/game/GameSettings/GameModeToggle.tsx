@@ -59,7 +59,7 @@ export function GameModeToggle({ isHost, currentMode, onSelect }: Props) {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1.5,
+                gap: 2,
                 py: "9px",
                 px: 2,
                 fontFamily: "var(--font-display)",
