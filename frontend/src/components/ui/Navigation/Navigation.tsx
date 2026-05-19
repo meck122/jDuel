@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from "react";
+import { useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -113,10 +113,7 @@ export function Navigation({ onAboutOpen }: { onAboutOpen: () => void }) {
             {!isActiveGameplay && !isAboutPage && (
               <Box
                 component="button"
-                onClick={(e: MouseEvent<HTMLButtonElement>) => {
-                  e.currentTarget.blur();
-                  onAboutOpen();
-                }}
+                onClick={onAboutOpen}
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -134,6 +131,11 @@ export function Navigation({ onAboutOpen }: { onAboutOpen: () => void }) {
                   borderRadius: "var(--radius-sm)",
                   transition: "opacity 0.2s",
                   "&:hover": { opacity: 0.75 },
+                  "&:focus": { outline: "none" },
+                  "&:focus-visible": {
+                    outline: "2px solid var(--color-accent-purple)",
+                    outlineOffset: "2px",
+                  },
                 }}
               >
                 <InfoIcon fontSize="small" />
