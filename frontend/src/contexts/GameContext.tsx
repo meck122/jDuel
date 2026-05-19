@@ -220,6 +220,47 @@ export function GameProvider({ children, onRoomClosed }: GameProviderProps) {
     };
   }, [disconnect]);
 
+  // iOS Safari closes background WebSockets within seconds of backgrounding
+  // the tab. When the tab returns to the foreground, transparently reopen the
+  // socket using the stored session token so a host who briefly switched to
+  // Messages doesn't see a frozen lobby. We do not surface a "reconnecting…"
+  // UI — on success the next ROOM_STATE repaints the screen; on failure (room
+  // gone past the backend grace window) the existing 4004 handling redirects
+  // home.
+  //
+  // joinRoom is intentionally NOT called here: the backend keeps the player
+  // registered across disconnect and validates the session token directly on
+  // WebSocket attach. Re-joining would hit the HTTP rate limiter and the
+  // NAME_TAKEN retry logic for no benefit.
+  const reconnectGuardRef = useRef({
+    roomId,
+    playerId,
+    roomState,
+    isConnecting,
+  });
+  useEffect(() => {
+    reconnectGuardRef.current = { roomId, playerId, roomState, isConnecting };
+  }, [roomId, playerId, roomState, isConnecting]);
+
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState !== "visible") return;
+      const guard = reconnectGuardRef.current;
+      // Active-session gate: roomState non-null means we already completed
+      // the initial join flow and know our roomId/playerId. Initial mount,
+      // deep-link cold-start, and full page refresh are owned by GamePage's
+      // own registerAndConnect effect, not by this listener.
+      if (!guard.roomState) return;
+      if (guard.isConnecting) return;
+      if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) return;
+      const token = getToken(guard.roomId, guard.playerId);
+      if (!token) return;
+      connect(guard.roomId, guard.playerId);
+    };
+    document.addEventListener("visibilitychange", handler);
+    return () => document.removeEventListener("visibilitychange", handler);
+  }, [connect]);
+
   const value: GameContextValue = {
     roomId,
     playerId,

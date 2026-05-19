@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
@@ -10,6 +11,7 @@ from fastapi import WebSocket
 
 from app.config import (
     DIFFICULTY_RANGES,
+    EMPTY_ROOM_GRACE_MS,
     GAME_MODES,
     GAME_OVER_TIME_MS,
     QUESTION_TIME_MS,
@@ -68,6 +70,11 @@ class GameOrchestrator:
         self._state_builder = state_builder
         self._room_closer = room_closer
         self._speed_battle_handler = speed_battle_handler
+        # Grace-period tasks for empty rooms in WAITING/FINISHED phases. A room
+        # with no active connections is held for EMPTY_ROOM_GRACE_MS so a host
+        # who briefly backgrounds Safari (or refreshes a solo lobby) can
+        # reconnect without losing the room.
+        self._pending_deletions: dict[str, asyncio.Task] = {}
 
     def start_game_over_timer(self, room_id: str) -> None:
         """Public delegate used by SpeedBattleHandler to schedule room close."""
@@ -111,6 +118,15 @@ class GameOrchestrator:
                 room_id, player_id, websocket
             )
             if success:
+                # Cancel any pending grace-period deletion now that a player
+                # has reattached. We do this after attach succeeded and inside
+                # the lock so a failed/invalid reconnect cannot cancel the
+                # task, and the cancellation is observed atomically with the
+                # room becoming non-empty.
+                pending = self._pending_deletions.pop(room_id, None)
+                if pending is not None:
+                    pending.cancel()
+
                 if (
                     room.config.game_mode == "speed_battle"
                     and room.status in (GameStatus.PLAYING, GameStatus.FINISHED)
@@ -488,10 +504,33 @@ class GameOrchestrator:
             # Detach WebSocket but keep player registered (allows reconnection)
             self._room_manager.detach_connection(room_id, player_id)
 
-            # If no players have active connections, clean up the room entirely
+            # If no players have active connections, decide between grace and
+            # immediate cleanup based on game phase.
             if not room.connections:
+                if room.status in (GameStatus.WAITING, GameStatus.FINISHED):
+                    # Defensive: cancel any prior grace task before scheduling
+                    # a new one (shouldn't happen, but harmless if it does).
+                    prior = self._pending_deletions.pop(room_id, None)
+                    if prior is not None:
+                        prior.cancel()
+
+                    logger.info(
+                        f"No active connections in room {room_id} "
+                        f"(status={room.status.value}); scheduling grace "
+                        f"deletion in {EMPTY_ROOM_GRACE_MS}ms"
+                    )
+                    # asyncio.create_task() schedules without blocking; the
+                    # task body runs in its own coroutine and acquires
+                    # room.lock independently after the sleep — it must NOT
+                    # inherit this lock.
+                    self._pending_deletions[room_id] = asyncio.create_task(
+                        self._run_room_deletion_grace(room_id)
+                    )
+                    return
+
                 logger.info(
-                    f"No active connections in room {room_id}, cleaning up room"
+                    f"No active connections in room {room_id} mid-game "
+                    f"(status={room.status.value}); cleaning up immediately"
                 )
                 self._timer_service.cancel_all_timers_for_room(room_id)
                 if self._speed_battle_handler is not None:
@@ -518,6 +557,39 @@ class GameOrchestrator:
             await self._room_manager.broadcast_state_per_recipient(room_id, build_state)
         elif state_snapshot is not None:
             await self._room_manager.broadcast_state(room_id, state_snapshot.to_dict())
+
+    async def _run_room_deletion_grace(self, room_id: str) -> None:
+        """Wait EMPTY_ROOM_GRACE_MS, then delete the room if still empty.
+
+        Cancelled by handle_connect when a player reattaches. On cancel the
+        task simply exits without touching room state.
+        """
+        try:
+            await asyncio.sleep(EMPTY_ROOM_GRACE_MS / 1000)
+        except asyncio.CancelledError:
+            # Reconnect arrived in time; handle_connect already popped us.
+            raise
+
+        room = self._room_manager.get_room(room_id)
+        if room is None:
+            # Room was already deleted (e.g., explicit close); nothing to do.
+            self._pending_deletions.pop(room_id, None)
+            return
+
+        async with room.lock:
+            # Re-check under lock: a player may have reattached between the
+            # sleep returning and the lock acquisition.
+            if room.connections:
+                self._pending_deletions.pop(room_id, None)
+                return
+
+            logger.info(f"Grace period expired for empty room {room_id}; cleaning up")
+            self._timer_service.cancel_all_timers_for_room(room_id)
+            if self._speed_battle_handler is not None:
+                self._speed_battle_handler.cleanup_room(room_id)
+            self._room_manager.delete_room(room_id)
+
+        self._pending_deletions.pop(room_id, None)
 
     def _start_question_timer(self, room_id: str) -> None:
         """Start the question timer for a room."""

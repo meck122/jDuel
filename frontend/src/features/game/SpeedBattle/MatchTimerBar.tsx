@@ -55,7 +55,7 @@ export function MatchTimerBar({
         alignItems: "center",
         gap: fullWidth ? 3 : compact ? 3 : 2,
         px: fullWidth ? 4 : compact ? 2 : 3,
-        py: fullWidth ? 2.5 : 1,
+        py: fullWidth ? "10px" : 1,
         background: "var(--color-bg-elevated)",
         border: `1px solid ${borderColor}`,
         borderRadius: "var(--radius-full)",
