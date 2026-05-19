@@ -124,7 +124,7 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <Box component="section" sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+    <Box component="section" sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Box
         component="h2"
         sx={{
@@ -174,7 +174,7 @@ function ModeCard({
     <Box
       sx={{
         display: "flex",
-        gap: 2.5,
+        gap: 3,
         alignItems: "flex-start",
         p: { xs: 3, sm: 4 },
         background: gold ? "rgba(251,191,36,0.05)" : "rgba(139,92,246,0.06)",
@@ -214,7 +214,7 @@ function ModeCard({
 
 function FaqItem({ q, children }: { q: string; children: ReactNode }) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box
         component="dt"
         sx={{
