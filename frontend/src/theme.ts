@@ -136,5 +136,15 @@ export const appTheme = createTheme({
         },
       },
     },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          "&:focus:not(.Mui-focusVisible)": {
+            outline: "none",
+            boxShadow: "none",
+          },
+        },
+      },
+    },
   },
 });
