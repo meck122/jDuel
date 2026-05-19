@@ -33,26 +33,53 @@ export function SpeedBattleRound() {
   const handleCountdownDone = useCallback(() => setCountdownDone(true), []);
 
   // ── Match timer ──────────────────────────────────────────────────────────
+  // Anchor to a wall-clock deadline rather than subtracting fixed deltas every
+  // tick. Browsers throttle setInterval callbacks for background tabs (often
+  // to ~1 Hz), so a "subtract 100ms per tick" model under-counts while the
+  // tab is hidden and the displayed timer falls behind real time. By
+  // re-deriving `localMatchMs` from `Date.now()` against a stored deadline,
+  // the value is always real time-remaining regardless of throttling.
+  // matchSyncRef stores the last server value plus the wall-clock instant we
+  // received it. The interval below derives the displayed time from this
+  // (serverMs - (Date.now() - syncedAt)), so background-tab throttling can
+  // pause the interval without the clock falling behind: each tick after
+  // resume reads real elapsed time and produces a correct value.
+  const matchSyncRef = useRef<{ serverMs: number; syncedAt: number }>({
+    serverMs: serverMatchMs,
+    syncedAt: 0,
+  });
   const [localMatchMs, setLocalMatchMs] = useState<number>(serverMatchMs);
   useEffect(() => {
-    setLocalMatchMs(serverMatchMs);
+    matchSyncRef.current = { serverMs: serverMatchMs, syncedAt: Date.now() };
   }, [serverMatchMs]);
   useEffect(() => {
     const id = setInterval(() => {
-      setLocalMatchMs((prev) => Math.max(0, prev - 100));
+      const { serverMs, syncedAt } = matchSyncRef.current;
+      if (syncedAt === 0) return;
+      setLocalMatchMs(Math.max(0, serverMs - (Date.now() - syncedAt)));
     }, 100);
     return () => clearInterval(id);
   }, []);
 
   // ── Cooldown timer ───────────────────────────────────────────────────────
+  // Same wall-clock-anchored pattern as the match timer.
+  const cooldownSyncRef = useRef<{ serverMs: number; syncedAt: number }>({
+    serverMs: serverCooldownMs ?? 0,
+    syncedAt: 0,
+  });
   const [localCooldownMs, setLocalCooldownMs] = useState<number>(serverCooldownMs ?? 0);
   useEffect(() => {
-    setLocalCooldownMs(serverCooldownMs ?? 0);
+    cooldownSyncRef.current = {
+      serverMs: serverCooldownMs ?? 0,
+      syncedAt: Date.now(),
+    };
   }, [serverCooldownMs]);
   useEffect(() => {
     if (serverCooldownMs === null) return;
     const id = setInterval(() => {
-      setLocalCooldownMs((prev) => Math.max(0, prev - 100));
+      const { serverMs, syncedAt } = cooldownSyncRef.current;
+      if (syncedAt === 0) return;
+      setLocalCooldownMs(Math.max(0, serverMs - (Date.now() - syncedAt)));
     }, 100);
     return () => clearInterval(id);
   }, [serverCooldownMs]);
@@ -78,6 +105,7 @@ export function SpeedBattleRound() {
 
     if (submittedFlash) {
       // Server advanced the question → our answer was correct
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing flash flow; deferred to a focused refactor
       setConfirmedCorrect(true);
       const t = setTimeout(() => {
         setSubmittedFlash(null);
@@ -94,6 +122,7 @@ export function SpeedBattleRound() {
 
   useEffect(() => {
     if (serverCooldownMs !== null && submittedFlash) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing wrong-answer snapshot flow; deferred to a focused refactor
       setWrongSelectedOption(submittedFlash.selected);
       setSubmittedFlash(null);
       setConfirmedCorrect(false);
