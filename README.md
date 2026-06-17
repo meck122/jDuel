@@ -411,11 +411,12 @@ Manual testing workflow (automated tests not currently implemented):
 
 ## Deployment
 
-See [deploy/README.md](deploy/README.md) for production deployment instructions including:
+Merging to `main` auto-deploys to production via GitHub Actions. See
+[docs/DeploymentGuide.md](docs/DeploymentGuide.md) for the day-to-day workflow
+and [deploy/AUTO_DEPLOY_SETUP.md](deploy/AUTO_DEPLOY_SETUP.md) for one-time setup.
 
-- Nginx reverse proxy setup
-- SystemD service configuration
-- HTTPS with Let's Encrypt
+For VPS provisioning, Nginx, SystemD, and HTTPS details, see
+[deploy/README.md](deploy/README.md).
 
 ## Future Enhancements
 

@@ -50,8 +50,18 @@ uvx pre-commit run --all-files               # Run all hooks (lint, format, test
 
 ### Deployment
 
+**Auto-deploy is the default.** Merging a PR to `main` triggers
+`.github/workflows/deploy.yml` — CI runs the pre-commit suite, then (on green
+and only when production-relevant paths changed) SSHes into the Oracle VPS and
+runs `deploy.sh`. See [docs/DeploymentGuide.md](docs/DeploymentGuide.md) for
+the full workflow and [deploy/AUTO_DEPLOY_SETUP.md](deploy/AUTO_DEPLOY_SETUP.md)
+for one-time setup.
+
 ```bash
-./deploy.sh          # Full stack deploy (builds frontend, syncs backend, restarts services)
+# Emergency / manual deploy (only when auto-deploy is unavailable):
+./deploy.sh                 # Full stack deploy
+./deploy.sh --dry-run       # Validate sudoers + flock without touching prod
+./deploy.sh --force-dirty   # Allow deploy with uncommitted edits on the box
 
 # Initial provisioning on fresh Oracle VPS (run once):
 bash deploy/setup.sh --domain yourdomain.com --user ubuntu
